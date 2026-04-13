@@ -1,0 +1,314 @@
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  background-color: #000;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.9)),
+    url("../img/comisaria.png");
+  background-size: cover;
+  background-position: center;
+  color: #e2e2b6;
+  font-family: "Times New Roman", serif;
+  overflow: hidden;
+  position: relative;
+}
+
+.efecto-crt {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 4px;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.pantalla-oculta {
+  display: none !important;
+}
+
+.pantalla-activa {
+  display: flex !important;
+}
+
+.fase-contenedor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 20px;
+}
+
+.grid-personajes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 30px;
+  max-width: 800px;
+}
+
+.carta-personaje {
+  background-color: rgba(20, 20, 20, 0.8);
+  border: 2px solid #555;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.carta-personaje:hover {
+  border-color: #8b0000;
+  background-color: rgba(139, 0, 0, 0.5);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.menu-aviso {
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 40px;
+  border: 1px solid #555;
+  max-width: 500px;
+}
+
+.opciones-aviso {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.btn-retro {
+  background-color: #111;
+  color: #e2e2b6;
+  border: 1px solid #555;
+  padding: 15px;
+  text-decoration: none;
+  font-family: inherit;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.btn-retro:hover {
+  background-color: #333;
+  border-color: #fff;
+}
+
+.btn-peligro:hover {
+  background-color: #8b0000;
+  border-color: #ff0000;
+  color: #fff;
+}
+
+.pantalla-titulo {
+  justify-content: space-between;
+}
+
+.logo-area {
+  text-align: center;
+  margin-top: 50px;
+}
+
+.main-logo {
+  max-width: 300px;
+  height: auto;
+}
+
+.subtitulo {
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: #d3d3d3;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.menu-area {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.menu-area ul {
+  list-style: none;
+  padding: 0;
+}
+
+.menu-area li {
+  margin-bottom: 20px;
+}
+
+.menu-area a {
+  text-decoration: none;
+  color: inherit;
+  font-size: 20px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: color 0.2s ease;
+}
+
+.menu-area a.item-seleccionado,
+.menu-area a:hover {
+  color: #ffd700;
+}
+
+.icono {
+  margin-right: 15px;
+}
+
+.llave {
+  color: #ff4500;
+  margin-left: 10px;
+}
+
+.hud-area {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 10px 30px;
+  border-top: 1px solid #333;
+  font-size: 14px;
+  font-family: "Courier New", monospace;
+  box-sizing: border-box;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+.hud-izquierda {
+  display: flex;
+  align-items: center;
+}
+
+.hud-avatar {
+  width: 32px;
+  height: 32px;
+  margin-right: 15px;
+  border: 1px solid #444;
+}
+
+.nombre-jugador {
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.puntos-jugador {
+  color: #ff4500;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.layout-enciclopedia {
+  justify-content: flex-start;
+  padding: 40px;
+  padding-top: 60px;
+}
+
+.header-enciclopedia {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1000px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #555;
+  padding-bottom: 15px;
+}
+
+.contenedor-archivos {
+  display: flex;
+  width: 100%;
+  max-width: 1000px;
+  height: 70vh;
+  background-color: rgba(10, 10, 10, 0.85);
+  border: 1px solid #444;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+.lista-documentos {
+  width: 35%;
+  border-right: 2px solid #333;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.lista-documentos ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.lista-documentos li {
+  margin-bottom: 10px;
+}
+
+.btn-archivo {
+  width: 100%;
+  background: transparent;
+  color: #aaa;
+  border: 1px solid transparent;
+  padding: 10px;
+  text-align: left;
+  font-family: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-archivo:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-archivo.activo {
+  color: #ffd700;
+  border-left: 3px solid #ff4500;
+  background-color: rgba(255, 69, 0, 0.1);
+}
+
+.btn-archivo.bloqueado {
+  color: #555;
+  font-style: italic;
+}
+
+.visor-documento {
+  width: 65%;
+  padding: 30px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  font-size: 18px;
+  line-height: 1.6;
+  color: #e2e2b6;
+}
+
+.contenedor-archivos ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.contenedor-archivos ::-webkit-scrollbar-track {
+  background: #111;
+}
+
+.contenedor-archivos ::-webkit-scrollbar-thumb {
+  background: #555;
+}
+
+.contenedor-archivos ::-webkit-scrollbar-thumb:hover {
+  background: #ff4500;
+}
