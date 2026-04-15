@@ -16,7 +16,7 @@
 
         <header class="header-enciclopedia">
             <h2 style="color: #8b0000; text-shadow: 2px 2px 0px #000; margin: 0;">BASE DE DATOS: UMBRELLA CORP.</h2>
-            <a href="../index.html" class="btn-retro" style="padding: 10px 20px;">Volver al menu</a>
+            <a href="../index.php" class="btn-retro" style="padding: 10px 20px;">Volver al menu</a>
         </header>
 
         <div class="contenedor-archivos">
