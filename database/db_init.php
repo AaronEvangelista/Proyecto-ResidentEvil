@@ -69,6 +69,19 @@ CREATE TABLE IF NOT EXISTS catalogo_enemigos (
     imagen_url TEXT DEFAULT NULL
 );
 
+CREATE TABLE IF NOT EXISTS catalogo_salas (
+    id_sala TEXT PRIMARY KEY, 
+    nombre_visual TEXT NOT NULL, 
+    descripcion TEXT, 
+    capitulo INTEGER DEFAULT 1,
+    //Conexiones (esto se puede manejar aquí o en una tabla aparte)
+    norte TEXT, 
+    sur TEXT,
+    este TEXT,
+    oeste TEXT,
+    imagen_url TEXT DEFAULT NULL 
+);
+
 //BLOQUE 3: DATOS DE PARTIDA (Lo que se guarda en la máquina de escribir)
 
 CREATE TABLE IF NOT EXISTS partida (
@@ -126,7 +139,11 @@ INSERT INTO catalogo_items (nombre, tipo, ruta_exclusiva, descripcion, imagen_ur
 ('Cinta de Guardado', 'clave', 'ambos', 'Una cinta magnética para máquina de escribir. Permite registrar tu progreso una sola vez. Úsala con sabiduría.', NULL),
 ('Medallon de León', 'clave', 'ambos', 'Un pesado medallon de plata con el emblema de un león', NULL),
 ('Medallon de Unicornio', 'clave', 'ambos', 'Un pesado medallon de bronce con el emblema de un unicornio', NULL),
-('Medallon de Doncella', 'clave', 'ambos', 'Un pesado medallon de oro con el emblema de una doncella', NULL);
+('Medallon de Doncella', 'clave', 'ambos', 'Un pesado medallon de oro con el emblema de una doncella', NULL),
+('Caja Fuerte Portatil', 'clave', 'ambos', 'Una pequeña caja fuerte con combinación, si la consigues abrir puede traer buenas recompensas', NULL),
+('Llave de Diamante', 'clave', 'ambos', 'Una llave que tiene la forma del diamate', NULL),
+('Llave de Pica', 'clave', 'ambos', 'Una llave que tiene la forma de la pica', NULL),
+('Cortacadenas', 'clave', 'ambos', 'Herramienta útil para cortar cadenas que impidan el paso', NULL);
 
 //Insertar Enemigos (AÚN QUEDA COMPLETARLO AÑADIENDO MÁS !!!!!!!!!!!)
 INSERT INTO catalogo_enemigos (nombre, tipo, vida_maxima, dano_base, esquive_base, precision_cabeza, precision_torso, precision_piernas, prob_aturdir_piernas, 
@@ -138,7 +155,44 @@ multiplicador_cabeza, imagen_url) VALUES
 //Lastre: Muy fácil de acertar (grande y lento), pero difícil de aturdir por su masa.
 ('Lastre', 'zombie_pesado', 120, 15, 60, 20, 85, 40, 20, 1.5, NULL),
 //Espasmo: Muy difícil de apuntar (errático), pero si le das en las piernas se nota.
-('Espasmo', 'zombie_agil', 40, 50, 15, 10, 50, 40, 60, 2.0, NULL);
+('Espasmo', 'zombie_agil', 40, 50, 15, 10, 50, 40, 60, 2.0, NULL),
+//FASE 1: El Recopilador (Científico Translúcido)
+//Estrategia: Difícil de huir por sus alucinaciones, pero vulnerable si logras acercarte.
+('El Recopilador - Fase 1', 'boss', 300, 35, 10, 20, 70, 50, 40, 2.0, NULL),
+//FASE 2: El Recopilador (Mutación Blindada)
+//Estrategia: Mucha vida. El torso está protegido por el traje fundido, hay que ir a la cabeza.
+('El Recopilador - Fase 2', 'boss', 600, 55, 5, 15, 50, 40, 25, 3.0, NULL),
+//FASE 3: El Recopilador (Forma Final / Coloso de Memorias)
+//Estrategia: Un tanque absoluto. Casi no puedes huir (5%) y es muy difícil de aturdir (10%).
+('El Recopilador - Fase 3', 'boss', 1000, 80, 5, 10, 60, 30, 10, 4.0, NULL);
+
+//CATALOGO_SALAS COMPLETO (Estructura técnica) //SOLO TENEMOS EL 1R CAP
+INSERT INTO catalogo_salas (id_sala, nombre_visual, descripcion, capitulo, norte, sur, este, oeste, imagen_url) VALUES
+//PLANTA BAJA
+('banos_inicio', 'Baños (Inicio)', 'Un lugar lúgubre donde comenzó la pesadilla.', 1, 'lobby_principal', NULL, NULL, NULL, NULL),
+
+('lobby_principal', 'Lobby Principal', 'Hub central de la comisaría. Estatua de los medallones.', 1, 'oficina_este', 'banos_inicio', 'biblioteca', 'sala_espera', NULL),
+
+('sala_espera', 'Sala de Espera', 'Sillas volcadas y rastros de evacuación.', 1, 'oficina_oeste', NULL, 'lobby_principal', NULL, NULL),
+
+('oficina_oeste', 'Oficina Oeste', 'Departamento de investigación. Huele a químicos.', 1, NULL, 'sala_espera', NULL, 'sala_archivos', NULL),
+
+('oficina_este', 'Oficina Este', 'Área administrativa. Hay una puerta con cadena.', 1, 'sala_descanso', 'lobby_principal', NULL, NULL, NULL),
+
+('sala_archivos', 'Sala de Archivos', 'Estanterías llenas de documentos y papel.', 1, NULL, NULL, 'oficina_oeste', NULL, NULL),
+
+('sala_descanso', 'Sala de Descanso', 'Un pequeño refugio con literas y una cafetera.', 1, 'sala_interrogatorios', 'oficina_este', NULL, NULL, NULL),
+
+('sala_interrogatorios', 'Sala de Interrogatorios', 'Fría y oscura. El espejo está agrietado.', 1, NULL, 'sala_descanso', NULL, NULL, NULL),
+
+//SEGUNDA PLANTA
+('biblioteca', 'Biblioteca (2F)', 'Suelos de madera que crujen y estanterías móviles.', 1, 'sala_arte', NULL, NULL, 'lobby_principal', NULL),
+
+('sala_arte', 'Sala de Arte', 'Exposición de estatuas y cuadros clásicos.', 1, 'oficina_capitan', 'biblioteca', NULL, NULL, NULL),
+
+('oficina_capitan', 'Oficina del Capitán', 'Lujosa pero desordenada. Caja fuerte grande.', 1, 'sala_electrica', 'sala_arte', NULL, NULL, NULL),
+
+('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, NULL, 'oficina_capitan', NULL, NULL, NULL);
 
 //NOTAS DE HISTORIA PRINCIPAL Y PISTAS (Comunes para ambos) SOLO TENEMOS EL 1R CAP
 INSERT INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, imagen_url) VALUES
