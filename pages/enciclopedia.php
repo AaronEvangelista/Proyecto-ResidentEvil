@@ -26,7 +26,7 @@
                 <ul id="menu-archivos">
                     <li><button class="btn-archivo activo">01. Reporte: Infectados</button></li>
                     <li><button class="btn-archivo">02. Mutacion: Licker</button></li>
-                    <li><button class="btn-archivo">03. Proyecto: Nemesis</button></li>
+                    <li><button class="btn-archivo">03. Proyecto: Recopilador</button></li>
                     <li><button class="btn-archivo">04. Diario del Guardián</button></li>
                     <li><button class="btn-archivo bloqueado">05. [DATOS CORRUPTOS]</button></li>
                 </ul>

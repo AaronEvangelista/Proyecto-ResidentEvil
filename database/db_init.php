@@ -221,4 +221,18 @@ INSERT INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, imagen_url) 
 ('NOTA OCULTA 5: Mensaje en la pared', 'chico', 'NO VAYAN A LAS ALCANTARILLAS. Están subiendo por los túneles. No son los muertos de la calle. Son otra cosa. Tienen garras. No tienen piel. Cazan por el sonido.', NULL),
 ('NOTA OCULTA 6: Orden de evacuación VIP', 'chico', 'Lista de Extracción Prioritaria. Solo personal de nivel 4 o superior. El perímetro de la ciudad se cerrará permanentemente a las 00:00 horas. Directiva: Ningún civil, policía o personal médico está autorizado a salir. Disparen a matar a cualquiera que se acerque a los muros.', NULL),
 ('NOTA OCULTA 7: Nota ensangrentada de un mercenario', 'chico', 'Aseguramos la muestra del virus, pero esa maldita aberración gigante mató a Jenkins. Escondí el maletín en el cuarto del generador principal. Si algún desgraciado sigue vivo y lee esto… no confíes en el helicóptero de extracción. Nos traicionaron a todos.', NULL);
+
+INSERT INTO catalogo_logros (nombre, descripcion) VALUES 
+('Bienvenido al Infierno', 'Has logrado sobrevivir y completar el primer capítulo de la pesadilla.'),
+('Control de Plagas', 'Elimina a 5 zombies. No dejes que se vuelvan a levantar.'),
+('Intocable', 'Demuestra tus reflejos esquivando con éxito a 3 zombies.'),
+('Toma un Respiro', 'Aturde a 3 enemigos atacando a sus puntos débiles (piernas).'),
+('El Acertijo de la Estatua', 'Encuentra los medallones del León, el Unicornio y la Doncella.'),
+('Científico Caído', 'Derrota la primera fase de "El Recopilador" en los laboratorios.'),
+('Descenso a la Oscuridad', 'Has completado el segundo capítulo. La verdad está cada vez más cerca.'),
+('Superviviente Definitivo', 'Has completado el tercer capítulo y superado los horrores de la ciudad.'),
+('Fuerza Bruta', 'Consigue la Escopeta W-870 en la ruta de Leon.'),
+('Muerte a Distancia', 'Consigue el Fusil de Cerrojo en la ruta de Claire.');
+
+
 ?>
