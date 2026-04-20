@@ -124,66 +124,62 @@ CREATE TABLE IF NOT EXISTS estado_enemigos (
 //INSERTS
 //Insertar Armas
 INSERT INTO catalogo_armas (nombre, dano_porcentaje, ruta_exclusiva, descripcion, imagen_url) VALUES
-('Pistola M19', 25, 'ambos', 'Arma reglamentaria. Daño bajo. La munición se crea combinando 2 pólvoras grises.', NULL),
-('Escopeta W-870', 75, 'chico', 'Ideal para distancias cortas. Daño letal. La munición se crea con 1 pólvora amarilla y 1 gris.', NULL),
-('Fusil de Cerrojo', 75, 'chica', 'Alta precisión y gran poder de detención. La munición se crea con 1 pólvora roja y 1 gris.', NULL),
-('Granada de Fragmentación', 100, 'ambos', 'Eliminación instantánea de enemigos comunes. Creada al combinar 2 pólvoras amarillas (chico) o 2 rojas (chica).', NULL);
+('Pistola M19', 25, 'ambos', 'Arma reglamentaria. Daño bajo. La munición se crea combinando 2 pólvoras grises.', "../img/PistolaM19.png"),
+('Escopeta W-870', 75, 'chico', 'Ideal para distancias cortas. Daño letal. La munición se crea con 1 pólvora amarilla y 1 gris.', "../img/EscopetaW-870.webp"),
+('Fusil de Cerrojo', 75, 'chica', 'Alta precisión y gran poder de detención. La munición se crea con 1 pólvora roja y 1 gris.', "../img/FusildeCerrojo.webp"),
+('Granada de Fragmentación', 100, 'ambos', 'Eliminación instantánea de enemigos comunes. Creada al combinar 2 pólvoras amarillas (chico) o 2 rojas (chica).', "../img/GranadaDeFragmentación.jpg");
 
 //Insertar Ítems (AÚN QUEDA COMPLETARLO AÑADIENDO MÁS ITEMS !!!!!!!!!!!)
 INSERT INTO catalogo_items (nombre, tipo, ruta_exclusiva, descripcion, imagen_url) VALUES
-('Hierba Verde', 'curacion', 'ambos', 'Planta medicinal local. Cura un 25% de salud. Se pueden combinar hasta 3 juntas (100% de salud).', NULL),
-('Cuchillo Defensivo', 'defensa', 'ambos', 'Permite evitar un mordisco y escapar sin recibir daño. Se consume tras su uso.', NULL),
-('Pólvora Gris', 'fabricacion', 'ambos', 'Pólvora común. Requiere combinarse con otras pólvoras para ser útil.', NULL),
-('Pólvora Amarilla', 'fabricacion', 'chico', 'Combínala con gris para cartuchos de escopeta, o con otra amarilla para una granada.', NULL),
-('Pólvora Roja', 'fabricacion', 'chica', 'Combínala con gris para munición de fusil, o con otra roja para una granada.', NULL),
-('Cinta de Guardado', 'clave', 'ambos', 'Una cinta magnética para máquina de escribir. Permite registrar tu progreso una sola vez. Úsala con sabiduría.', NULL),
-('Medallon de León', 'clave', 'ambos', 'Un pesado medallon de plata con el emblema de un león', NULL),
-('Medallon de Unicornio', 'clave', 'ambos', 'Un pesado medallon de bronce con el emblema de un unicornio', NULL),
-('Medallon de Doncella', 'clave', 'ambos', 'Un pesado medallon de oro con el emblema de una doncella', NULL),
-('Caja Fuerte Portatil', 'clave', 'ambos', 'Una pequeña caja fuerte con combinación, si la consigues abrir puede traer buenas recompensas', NULL),
-('Llave de Diamante', 'clave', 'ambos', 'Una llave que tiene la forma del diamate', NULL),
-('Llave de Pica', 'clave', 'ambos', 'Una llave que tiene la forma de la pica', NULL),
-('Cortacadenas', 'clave', 'ambos', 'Herramienta útil para cortar cadenas que impidan el paso', NULL);
+('Hierba Verde', 'curacion', 'ambos', 'Planta medicinal local. Cura un 25% de salud. Se pueden combinar hasta 3 juntas (100% de salud).', "../img/Verde_hierva.webp"),
+('Cuchillo Defensivo', 'defensa', 'ambos', 'Permite evitar un mordisco y escapar sin recibir daño. Se consume tras su uso.', "../img/Cuchillo_Defensivo.webp"),
+('Pólvora Gris', 'fabricacion', 'ambos', 'Pólvora común. Requiere combinarse con otras pólvoras para ser útil.', "../img/polvora_gris.png"),
+('Pólvora Amarilla', 'fabricacion', 'chico', 'Combínala con gris para cartuchos de escopeta, o con otra amarilla para una granada.', "../img/polvora_amarilla.png"),
+('Pólvora Roja', 'fabricacion', 'chica', 'Combínala con gris para munición de fusil, o con otra roja para una granada.', "../img/Pólvora_roja.png"),
+('Cinta de Guardado', 'clave', 'ambos', 'Una cinta magnética para máquina de escribir. Permite registrar tu progreso una sola vez. Úsala con sabiduría.', "../img/cinta_de_tinta.webp"),
+('Medallon de León', 'clave', 'ambos', 'Un pesado medallon de plata con el emblema de un león', "../img/medallon_de_leon.png"),
+('Medallon de Unicornio', 'clave', 'ambos', 'Un pesado medallon de bronce con el emblema de un unicornio', "../img/medallon_de_unicornio.png"),
+('Medallon de Doncella', 'clave', 'ambos', 'Un pesado medallon de oro con el emblema de una doncella', "../img/medallon_de_doncella.png"),
+('Caja Fuerte Portatil', 'clave', 'ambos', 'Una pequeña caja fuerte con combinación, si la consigues abrir puede traer buenas recompensas', "../img/Caja_Fuerte_Portatil.png"),
+('Llave de Diamante', 'clave', 'ambos', 'Una llave que tiene la forma del diamate', "../img/llave_de_diamante.png"),
+('Llave de Pica', 'clave', 'ambos', 'Una llave que tiene la forma de la pica', "../img/llave_de_pica.png"),
+('Cortacadenas', 'clave', 'ambos', 'Herramienta útil para cortar cadenas que impidan el paso', "../img/corta_cadenas.png");
 
 //Insertar Enemigos (AÚN QUEDA COMPLETARLO AÑADIENDO MÁS !!!!!!!!!!!)
 INSERT INTO catalogo_enemigos (nombre, tipo, vida_maxima, dano_base, esquive_base, precision_cabeza, precision_torso, precision_piernas, prob_aturdir_piernas, 
 multiplicador_cabeza, imagen_url) VALUES
 //Zombie Común: Equilibrado.
-('Zombie', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, NULL),
+('Zombie Hombre', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, "../img/zombie_civil_hombre.png"),
+('Zombie Mujer', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, "../img/zombie_civil_mujer.png"),
+('Zombie Recluso', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, "../img/zombie_recluso.png"),
+('Zombie Uniforme', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, "../img/zombie_uniforme.png"),
 //Licker: Muy difícil de dar en la cabeza por su postura, pero vulnerable al torso.
-('Licker', 'mutante', 75, 50, 25, 15, 60, 45, 30, 2.5, NULL),
+('Licker', 'mutante', 75, 50, 25, 15, 60, 45, 30, 2.5, "../img/licker.png"),
 //Lastre: Muy fácil de acertar (grande y lento), pero difícil de aturdir por su masa.
-('Lastre', 'zombie_pesado', 120, 15, 60, 20, 85, 40, 20, 1.5, NULL),
+('Lastre', 'zombie_pesado', 120, 15, 60, 20, 85, 40, 20, 1.5, "../img/laste_enemigo.png"),
 //Espasmo: Muy difícil de apuntar (errático), pero si le das en las piernas se nota.
-('Espasmo', 'zombie_agil', 40, 50, 15, 10, 50, 40, 60, 2.0, NULL),
+('Espasmo', 'zombie_agil', 40, 50, 15, 10, 50, 40, 60, 2.0, "../img/espasmo_enemigo.png"),
 //FASE 1: El Recopilador (Científico Translúcido)
 //Estrategia: Difícil de huir por sus alucinaciones, pero vulnerable si logras acercarte.
-('El Recopilador - Fase 1', 'boss', 300, 35, 10, 20, 70, 50, 40, 2.0, NULL),
+('El Recopilador - Fase 1', 'boss', 300, 35, 10, 20, 70, 50, 40, 2.0, "../img/boss_fase1.png"),
 //FASE 2: El Recopilador (Mutación Blindada)
 //Estrategia: Mucha vida. El torso está protegido por el traje fundido, hay que ir a la cabeza.
-('El Recopilador - Fase 2', 'boss', 600, 55, 5, 15, 50, 40, 25, 3.0, NULL),
+('El Recopilador - Fase 2', 'boss', 600, 55, 5, 15, 50, 40, 25, 3.0, "../img/boss_fase2.png"),
 //FASE 3: El Recopilador (Forma Final / Coloso de Memorias)
 //Estrategia: Un tanque absoluto. Casi no puedes huir (5%) y es muy difícil de aturdir (10%).
-('El Recopilador - Fase 3', 'boss', 1000, 80, 5, 10, 60, 30, 10, 4.0, NULL);
+('El Recopilador - Fase 3', 'boss', 1000, 80, 5, 10, 60, 30, 10, 4.0, "../img/boss_fase3.png");
 
 //CATALOGO_SALAS COMPLETO (Estructura técnica) //SOLO TENEMOS EL 1R CAP
 INSERT INTO catalogo_salas (id_sala, nombre_visual, descripcion, capitulo, norte, sur, este, oeste, imagen_url) VALUES
 //PLANTA BAJA
-('banos_inicio', 'Baños (Inicio)', 'Un lugar lúgubre donde comenzó la pesadilla.', 1, 'lobby_principal', NULL, NULL, NULL, NULL),
-
-('lobby_principal', 'Lobby Principal', 'Hub central de la comisaría. Estatua de los medallones.', 1, 'oficina_este', 'banos_inicio', 'biblioteca', 'sala_espera', NULL),
-
-('sala_espera', 'Sala de Espera', 'Sillas volcadas y rastros de evacuación.', 1, 'oficina_oeste', NULL, 'lobby_principal', NULL, NULL),
-
-('oficina_oeste', 'Oficina Oeste', 'Departamento de investigación. Huele a químicos.', 1, NULL, 'sala_espera', NULL, 'sala_archivos', NULL),
-
-('oficina_este', 'Oficina Este', 'Área administrativa. Hay una puerta con cadena.', 1, 'sala_descanso', 'lobby_principal', NULL, NULL, NULL),
-
-('sala_archivos', 'Sala de Archivos', 'Estanterías llenas de documentos y papel.', 1, NULL, NULL, 'oficina_oeste', NULL, NULL),
-
-('sala_descanso', 'Sala de Descanso', 'Un pequeño refugio con literas y una cafetera.', 1, 'sala_interrogatorios', 'oficina_este', NULL, NULL, NULL),
-
-('sala_interrogatorios', 'Sala de Interrogatorios', 'Fría y oscura. El espejo está agrietado.', 1, NULL, 'sala_descanso', NULL, NULL, NULL),
+('banos_inicio', 'Baños (Inicio)', 'Un lugar lúgubre donde comenzó la pesadilla.', 1, 'lobby_principal', NULL, NULL, NULL, "../img/sala_baños.png"),
+('lobby_principal', 'Lobby Principal', 'Hub central de la comisaría. Estatua de los medallones.', 1, 'oficina_este', 'banos_inicio', 'biblioteca', 'sala_espera', "../img/lobby_principal.png"),
+('sala_espera', 'Sala de Espera', 'Sillas volcadas y rastros de evacuación.', 1, 'oficina_oeste', NULL, 'lobby_principal', NULL, "../img/sala_de_espera.png"),
+('oficina_oeste', 'Oficina Oeste', 'Departamento de investigación. Huele a químicos.', 1, NULL, 'sala_espera', NULL, 'sala_archivos', "../img/oficina_oeste.png"),
+('oficina_este', 'Oficina Este', 'Área administrativa. Hay una puerta con cadena.', 1, 'sala_descanso', 'lobby_principal', NULL, NULL, "../img/oficina_este.png"),
+('sala_archivos', 'Sala de Archivos', 'Estanterías llenas de documentos y papel.', 1, NULL, NULL, 'oficina_oeste', NULL, "../img/sala_de_archivos.png"),
+('sala_descanso', 'Sala de Descanso', 'Un pequeño refugio con literas y una cafetera.', 1, 'sala_interrogatorios', 'oficina_este', NULL, NULL, "../img/sala_de_descanso.png"),
+('sala_interrogatorios', 'Sala de Interrogatorios', 'Fría y oscura. El espejo está agrietado.', 1, NULL, 'sala_descanso', NULL, NULL, "../img/sale_de_interrogatorio.png"),
 
 //SEGUNDA PLANTA
 ('biblioteca', 'Biblioteca (2F)', 'Suelos de madera que crujen y estanterías móviles.', 1, 'sala_arte', NULL, NULL, 'lobby_principal', NULL),
