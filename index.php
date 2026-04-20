@@ -1,3 +1,7 @@
+<?php
+require_once 'database/db_init.php';
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 
@@ -24,7 +28,7 @@
                     </a></li>
                 <li><a href="./pages/enciclopedia.php"><span class="icono"></span> ENCICLOPEDIA DE RACCOON CITY</a></li>
                 <li><a href="#"><span class="icono"></span> ARCHIVOS DE DATOS</a></li>
-                <li><a href="#"><span class="icono"></span> Logros</a></li>
+                <li><a href="./pages/logros.php"><span class="icono"></span> Logros</a></li>
                 <li><a href="#"><span class="icono"></span> OPCIONES</a></li>
             </ul>
         </nav>
