@@ -23,7 +23,7 @@ require_once 'database/db_init.php';
 
         <nav class="menu-area">
             <ul>
-                <li><a href="juego.php" class="item-seleccionado">
+                <li><a href="./pages/juego.php" class="item-seleccionado">
                         <span class="icono"></span>JUGAR STORY<span class="llave"></span>
                     </a></li>
                 <li><a href="./pages/enciclopedia.php"><span class="icono"></span> ENCICLOPEDIA DE RACCOON CITY</a></li>
