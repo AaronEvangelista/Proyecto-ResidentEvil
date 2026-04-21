@@ -1,6 +1,6 @@
 <?php
 //BLOQUE 1: USUARIOS Y LOGROS GLOBALES
-$db = new SQLite3('resident_evil.db');
+$db = new SQLite3(__DIR__ . '/resident_evil.sqlite3');
 
 $db->exec('PRAGMA foreign_keys = ON;');
 
@@ -130,14 +130,14 @@ $db->exec($esquema);
 // INSERTS
 $inserts = "
 -- Insertar Armas
-INSERT INTO catalogo_armas (nombre, dano_porcentaje, ruta_exclusiva, descripcion, imagen_url) VALUES
+INSERT OR IGNORE INTO catalogo_armas (nombre, dano_porcentaje, ruta_exclusiva, descripcion, imagen_url) VALUES
 ('Pistola M19', 25, 'ambos', 'Arma reglamentaria. Daño bajo. La munición se crea combinando 2 pólvoras grises.', '../img/PistolaM19.png'),
 ('Escopeta W-870', 75, 'chico', 'Ideal para distancias cortas. Daño letal. La munición se crea con 1 pólvora amarilla y 1 gris.', '../img/EscopetaW-870.webp'),
 ('Fusil de Cerrojo', 75, 'chica', 'Alta precisión y gran poder de detención. La munición se crea con 1 pólvora roja y 1 gris.', '../img/FusildeCerrojo.webp'),
 ('Granada de Fragmentación', 100, 'ambos', 'Eliminación instantánea de enemigos comunes. Creada al combinar 2 pólvoras amarillas (chico) o 2 rojas (chica).', '../img/GranadaDeFragmentación.jpg');
 
 -- Insertar Ítems
-INSERT INTO catalogo_items (nombre, tipo, ruta_exclusiva, descripcion, imagen_url) VALUES
+INSERT OR IGNORE INTO catalogo_items (nombre, tipo, ruta_exclusiva, descripcion, imagen_url) VALUES
 ('Hierba Verde', 'curacion', 'ambos', 'Planta medicinal local. Cura un 25% de salud. Se pueden combinar hasta 3 juntas (100% de salud).', '../img/Verde_hierva.webp'),
 ('Cuchillo Defensivo', 'defensa', 'ambos', 'Permite evitar un mordisco y escapar sin recibir daño. Se consume tras su uso.', '../img/Cuchillo_Defensivo.webp'),
 ('Pólvora Gris', 'fabricacion', 'ambos', 'Pólvora común. Requiere combinarse con otras pólvoras para ser útil.', '../img/polvora_gris.png'),
@@ -153,7 +153,7 @@ INSERT INTO catalogo_items (nombre, tipo, ruta_exclusiva, descripcion, imagen_ur
 ('Cortacadenas', 'clave', 'ambos', 'Herramienta útil para cortar cadenas que impidan el paso', '../img/corta_cadenas.png');
 
 -- Insertar Enemigos
-INSERT INTO catalogo_enemigos (nombre, tipo, vida_maxima, dano_base, esquive_base, precision_cabeza, precision_torso, precision_piernas, prob_aturdir_piernas, 
+INSERT OR IGNORE INTO catalogo_enemigos (nombre, tipo, vida_maxima, dano_base, esquive_base, precision_cabeza, precision_torso, precision_piernas, prob_aturdir_piernas, 
 multiplicador_cabeza, imagen_url) VALUES
 -- Zombie Común: Equilibrado.
 ('Zombie Hombre', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_civil_hombre.png'),
@@ -174,7 +174,7 @@ multiplicador_cabeza, imagen_url) VALUES
 ('El Recopilador - Fase 3', 'boss', 1000, 80, 5, 10, 60, 30, 10, 4.0, '../img/boss_fase3.png');
 
 -- CATALOGO_SALAS COMPLETO 
-INSERT INTO catalogo_salas (id_sala, nombre_visual, descripcion, capitulo, norte, sur, este, oeste, imagen_url) VALUES
+INSERT OR IGNORE INTO catalogo_salas (id_sala, nombre_visual, descripcion, capitulo, norte, sur, este, oeste, imagen_url) VALUES
 -- PLANTA BAJA
 ('banos_inicio', 'Baños (Inicio)', 'Un lugar lúgubre donde comenzó la pesadilla.', 1, 'lobby_principal', NULL, NULL, NULL, '../img/sala_baños.png'),
 ('lobby_principal', 'Lobby Principal', 'Hub central de la comisaría. Estatua de los medallones.', 1, 'oficina_este', 'banos_inicio', 'biblioteca', 'sala_espera', '../img/lobby_principal.png'),
@@ -192,7 +192,7 @@ INSERT INTO catalogo_salas (id_sala, nombre_visual, descripcion, capitulo, norte
 ('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, NULL, 'oficina_capitan', NULL, NULL, NULL);
 
 -- NOTAS DE HISTORIA PRINCIPAL Y PISTAS 
-INSERT INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, imagen_url) VALUES
+INSERT OR IGNORE INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, imagen_url) VALUES
 ('NOTA 1: Informe inicial', 'ambos', 'Fecha: 19 de septiembre. Hemos recibido múltiples llamadas sobre disturbios en la zona este. Al principio parecían ataques aislados, pero todos los testigos describen lo mismo: gente extremadamente agresiva… que no responde al dolor. El capitán ha ordenado aumentar la vigilancia. Personalmente, creo que esto va a peor.', NULL),
 ('NOTA 2: Registro médico improvisado', 'ambos', 'Paciente: Civil masculino (sin identificar). Mordedura profunda en el brazo. Fiebre alta (40°C). Comportamiento errático. El paciente murió a las 03:12… y volvió a moverse a las 03:27. NO es una broma.', NULL),
 ('NOTA 3: Orden interna', 'ambos', 'A TODO EL PERSONAL: Queda prohibido permitir la entrada a civiles con heridas abiertas o mordeduras. Cualquier individuo que muestre signos de agresividad extrema deberá ser neutralizado. Disparen a la cabeza. — Capitanía', NULL),
@@ -222,7 +222,7 @@ INSERT INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, imagen_url) 
 ('NOTA OCULTA 7: Nota ensangrentada de un mercenario', 'chico', 'Aseguramos la muestra del virus, pero esa maldita aberración gigante mató a Jenkins. Escondí el maletín en el cuarto del generador principal. Si algún desgraciado sigue vivo y lee esto… no confíes en el helicóptero de extracción. Nos traicionaron a todos.', NULL);
 
 -- LOGROS GLOBALES
-INSERT INTO catalogo_logros (nombre, descripcion) VALUES 
+INSERT OR IGNORE INTO catalogo_logros (nombre, descripcion) VALUES 
 ('Bienvenido al Infierno', 'Has logrado sobrevivir y completar el primer capítulo de la pesadilla.'),
 ('Control de Plagas', 'Elimina a 5 zombies. No dejes que se vuelvan a levantar.'),
 ('Intocable', 'Demuestra tus reflejos esquivando con éxito a 3 zombies.'),
