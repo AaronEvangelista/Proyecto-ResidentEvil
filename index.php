@@ -1,31 +1,31 @@
+<?php
+session_start();
+$logueado = $_SESSION['logueado'] ?? false;
+$nombreUsuario = $_SESSION['usuario_nombre'] ?? '';
+?>
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Resident Evil: Trivia Survival – El juego de supervivencia basado en el universo Resident Evil.">
-    <title>Resident Evil: Trivia Survival</title>
+    <meta name="description" content="Resident Evil">
+    <title>Resident Evil</title>
     <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="styles/index.css">
 </head>
 
 <body>
 
-    <!-- ░░ EFECTO CRT ░░ -->
     <div class="efecto-crt"></div>
 
-    <!-- ░░ CONTENEDOR PRINCIPAL ░░ -->
     <div class="fase-contenedor">
 
-        <!-- LOGO -->
         <header class="logo-area">
             <img src="./img/logo.png" alt="Resident Evil Trivia" class="main-logo">
             <p class="subtitulo">THE SURVIVAL HORROR</p>
         </header>
 
-        <!-- MENÚ PRINCIPAL -->
         <nav class="menu-area" id="menu-principal">
             <ul>
                 <li>
@@ -33,20 +33,16 @@
                         <span class="icono"></span>JUGAR STORY<span class="llave"></span>
                     </a>
                 </li>
-                        <li><a href="./pages/enciclopedia.php"><span class="icono"></span> ENCICLOPEDIA DE RACCOON
-                                CITY</a></li>
-                        <li><a href="#"><span class="icono"></span> ARCHIVOS DE DATOS</a></li>
-                        <li><a href="./pages/logros.php"><span class="icono"></span> Logros</a></li>
-                        <li><a href="#"><span class="icono"></span> OPCIONES</a></li>
+                <li><a href="./pages/enciclopedia.php"><span class="icono"></span> ENCICLOPEDIA DE RACCOON CITY</a></li>
+                <li><a href="#"><span class="icono"></span> ARCHIVOS DE DATOS</a></li>
+                <li><a href="./pages/logros.php"><span class="icono"></span> Logros</a></li>
+                <li><a href="#"><span class="icono"></span> OPCIONES</a></li>
             </ul>
         </nav>
 
-    </div><!-- /fase-contenedor -->
-
-    <!-- ░░ HUD INFERIOR — barra de usuario ░░ -->
+    </div>
     <div class="hud-area" id="hud-usuario">
         <?php if ($logueado): ?>
-            <!-- Usuario logueado -->
             <div class="hud-izquierda">
                 <div class="hud-avatar-icon">☣</div>
                 <div class="hud-info">
@@ -63,7 +59,6 @@
                 </a>
             </div>
         <?php else: ?>
-            <!-- Sin sesión -->
             <div class="hud-izquierda">
                 <div class="hud-avatar-icon hud-avatar-anon">?</div>
                 <div class="hud-info">
@@ -82,7 +77,6 @@
         <?php endif; ?>
     </div>
 
-    <!-- ░░ MODAL — requiere login para jugar ░░ -->
     <div class="modal-overlay" id="modal-login" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
         <div class="modal-card">
             <div class="modal-icono">☣</div>
@@ -114,7 +108,7 @@
         btnJugar.addEventListener('click', function (e) {
             e.preventDefault();
             if (logueado) {
-                window.location.href = 'pages/juego.php';
+                window.location.href = './pages/juego.php';
             } else {
                 modal.classList.add('modal-visible');
             }

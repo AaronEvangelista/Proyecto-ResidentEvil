@@ -1,0 +1,99 @@
+.layout-logros {
+    justify-content: flex-start;
+    padding: 40px;
+    padding-top: 60px;
+    overflow-y: auto;
+}
+
+.contenedor-logros {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid #333;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+    box-sizing: border-box;
+}
+
+.header-logros {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #8b0000;
+    padding-bottom: 15px;
+    margin-bottom: 30px;
+}
+
+.lista-logros {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.logro-item {
+    padding: 15px 20px;
+    border: 1px solid #333;
+    background: #111;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+}
+
+.logro-icono {
+    font-size: 30px;
+    min-width: 50px;
+    text-align: center;
+    color: #555;
+    text-shadow: 1px 1px 2px #000;
+}
+
+.logro-info h3 {
+    margin: 0 0 5px 0;
+    color: #777;
+    text-transform: uppercase;
+}
+
+.logro-info p {
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+}
+
+/* ESTADOS DEL LOGRO: VERDE SI ESTÁ COMPLETADO */
+.logro-completado {
+    border-color: #2e8b57;
+    /* Verde oscuro */
+    background: rgba(46, 139, 87, 0.1);
+}
+
+.logro-completado .logro-icono {
+    color: #3cb371;
+    /* Verde brillante */
+    text-shadow: 0 0 10px rgba(60, 179, 113, 0.5);
+}
+
+.logro-completado .logro-info h3 {
+    color: #3cb371;
+}
+
+.logro-completado .logro-info p {
+    color: #ccc;
+}
+
+.fecha-desbloqueo {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #2e8b57;
+    font-style: italic;
+}
+
+.mensaje-login {
+    text-align: center;
+    padding: 20px;
+    background: rgba(139, 0, 0, 0.1);
+    border: 1px solid #8b0000;
+    color: #ffcccc;
+    margin-bottom: 20px;
+}

@@ -1,8 +1,28 @@
 <?php
+session_start();
 require_once '../includes/conexion.php';
 
-$stmt = $pdo->query("SELECT * FROM catalogo_archivos ORDER BY id_archivo ASC");
-$archivos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$archivos = [];
+$logueado = $_SESSION['logueado'] ?? false;
+
+if ($logueado && !empty($_SESSION['usuario_id'])) {
+    $id_usuario = $_SESSION['usuario_id'];
+
+    // mostramos los archivos que el jugador tiene
+    $query = "
+        SELECT ca.* 
+        FROM catalogo_archivos ca
+        JOIN inventario i ON ca.id_archivo = i.id_objeto
+        JOIN partida p ON i.id_partida = p.id_partida
+        WHERE i.tipo_objeto = 'archivo' AND p.id_usuario = :id_usuario
+        GROUP BY ca.id_archivo
+        ORDER BY ca.id_archivo ASC
+    ";
+
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([':id_usuario' => $id_usuario]);
+    $archivos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 ?>
 
 <!DOCTYPE html>
@@ -45,8 +65,8 @@ $archivos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </li>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <li><span style="color: #555; font-style: italic;">No se encontraron archivos en la base de
-                                datos.</span></li>
+                        <li><span style="color: #555; font-style: italic;">Aún no has encontrado ningún archivo clasificado
+                                en tus partidas.</span></li>
                     <?php endif; ?>
                 </ul>
             </aside>
@@ -55,8 +75,8 @@ $archivos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div id="contenido-visor">
                     <h2 style="color: #ff4500;">Sistema en espera</h2>
                     <p style="color: #aaa;">Seleccione un archivo del índice para decodificar su contenido.</p>
-                    <p style="color: #555; font-size: 14px;"><?= count($archivos) ?> archivo(s) encontrados en la base
-                        de datos.</p>
+                    <p style="color: #555; font-size: 14px;"><?= count($archivos) ?> archivo(s) recuperados de tus
+                        registros.</p>
                 </div>
             </main>
 

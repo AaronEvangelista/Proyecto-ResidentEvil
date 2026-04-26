@@ -1,9 +1,5 @@
-/* =====================================================
-   index.css — HUD de usuario + Modal de login
-   ===================================================== */
 
-/* ── HUD inferior ── */
-.hud-area {
+hud-area {
     position: fixed;
     bottom: 0;
     left: 0;
