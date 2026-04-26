@@ -1,4 +1,5 @@
 <?php
+require_once 'database/db_init.php';
 require_once __DIR__ . '/includes/seguridad.php';
 session_start();
 $logueado       = !empty($_SESSION['logueado']);
@@ -41,6 +42,7 @@ $emailUsuario   = htmlspecialchars($_SESSION['usuario_email']  ?? '');
                 </li>
                 <li><a href="./pages/enciclopedia.php"><span class="icono"></span> ENCICLOPEDIA DE RACCOON CITY</a></li>
                 <li><a href="#"><span class="icono"></span> ARCHIVOS DE DATOS</a></li>
+                <li><a href="./pages/logros.php"><span class="icono"></span> Logros</a></li>
                 <li><a href="#"><span class="icono"></span> OPCIONES</a></li>
             </ul>
         </nav>
@@ -118,7 +120,7 @@ $emailUsuario   = htmlspecialchars($_SESSION['usuario_email']  ?? '');
         btnJugar.addEventListener('click', function (e) {
             e.preventDefault();
             if (logueado) {
-                window.location.href = 'juego.php';
+                window.location.href = './pages/juego.php';
             } else {
                 modal.classList.add('modal-visible');
             }
