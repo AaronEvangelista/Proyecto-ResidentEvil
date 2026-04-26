@@ -1,8 +1,3 @@
-/* =====================================================
-   perfil.css — Página de perfil del superviviente
-   ===================================================== */
-
-/* Override: el body de style.css tiene overflow:hidden, aquí necesitamos scroll */
 body {
     overflow: auto !important;
     height: auto !important;
@@ -10,13 +5,10 @@ body {
     background-attachment: fixed;
 }
 
-/* El efecto CRT tiene position:absolute, lo hacemos fixed para que cubra el scroll */
 .efecto-crt {
     position: fixed !important;
     pointer-events: none;
 }
-
-/* ── Wrapper principal (scroll vertical) ── */
 .perfil-wrapper {
     min-height: 100vh;
     background:
@@ -31,7 +23,6 @@ body {
     box-sizing: border-box;
 }
 
-/* ── Cabecera ── */
 .perfil-header {
     width: 100%;
     max-width: 860px;
@@ -88,7 +79,6 @@ body {
     background: rgba(139,0,0,.15);
 }
 
-/* ── Tarjeta de identidad ── */
 .perfil-id-card {
     width: 100%;
     max-width: 860px;
@@ -107,7 +97,6 @@ body {
     overflow: hidden;
 }
 
-/* CRT lines sobre la card */
 .perfil-id-card::before {
     content: '';
     position: absolute;
@@ -121,7 +110,6 @@ body {
     z-index: 5;
 }
 
-/* Borde rojo izquierdo decorativo */
 .perfil-id-card::after {
     content: '';
     position: absolute;
@@ -132,7 +120,6 @@ body {
     background: linear-gradient(to bottom, #cc2200, transparent 80%);
 }
 
-/* ── Avatar / Icono ── */
 .perfil-avatar {
     position: relative;
     width: 90px;
@@ -167,7 +154,6 @@ body {
     50%       { transform: scale(1.1); opacity: .6;  }
 }
 
-/* ── Datos del usuario ── */
 .perfil-datos {
     flex: 1;
     min-width: 0;
@@ -230,7 +216,6 @@ body {
     50%       { opacity: .55; }
 }
 
-/* ── Badge "PRIVADO" junto al label de correo ── */
 .perfil-privado-tag {
     display: inline-block;
     margin-left: 6px;
@@ -248,7 +233,6 @@ body {
     color: #aaa;
 }
 
-/* ── Email enmascarado (aspecto monoespaciado / técnico) ── */
 .perfil-email-masked {
     font-family: 'Courier New', monospace;
     letter-spacing: 1px;
@@ -256,7 +240,6 @@ body {
     font-style: italic;
 }
 
-/* ── Estadísticas rápidas ── */
 .perfil-stats {
     width: 100%;
     max-width: 860px;
@@ -300,7 +283,6 @@ body {
     text-align: center;
 }
 
-/* ── Sección genérica (partidas, logros…) ── */
 .perfil-seccion {
     width: 100%;
     max-width: 860px;
@@ -327,7 +309,6 @@ body {
     font-size: 10px;
 }
 
-/* ── Estado vacío ── */
 .perfil-vacio {
     background: rgba(5,5,5,.85);
     border: 1px solid #1e1e1e;
@@ -381,7 +362,6 @@ body {
     box-shadow: 0 0 12px rgba(255,34,0,.3);
 }
 
-/* ── Lista de partidas ── */
 .partidas-lista {
     display: flex;
     flex-direction: column;
@@ -477,7 +457,6 @@ body {
     box-shadow: 0 0 10px rgba(255,34,0,.25);
 }
 
-/* ── Responsive básico ── */
 @media (max-width: 620px) {
     .perfil-id-card {
         flex-direction: column;

@@ -78,7 +78,6 @@ hud-area {
     align-items: center;
 }
 
-/* Botones HUD */
 .hud-btn {
     display: inline-block;
     padding: 8px 18px;
@@ -136,7 +135,6 @@ hud-area {
     border-color: #cc2200;
 }
 
-/* ── Modal de login ── */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -171,7 +169,6 @@ hud-area {
     position: relative;
     transform: scale(.95);
     transition: transform .25s;
-    /* CRT lines */
     overflow: hidden;
 }
 

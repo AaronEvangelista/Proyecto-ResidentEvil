@@ -1,8 +1,4 @@
-/* =====================================================
-   auth.css — Estilos de login y registro
-   ===================================================== */
 
-/* ── Fondo con imagen de la comisaría ── */
 .login-wrapper {
     position: fixed;
     inset: 0;
@@ -14,7 +10,6 @@
         url('../img/comisaria.png') center/cover no-repeat;
 }
 
-/* ── Tarjeta central ── */
 .login-card {
     background: rgba(5, 5, 5, 0.92);
     border: 1px solid #3a3a3a;
@@ -28,7 +23,6 @@
     overflow: hidden;
 }
 
-/* Efecto líneas CRT sobre la tarjeta */
 .login-card::before {
     content: '';
     position: absolute;
@@ -42,7 +36,6 @@
     z-index: 10;
 }
 
-/* ── Logo ── */
 .login-card .logo-mini {
     display: block;
     margin: 0 auto 6px;
@@ -51,7 +44,6 @@
     animation: latidos 2.5s infinite;
 }
 
-/* ── Títulos ── */
 .login-card h2 {
     text-align: center;
     color: #ffd700;
@@ -70,7 +62,6 @@
     margin-bottom: 6px;
 }
 
-/* ── Inputs ── */
 .login-card input[type="text"],
 .login-card input[type="password"],
 .login-card input[type="email"] {
@@ -95,7 +86,6 @@
     border-color: #cc2200;
 }
 
-/* ── Botón principal ── */
 .login-card .btn-submit {
     background: #0d0d0d;
     color: #e2e2b6;
@@ -117,7 +107,6 @@
     box-shadow: 0 0 12px rgba(255, 34, 0, .3);
 }
 
-/* ── Botones secundarios ── */
 .login-card .btn-secundario {
     background: transparent;
     color: #888;
@@ -136,14 +125,12 @@
     border-color: #666;
 }
 
-/* ── Separador ── */
 .login-card .separador {
     border: none;
     border-top: 1px solid #222;
     margin: 4px 0;
 }
 
-/* ── Mensajes de alerta ── */
 .alerta {
     padding: 12px 14px;
     font-size: 12px;
@@ -173,7 +160,6 @@
     margin-bottom: 4px;
 }
 
-/* ── Grupo de campo (label + input) ── */
 .campo-grupo {
     position: relative;
 }
@@ -187,7 +173,6 @@
     margin-bottom: 5px;
 }
 
-/* ── Indicador de fuerza de contraseña (registro) ── */
 .strength-bar {
     height: 3px;
     background: #1a1a1a;

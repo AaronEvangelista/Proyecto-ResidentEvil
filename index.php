@@ -52,10 +52,10 @@ $nombreUsuario = $_SESSION['usuario_nombre'] ?? '';
             </div>
             <div class="hud-derecha">
                 <a href="pages/perfil.php" class="hud-btn hud-btn-perfil" id="btn-hud-perfil">
-                    ▶ MI PERFIL
+                    MI PERFIL
                 </a>
                 <a href="sessions/logout.php" class="hud-btn hud-btn-logout" id="btn-hud-logout">
-                    ⏻ CERRAR SESIÓN
+                    CERRAR SESIÓN
                 </a>
             </div>
         <?php else: ?>
@@ -87,10 +87,10 @@ $nombreUsuario = $_SESSION['usuario_nombre'] ?? '';
             </p>
             <div class="modal-acciones">
                 <a href="sessions/login.php" class="modal-btn modal-btn-principal" id="modal-btn-login">
-                    ▶ INICIAR SESIÓN
+                    INICIAR SESIÓN
                 </a>
                 <a href="sessions/registro.php" class="modal-btn modal-btn-secundario" id="modal-btn-registro">
-                    ✚ CREAR CUENTA
+                    CREAR CUENTA
                 </a>
             </div>
             <button class="modal-cerrar" id="modal-cerrar" aria-label="Cerrar">✕ CANCELAR</button>
