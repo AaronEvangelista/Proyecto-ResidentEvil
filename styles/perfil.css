@@ -1,0 +1,515 @@
+/* =====================================================
+   perfil.css — Página de perfil del superviviente
+   ===================================================== */
+
+/* Override: el body de style.css tiene overflow:hidden, aquí necesitamos scroll */
+body {
+    overflow: auto !important;
+    height: auto !important;
+    min-height: 100vh;
+    background-attachment: fixed;
+}
+
+/* El efecto CRT tiene position:absolute, lo hacemos fixed para que cubra el scroll */
+.efecto-crt {
+    position: fixed !important;
+    pointer-events: none;
+}
+
+/* ── Wrapper principal (scroll vertical) ── */
+.perfil-wrapper {
+    min-height: 100vh;
+    background:
+        linear-gradient(rgba(0,0,0,.80), rgba(0,0,0,.96)),
+        url('../img/comisaria.png') center/cover no-repeat fixed;
+    color: #e2e2b6;
+    font-family: 'Times New Roman', serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 60px;
+    box-sizing: border-box;
+}
+
+/* ── Cabecera ── */
+.perfil-header {
+    width: 100%;
+    max-width: 860px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 30px 20px;
+    border-bottom: 1px solid #1e1e1e;
+    box-sizing: border-box;
+    position: sticky;
+    top: 0;
+    background: rgba(0,0,0,.88);
+    z-index: 100;
+    backdrop-filter: blur(6px);
+}
+
+.perfil-titulo {
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: #ffd700;
+    text-transform: uppercase;
+    margin: 0;
+    font-weight: bold;
+}
+
+.perfil-volver,
+.perfil-logout {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 8px 14px;
+    border: 1px solid;
+    transition: all .2s;
+    font-family: inherit;
+}
+
+.perfil-volver {
+    color: #888;
+    border-color: #2a2a2a;
+}
+.perfil-volver:hover {
+    color: #e2e2b6;
+    border-color: #555;
+}
+
+.perfil-logout {
+    color: #cc4400;
+    border-color: #3a1a1a;
+}
+.perfil-logout:hover {
+    color: #ff6b5b;
+    border-color: #cc2200;
+    background: rgba(139,0,0,.15);
+}
+
+/* ── Tarjeta de identidad ── */
+.perfil-id-card {
+    width: 100%;
+    max-width: 860px;
+    margin: 36px 30px 0;
+    padding: 36px 40px;
+    background: rgba(5,5,5,.92);
+    border: 1px solid #2a2a2a;
+    box-shadow:
+        0 0 50px rgba(255,30,0,.08),
+        0 0 0 1px #111;
+    box-sizing: border-box;
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    position: relative;
+    overflow: hidden;
+}
+
+/* CRT lines sobre la card */
+.perfil-id-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 3px,
+        rgba(0,0,0,.12) 3px, rgba(0,0,0,.12) 4px
+    );
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* Borde rojo izquierdo decorativo */
+.perfil-id-card::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #cc2200, transparent 80%);
+}
+
+/* ── Avatar / Icono ── */
+.perfil-avatar {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.perfil-avatar-icono {
+    font-size: 44px;
+    color: #cc2200;
+    filter: drop-shadow(0 0 8px rgba(204,34,0,.5));
+    animation: latidos 2.5s infinite;
+    display: block;
+    text-align: center;
+    line-height: 90px;
+}
+
+.perfil-avatar-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid #cc2200;
+    opacity: .35;
+    animation: ring-pulse 2.5s infinite;
+}
+
+@keyframes ring-pulse {
+    0%, 100% { transform: scale(1);   opacity: .35; }
+    50%       { transform: scale(1.1); opacity: .6;  }
+}
+
+/* ── Datos del usuario ── */
+.perfil-datos {
+    flex: 1;
+    min-width: 0;
+}
+
+.perfil-nombre {
+    font-size: 26px;
+    font-weight: bold;
+    color: #ffd700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.perfil-rango {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: #555;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+    border-left: 2px solid #330000;
+    padding-left: 10px;
+}
+
+.perfil-grid-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 30px;
+}
+
+.perfil-info-bloque {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.perfil-info-label {
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    color: #555;
+    text-transform: uppercase;
+}
+
+.perfil-info-valor {
+    font-size: 13px;
+    color: #c8c8a0;
+    letter-spacing: .5px;
+    word-break: break-all;
+}
+
+.perfil-estado-activo {
+    color: #2a8a2a;
+    font-weight: bold;
+    letter-spacing: 2px;
+    animation: parpadeo-verde 2s infinite;
+}
+
+@keyframes parpadeo-verde {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .55; }
+}
+
+/* ── Badge "PRIVADO" junto al label de correo ── */
+.perfil-privado-tag {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: #555;
+    background: rgba(50,30,0,.4);
+    border: 1px solid #3a2a00;
+    padding: 1px 5px;
+    vertical-align: middle;
+    cursor: help;
+    transition: color .2s;
+}
+.perfil-privado-tag:hover {
+    color: #aaa;
+}
+
+/* ── Email enmascarado (aspecto monoespaciado / técnico) ── */
+.perfil-email-masked {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    color: #888;
+    font-style: italic;
+}
+
+/* ── Estadísticas rápidas ── */
+.perfil-stats {
+    width: 100%;
+    max-width: 860px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    margin-top: 1px;
+    background: #1a1a1a;
+    border: 1px solid #1a1a1a;
+    box-sizing: border-box;
+}
+
+.stat-bloque {
+    background: rgba(5,5,5,.90);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 22px 10px;
+    gap: 6px;
+    transition: background .2s;
+}
+
+.stat-bloque:hover {
+    background: rgba(20,5,5,.95);
+}
+
+.stat-valor {
+    font-size: 28px;
+    font-weight: bold;
+    color: #cc2200;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(204,34,0,.4);
+}
+
+.stat-label {
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    color: #555;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+/* ── Sección genérica (partidas, logros…) ── */
+.perfil-seccion {
+    width: 100%;
+    max-width: 860px;
+    margin-top: 30px;
+    box-sizing: border-box;
+    padding: 0 0px;
+}
+
+.perfil-seccion-titulo {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: #888;
+    text-transform: uppercase;
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #1e1e1e;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.icono-seccion {
+    color: #cc2200;
+    font-size: 10px;
+}
+
+/* ── Estado vacío ── */
+.perfil-vacio {
+    background: rgba(5,5,5,.85);
+    border: 1px solid #1e1e1e;
+    border-left: 3px solid #2a2a2a;
+    padding: 30px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+}
+
+.perfil-vacio-icono {
+    font-size: 28px;
+    color: #444;
+}
+
+.perfil-vacio p {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.7;
+}
+
+.perfil-vacio-sub {
+    font-size: 11px;
+    color: #444;
+    letter-spacing: .5px;
+}
+
+.perfil-btn-jugar {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 12px 28px;
+    background: #0d0d0d;
+    border: 1px solid #cc2200;
+    color: #e2e2b6;
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    transition: all .2s;
+}
+
+.perfil-btn-jugar:hover {
+    background: #7a0000;
+    border-color: #ff2200;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(255,34,0,.3);
+}
+
+/* ── Lista de partidas ── */
+.partidas-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.partida-card {
+    background: rgba(5,5,5,.90);
+    border: 1px solid #222;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    transition: border-color .2s, background .2s;
+}
+
+.partida-card:hover {
+    border-color: #3a1a1a;
+    background: rgba(15,5,5,.95);
+}
+
+.partida-ruta-badge {
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border: 1px solid;
+    flex-shrink: 0;
+    min-width: 52px;
+    text-align: center;
+}
+
+.partida-ruta-chico {
+    color: #4db8ff;
+    border-color: #1a3a5a;
+    background: rgba(26,58,90,.2);
+}
+
+.partida-ruta-chica {
+    color: #ff8cb4;
+    border-color: #5a1a3a;
+    background: rgba(90,26,58,.2);
+}
+
+.partida-ruta-ambos {
+    color: #ffd700;
+    border-color: #5a4a00;
+    background: rgba(90,74,0,.2);
+}
+
+.partida-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.partida-sala {
+    font-size: 14px;
+    color: #c8c8a0;
+    letter-spacing: .5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.partida-fecha {
+    font-size: 10px;
+    color: #444;
+    letter-spacing: 1px;
+    margin-top: 3px;
+}
+
+.partida-btn-continuar {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-family: inherit;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    border: 1px solid #cc2200;
+    color: #e2e2b6;
+    background: transparent;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all .2s;
+}
+
+.partida-btn-continuar:hover {
+    background: #7a0000;
+    border-color: #ff2200;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255,34,0,.25);
+}
+
+/* ── Responsive básico ── */
+@media (max-width: 620px) {
+    .perfil-id-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 28px 22px;
+    }
+
+    .perfil-grid-info {
+        grid-template-columns: 1fr;
+    }
+
+    .perfil-rango {
+        border-left: none;
+        padding-left: 0;
+    }
+
+    .perfil-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .perfil-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .partida-card {
+        flex-wrap: wrap;
+    }
+
+    .perfil-nombre {
+        font-size: 20px;
+    }
+}
