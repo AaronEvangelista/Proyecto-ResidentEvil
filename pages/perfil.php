@@ -2,21 +2,18 @@
 require_once __DIR__ . '/../includes/seguridad.php';
 session_start();
 
-// Protección: si no hay sesión, redirigir al login
 if (empty($_SESSION['logueado'])) {
     header('Location: ../sessions/login.php');
     exit;
 }
 
-require_once __DIR__ . '/../database/conexion.php';
+require_once __DIR__ . '/../includes/conexion.php';
 
-$usuarioId     = (int) $_SESSION['usuario_id'];
+$usuarioId = (int) $_SESSION['usuario_id'];
 $usuarioNombre = htmlspecialchars($_SESSION['usuario_nombre'] ?? '');
-$usuarioEmail  = htmlspecialchars($_SESSION['usuario_email']  ?? '');
+$usuarioEmail = htmlspecialchars($_SESSION['usuario_email'] ?? '');
 
-// ── Obtener datos completos del usuario desde la BD ──
 try {
-    $pdo  = getDB();
     $stmt = $pdo->prepare("
         SELECT id_usuario, nombre, email, fecha_registro
         FROM   usuarios
@@ -29,7 +26,6 @@ try {
     $usuario = null;
 }
 
-// ── Obtener partidas guardadas del usuario ──
 $partidas = [];
 try {
     $stmt = $pdo->prepare("
@@ -46,28 +42,37 @@ try {
     $partidas = [];
 }
 
-// ── Fecha de registro formateada ──
 $fechaRegistro = 'Desconocida';
 if ($usuario && !empty($usuario['fecha_registro'])) {
     $dt = new DateTime($usuario['fecha_registro']);
-    $meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-              'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    $fechaRegistro = $dt->format('d') . ' de ' . $meses[(int)$dt->format('n') - 1] . ' de ' . $dt->format('Y');
+    $meses = [
+        'Enero',
+        'Febrero',
+        'Marzo',
+        'Abril',
+        'Mayo',
+        'Junio',
+        'Julio',
+        'Agosto',
+        'Septiembre',
+        'Octubre',
+        'Noviembre',
+        'Diciembre'
+    ];
+    $fechaRegistro = $dt->format('d') . ' de ' . $meses[(int) $dt->format('n') - 1] . ' de ' . $dt->format('Y');
 }
 
-// ── Enmascarar email: muestra solo la inicial + *** antes del @ ──
-// Ejemplo: aaron@gmail.com → a***@gmail.com
 function enmascararEmail(string $email): string
 {
     $partes = explode('@', $email, 2);
-    if (count($partes) !== 2) return '***';
+    if (count($partes) !== 2)
+        return '***';
 
-    $local  = $partes[0];
+    $local = $partes[0];
     $dominio = $partes[1];
 
-    // Muestra 1 carácter si el local es corto, 2 si es largo
     $visibles = mb_strlen($local) <= 3 ? 1 : 2;
-    $inicio   = htmlspecialchars(mb_substr($local, 0, $visibles));
+    $inicio = htmlspecialchars(mb_substr($local, 0, $visibles));
 
     return $inicio . '***@' . htmlspecialchars($dominio);
 }
@@ -80,7 +85,8 @@ $emailMasked = enmascararEmail($usuario['email'] ?? $usuarioEmail);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Perfil del superviviente <?= $usuarioNombre ?> en Resident Evil: Trivia Survival.">
+    <meta name="description"
+        content="Perfil del superviviente <?= $usuarioNombre ?> en Resident Evil: Trivia Survival.">
     <title>Perfil — <?= $usuarioNombre ?> | RE:Trivia</title>
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/auth.css">
@@ -93,7 +99,6 @@ $emailMasked = enmascararEmail($usuario['email'] ?? $usuarioEmail);
 
     <div class="perfil-wrapper">
 
-        <!-- ── CABECERA ── -->
         <header class="perfil-header">
             <a href="../index.php" class="perfil-volver" id="btn-volver-inicio">
                 ← VOLVER AL MENÚ
@@ -104,7 +109,6 @@ $emailMasked = enmascararEmail($usuario['email'] ?? $usuarioEmail);
             </a>
         </header>
 
-        <!-- ── TARJETA DE IDENTIDAD ── -->
         <section class="perfil-id-card" aria-label="Datos de identidad">
 
             <div class="perfil-avatar" aria-hidden="true">
@@ -140,7 +144,6 @@ $emailMasked = enmascararEmail($usuario['email'] ?? $usuarioEmail);
 
         </section>
 
-        <!-- ── ESTADÍSTICAS RÁPIDAS ── -->
         <section class="perfil-stats" aria-label="Estadísticas">
             <div class="stat-bloque">
                 <span class="stat-valor"><?= count($partidas) ?></span>
@@ -156,7 +159,6 @@ $emailMasked = enmascararEmail($usuario['email'] ?? $usuarioEmail);
             </div>
         </section>
 
-        <!-- ── PARTIDAS GUARDADAS ── -->
         <section class="perfil-seccion" aria-label="Partidas guardadas">
             <h2 class="perfil-seccion-titulo">
                 <span class="icono-seccion">▶</span>
@@ -167,7 +169,8 @@ $emailMasked = enmascararEmail($usuario['email'] ?? $usuarioEmail);
                 <div class="perfil-vacio">
                     <span class="perfil-vacio-icono">⚠</span>
                     <p>No hay ninguna partida guardada.<br>
-                       <span class="perfil-vacio-sub">Inicia una partida y guarda tu progreso en una máquina de escribir.</span>
+                        <span class="perfil-vacio-sub">Inicia una partida y guarda tu progreso en una máquina de
+                            escribir.</span>
                     </p>
                     <a href="../index.php" class="perfil-btn-jugar" id="btn-ir-a-jugar">▶ JUGAR AHORA</a>
                 </div>
@@ -186,9 +189,8 @@ $emailMasked = enmascararEmail($usuario['email'] ?? $usuarioEmail);
                                     Guardado: <?= htmlspecialchars(substr($partida['fecha_guardado'], 0, 16)) ?>
                                 </div>
                             </div>
-                            <a href="../juego.php?partida=<?= (int)$partida['id_partida'] ?>"
-                               class="partida-btn-continuar"
-                               id="btn-continuar-<?= (int)$partida['id_partida'] ?>">
+                            <a href="../juego.php?partida=<?= (int) $partida['id_partida'] ?>" class="partida-btn-continuar"
+                                id="btn-continuar-<?= (int) $partida['id_partida'] ?>">
                                 CONTINUAR →
                             </a>
                         </div>
@@ -197,21 +199,20 @@ $emailMasked = enmascararEmail($usuario['email'] ?? $usuarioEmail);
             <?php endif; ?>
         </section>
 
-        <!-- ── SECCIÓN LOGROS (placeholder) ── -->
         <section class="perfil-seccion" aria-label="Logros">
             <h2 class="perfil-seccion-titulo">
                 <span class="icono-seccion">★</span>
                 LOGROS
             </h2>
             <div class="perfil-vacio">
-                <span class="perfil-vacio-icono">🔒</span>
+                <span class="perfil-vacio-icono"></span>
                 <p>Los logros se desbloquean a medida que avanzas por la historia.<br>
-                   <span class="perfil-vacio-sub">¿Sobrevivirás a Raccoon City?</span>
+                    <span class="perfil-vacio-sub">¿Sobrevivirás a Raccoon City?</span>
                 </p>
             </div>
         </section>
 
-    </div><!-- /perfil-wrapper -->
+    </div>
 
 </body>
 

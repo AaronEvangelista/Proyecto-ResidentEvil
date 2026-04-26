@@ -1,10 +1,10 @@
 <?php
-require_once __DIR__ . '/../database/conexion.php';
+require_once __DIR__ . '/conexion.php';
 
 function registrarUsuario(string $username, string $email, string $password): array
 {
     try {
-        $pdo = getDB();
+        global $pdo;
 
         $stmt = $pdo->prepare("
             SELECT id_usuario FROM usuarios

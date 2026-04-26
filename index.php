@@ -1,18 +1,11 @@
-<?php
-require_once 'database/db_init.php';
-require_once __DIR__ . '/includes/seguridad.php';
-session_start();
-$logueado       = !empty($_SESSION['logueado']);
-$nombreUsuario  = htmlspecialchars($_SESSION['usuario_nombre'] ?? '');
-$emailUsuario   = htmlspecialchars($_SESSION['usuario_email']  ?? '');
-?>
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Resident Evil: Trivia Survival – El juego de supervivencia basado en el universo Resident Evil.">
+    <meta name="description"
+        content="Resident Evil: Trivia Survival – El juego de supervivencia basado en el universo Resident Evil.">
     <title>Resident Evil: Trivia Survival</title>
     <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="styles/index.css">
@@ -40,10 +33,11 @@ $emailUsuario   = htmlspecialchars($_SESSION['usuario_email']  ?? '');
                         <span class="icono"></span>JUGAR STORY<span class="llave"></span>
                     </a>
                 </li>
-                <li><a href="./pages/enciclopedia.php"><span class="icono"></span> ENCICLOPEDIA DE RACCOON CITY</a></li>
-                <li><a href="#"><span class="icono"></span> ARCHIVOS DE DATOS</a></li>
-                <li><a href="./pages/logros.php"><span class="icono"></span> Logros</a></li>
-                <li><a href="#"><span class="icono"></span> OPCIONES</a></li>
+                        <li><a href="./pages/enciclopedia.php"><span class="icono"></span> ENCICLOPEDIA DE RACCOON
+                                CITY</a></li>
+                        <li><a href="#"><span class="icono"></span> ARCHIVOS DE DATOS</a></li>
+                        <li><a href="./pages/logros.php"><span class="icono"></span> Logros</a></li>
+                        <li><a href="#"><span class="icono"></span> OPCIONES</a></li>
             </ul>
         </nav>
 
@@ -112,15 +106,15 @@ $emailUsuario   = htmlspecialchars($_SESSION['usuario_email']  ?? '');
     <script>
         const logueado = <?= $logueado ? 'true' : 'false' ?>;
 
-        const btnJugar   = document.getElementById('btn-jugar');
-        const modal      = document.getElementById('modal-login');
-        const btnCerrar  = document.getElementById('modal-cerrar');
-        const overlay    = modal;
+        const btnJugar = document.getElementById('btn-jugar');
+        const modal = document.getElementById('modal-login');
+        const btnCerrar = document.getElementById('modal-cerrar');
+        const overlay = modal;
 
         btnJugar.addEventListener('click', function (e) {
             e.preventDefault();
             if (logueado) {
-                window.location.href = './pages/juego.php';
+                window.location.href = 'pages/juego.php';
             } else {
                 modal.classList.add('modal-visible');
             }
