@@ -175,20 +175,22 @@ multiplicador_cabeza, imagen_url) VALUES
 -- CATALOGO_SALAS COMPLETO 
 INSERT OR IGNORE INTO catalogo_salas (id_sala, nombre_visual, descripcion, capitulo, norte, sur, este, oeste, imagen_url) VALUES
 -- PLANTA BAJA
-('banos_inicio', 'Baños (Inicio)', 'Un lugar lúgubre donde comenzó la pesadilla.', 1, 'lobby_principal', NULL, NULL, NULL, '../img/sala_baños.png'),
-('lobby_principal', 'Lobby Principal', 'Hub central de la comisaría. Estatua de los medallones.', 1, 'oficina_este', 'banos_inicio', 'biblioteca', 'sala_espera', '../img/lobby_principal.png'),
+-- HAY QUE AÑADIR UN PASILLO DE PASO PARA LA PLANTA 1 Y 2
+('banos_inicio', 'Baños (Inicio)', 'Un lugar lúgubre donde comenzó la pesadilla.', 1, NULL, NULL, 'lobby_principal, NULL, '../img/sala_baños.png'),
+('lobby_principal', 'Lobby Principal', 'Hub central de la comisaría. Estatua de los medallones.', 1, 'pasillo', 'banos_inicio', 'oficina_este', 'sala_espera', '../img/lobby_principal.png'),
 ('sala_espera', 'Sala de Espera', 'Sillas volcadas y rastros de evacuación.', 1, 'oficina_oeste', NULL, 'lobby_principal', NULL, '../img/sala_de_espera.png'),
-('oficina_oeste', 'Oficina Oeste', 'Departamento de investigación. Huele a químicos.', 1, NULL, 'sala_espera', NULL, 'sala_archivos', '../img/oficina_oeste.png'),
-('oficina_este', 'Oficina Este', 'Área administrativa. Hay una puerta con cadena.', 1, 'sala_descanso', 'lobby_principal', NULL, NULL, '../img/oficina_este.png'),
-('sala_archivos', 'Sala de Archivos', 'Estanterías llenas de documentos y papel.', 1, NULL, NULL, 'oficina_oeste', NULL, '../img/sala_de_archivos.png'),
+('oficina_oeste', 'Oficina Oeste', 'Departamento de investigación. Huele a químicos.', 1, NULL, 'sala_espera', 'sala_archivos', NULL, '../img/oficina_oeste.png'),
+('oficina_este', 'Oficina Este', 'Área administrativa. Hay una puerta con cadena.', 1, 'sala_descanso', NULL, NULL, 'lobby_principal', '../img/oficina_este.png'),
+('sala_archivos', 'Sala de Archivos', 'Estanterías llenas de documentos y papel.', 1, NULL, NULL, NULL, 'oficina_oeste', '../img/sala_de_archivos.png'),
 ('sala_descanso', 'Sala de Descanso', 'Un pequeño refugio con literas y una cafetera.', 1, 'sala_interrogatorios', 'oficina_este', NULL, NULL, '../img/sala_de_descanso.png'),
 ('sala_interrogatorios', 'Sala de Interrogatorios', 'Fría y oscura. El espejo está agrietado.', 1, NULL, 'sala_descanso', NULL, NULL, '../img/sale_de_interrogatorio.png'),
 
 -- SEGUNDA PLANTA
-('biblioteca', 'Biblioteca (2F)', 'Suelos de madera que crujen y estanterías móviles.', 1, 'sala_arte', NULL, NULL, 'lobby_principal', NULL),
-('sala_arte', 'Sala de Arte', 'Exposición de estatuas y cuadros clásicos.', 1, 'oficina_capitan', 'biblioteca', NULL, NULL, NULL),
-('oficina_capitan', 'Oficina del Capitán', 'Lujosa pero desordenada. Caja fuerte grande.', 1, 'sala_electrica', 'sala_arte', NULL, NULL, NULL),
-('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, NULL, 'oficina_capitan', NULL, NULL, NULL);
+('pasillo', 'Pasillo', 'Pasillo que conecta la 1r y 2nd planta', 1, NULL, 'lobby_principal', 'sala_arte', 'oficina_capitan', NULL),
+('biblioteca', 'Biblioteca (2F)', 'Suelos de madera que crujen y estanterías móviles.', 1, 'sala_arte', NULL, NULL, NULL, NULL),
+('sala_arte', 'Sala de Arte', 'Exposición de estatuas y cuadros clásicos.', 1, NULL, 'biblioteca', NULL, 'pasillo', NULL), 
+('oficina_capitan', 'Oficina del Capitán', 'Lujosa pero desordenada. Caja fuerte grande.', 1, NULL, 'sala_electrica', 'pasillo', NULL, NULL), 
+('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, 'oficina_capitan', NULL, NULL, NULL, NULL);
 
 -- NOTAS DE HISTORIA PRINCIPAL Y PISTAS 
 INSERT OR IGNORE INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, imagen_url) VALUES
