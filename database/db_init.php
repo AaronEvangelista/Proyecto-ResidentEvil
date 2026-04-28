@@ -1,5 +1,4 @@
 <?php
-//BLOQUE 1: USUARIOS Y LOGROS GLOBALES
 $db = new SQLite3(__DIR__ . '/resident_evil.sqlite3');
 
 $db->exec('PRAGMA foreign_keys = ON;');
@@ -15,7 +14,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 CREATE TABLE IF NOT EXISTS catalogo_logros (
     id_logro INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
+    nombre TEXT UNIQUE NOT NULL,
     descripcion TEXT NOT NULL
 );
 
@@ -32,7 +31,7 @@ CREATE TABLE IF NOT EXISTS logros_desbloqueados (
 
 CREATE TABLE IF NOT EXISTS catalogo_armas (
     id_arma INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
+    nombre TEXT UNIQUE NOT NULL,
     dano_porcentaje INTEGER NOT NULL,
     ruta_exclusiva TEXT NOT NULL, 
     descripcion TEXT NOT NULL,
@@ -41,7 +40,7 @@ CREATE TABLE IF NOT EXISTS catalogo_armas (
 
 CREATE TABLE IF NOT EXISTS catalogo_items (
     id_item INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
+    nombre TEXT UNIQUE NOT NULL,
     tipo TEXT NOT NULL, 
     ruta_exclusiva TEXT NOT NULL, 
     descripcion TEXT NOT NULL,
@@ -50,7 +49,7 @@ CREATE TABLE IF NOT EXISTS catalogo_items (
 
 CREATE TABLE IF NOT EXISTS catalogo_archivos (
     id_archivo INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
+    nombre TEXT UNIQUE NOT NULL,
     ruta_exclusiva TEXT NOT NULL,
     informacion TEXT NOT NULL,
     imagen_url TEXT DEFAULT NULL 
@@ -58,7 +57,7 @@ CREATE TABLE IF NOT EXISTS catalogo_archivos (
 
 CREATE TABLE IF NOT EXISTS catalogo_enemigos (
     id_enemigo INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
+    nombre TEXT UNIQUE NOT NULL,
     tipo TEXT NOT NULL,
     vida_maxima INTEGER NOT NULL,
     dano_base INTEGER NOT NULL,
@@ -231,8 +230,8 @@ INSERT OR IGNORE INTO catalogo_logros (nombre, descripcion) VALUES
 ('Científico Caído', 'Derrota la primera fase de \"El Recopilador\" en los laboratorios.'),
 ('Descenso a la Oscuridad', 'Has completado el segundo capítulo. La verdad está cada vez más cerca.'),
 ('Superviviente Definitivo', 'Has completado el tercer capítulo y superado los horrores de la ciudad.'),
-('Fuerza Bruta', 'Consigue la Escopeta W-870 en la ruta de Leon.'),
-('Muerte a Distancia', 'Consigue el Fusil de Cerrojo en la ruta de Claire.');
+('Fuerza Bruta', 'Consigue la Escopeta W-870 en la ruta de Chico.'),
+('Muerte a Distancia', 'Consigue el Fusil de Cerrojo en la ruta de Chica.');
 ";
 
 $db->exec($inserts);

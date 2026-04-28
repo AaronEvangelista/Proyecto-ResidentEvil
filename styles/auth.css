@@ -1,0 +1,194 @@
+
+.login-wrapper {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        linear-gradient(rgba(0, 0, 0, .72), rgba(0, 0, 0, .92)),
+        url('../img/comisaria.png') center/cover no-repeat;
+}
+
+.login-card {
+    background: rgba(5, 5, 5, 0.92);
+    border: 1px solid #3a3a3a;
+    box-shadow: 0 0 40px rgba(255, 30, 0, 0.15), 0 0 0 1px #1a1a1a;
+    padding: 48px 40px 40px;
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(to bottom,
+            transparent 0px,
+            transparent 3px,
+            rgba(0, 0, 0, .18) 3px,
+            rgba(0, 0, 0, .18) 4px);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.login-card .logo-mini {
+    display: block;
+    margin: 0 auto 6px;
+    width: 90px;
+    filter: drop-shadow(0 0 6px red);
+    animation: latidos 2.5s infinite;
+}
+
+.login-card h2 {
+    text-align: center;
+    color: #ffd700;
+    font-size: 18px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin: 0 0 4px;
+}
+
+.login-card .subtitulo-form {
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.login-card input[type="text"],
+.login-card input[type="password"],
+.login-card input[type="email"] {
+    background: #0d0d0d;
+    border: 1px solid #3a3a3a;
+    padding: 13px 14px;
+    color: #e2e2b6;
+    font-family: 'Times New Roman', serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.login-card input:focus {
+    border-color: #cc2200;
+    box-shadow: 0 0 8px rgba(204, 34, 0, .45);
+}
+
+.login-card input.campo-invalido {
+    border-color: #cc2200;
+}
+
+.login-card .btn-submit {
+    background: #0d0d0d;
+    color: #e2e2b6;
+    border: 1px solid #cc2200;
+    padding: 13px;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 13px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background .2s, border-color .2s, color .2s;
+}
+
+.login-card .btn-submit:hover {
+    background: #7a0000;
+    border-color: #ff2200;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(255, 34, 0, .3);
+}
+
+.login-card .btn-secundario {
+    background: transparent;
+    color: #888;
+    border: 1px solid #2a2a2a;
+    padding: 11px;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all .2s;
+}
+
+.login-card .btn-secundario:hover {
+    color: #e2e2b6;
+    border-color: #666;
+}
+
+.login-card .separador {
+    border: none;
+    border-top: 1px solid #222;
+    margin: 4px 0;
+}
+
+.alerta {
+    padding: 12px 14px;
+    font-size: 12px;
+    border-left: 3px solid;
+    background: rgba(0, 0, 0, .5);
+}
+
+.alerta-error {
+    border-color: #cc2200;
+    color: #ff6b5b;
+}
+
+.alerta-exito {
+    border-color: #2a8a2a;
+    color: #7dff7d;
+    text-align: center;
+    font-size: 13px;
+    letter-spacing: .5px;
+}
+
+.alerta ul {
+    margin: 0;
+    padding: 0 0 0 16px;
+}
+
+.alerta ul li {
+    margin-bottom: 4px;
+}
+
+.campo-grupo {
+    position: relative;
+}
+
+.campo-grupo label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.strength-bar {
+    height: 3px;
+    background: #1a1a1a;
+    margin-top: 5px;
+    position: relative;
+}
+
+.strength-fill {
+    height: 100%;
+    width: 0%;
+    transition: width .3s, background .3s;
+}
+
+.strength-label {
+    font-size: 10px;
+    color: #555;
+    margin-top: 3px;
+    letter-spacing: 1px;
+}
