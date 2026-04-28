@@ -176,7 +176,7 @@ multiplicador_cabeza, imagen_url) VALUES
 INSERT OR IGNORE INTO catalogo_salas (id_sala, nombre_visual, descripcion, capitulo, norte, sur, este, oeste, imagen_url) VALUES
 -- PLANTA BAJA
 -- HAY QUE AÑADIR UN PASILLO DE PASO PARA LA PLANTA 1 Y 2
-('banos_inicio', 'Baños (Inicio)', 'Un lugar lúgubre donde comenzó la pesadilla.', 1, NULL, NULL, 'lobby_principal, NULL, '../img/sala_baños.png'),
+('banos_inicio', 'Baños (Inicio)', 'Un lugar lúgubre donde comenzó la pesadilla.', 1, NULL, NULL, 'lobby_principal', NULL, '../img/sala_baños.png'),
 ('lobby_principal', 'Lobby Principal', 'Hub central de la comisaría. Estatua de los medallones.', 1, 'pasillo', 'banos_inicio', 'oficina_este', 'sala_espera', '../img/lobby_principal.png'),
 ('sala_espera', 'Sala de Espera', 'Sillas volcadas y rastros de evacuación.', 1, 'oficina_oeste', NULL, 'lobby_principal', NULL, '../img/sala_de_espera.png'),
 ('oficina_oeste', 'Oficina Oeste', 'Departamento de investigación. Huele a químicos.', 1, NULL, 'sala_espera', 'sala_archivos', NULL, '../img/oficina_oeste.png'),
