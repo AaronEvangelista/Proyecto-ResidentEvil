@@ -179,7 +179,7 @@ INSERT OR IGNORE INTO catalogo_salas (id_sala, nombre_visual, descripcion, capit
 ('banos_inicio', 'Baños (Inicio)', 'Un lugar lúgubre donde comenzó la pesadilla.', 1, NULL, NULL, 'lobby_principal', NULL, '../img/sala_baños.png'),
 ('lobby_principal', 'Lobby Principal', 'Hub central de la comisaría. Estatua de los medallones.', 1, 'pasillo', 'banos_inicio', 'oficina_este', 'sala_espera', '../img/lobby_principal.png'),
 ('sala_espera', 'Sala de Espera', 'Sillas volcadas y rastros de evacuación.', 1, 'oficina_oeste', NULL, 'lobby_principal', NULL, '../img/sala_de_espera.png'),
-('oficina_oeste', 'Oficina Oeste', 'Departamento de investigación. Huele a químicos.', 1, NULL, 'sala_espera', 'sala_archivos', NULL, '../img/oficina_oeste.png'),
+('oficina_oeste', 'Oficina Oeste', 'Departamento de investigación. Huele a químicos.', 1, NULL, 'sala_espera', 'sala_archivos', NULL, '../img/oficina-oeste.png'),
 ('oficina_este', 'Oficina Este', 'Área administrativa. Hay una puerta con cadena.', 1, 'sala_descanso', NULL, NULL, 'lobby_principal', '../img/oficina_este.png'),
 ('sala_archivos', 'Sala de Archivos', 'Estanterías llenas de documentos y papel.', 1, NULL, NULL, NULL, 'oficina_oeste', '../img/sala_de_archivos.png'),
 ('sala_descanso', 'Sala de Descanso', 'Un pequeño refugio con literas y una cafetera.', 1, 'sala_interrogatorios', 'oficina_este', NULL, NULL, '../img/sala_de_descanso.png'),
