@@ -190,7 +190,7 @@ INSERT OR IGNORE INTO catalogo_salas (id_sala, nombre_visual, descripcion, capit
 ('biblioteca', 'Biblioteca (2F)', 'Suelos de madera que crujen y estanterías móviles.', 1, 'sala_arte', NULL, NULL, NULL, '../img/biblioteca.png'),
 ('sala_arte', 'Sala de Arte', 'Exposición de estatuas y cuadros clásicos.', 1, NULL, 'biblioteca', NULL, 'pasillo', '../img/sala_arte.png'), 
 ('oficina_capitan', 'Oficina del Capitán', 'Lujosa pero desordenada. Caja fuerte grande.', 1, NULL, 'sala_electrica', 'pasillo', NULL, '../img/oficina_capitan.png'), 
-('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, 'oficina_capitan', NULL, NULL, NULL, '../img/sala_electrica');
+('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, 'oficina_capitan', NULL, NULL, NULL, '../img/sala_electrica.png');
 
 -- NOTAS DE HISTORIA PRINCIPAL Y PISTAS 
 INSERT OR IGNORE INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, imagen_url) VALUES
