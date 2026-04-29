@@ -122,6 +122,21 @@ CREATE TABLE IF NOT EXISTS estado_enemigos (
     FOREIGN KEY(id_partida) REFERENCES partida(id_partida),
     FOREIGN KEY(id_enemigo) REFERENCES catalogo_enemigos(id_enemigo)
 );
+
+CREATE TABLE IF NOT EXISTS eventos_interactivos(
+    id_evento INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_sala TEXT NOT NULL,
+    nombre_objeto TEXT NOT NULL,
+    xmin FLOAT NOT NULL,
+    xmax FLOAT NOT NULL,
+    ymin FLOAT NOT NULL,
+    ymax FLOAT NOT NULL,
+    tipo_accion TEXT NOT NULL,
+    contenido_accion TEXT NOT NULL,
+    requiere_item TEXT NOT NULL,
+    script TEXT NOT NULL,
+    FOREIGN KEY(id_sala) REFERENCES catalogo_salas(id_sala) on delete cascade
+)
 ";
 
 $db->exec($esquema);
@@ -191,6 +206,11 @@ INSERT OR IGNORE INTO catalogo_salas (id_sala, nombre_visual, descripcion, capit
 ('sala_arte', 'Sala de Arte', 'Exposición de estatuas y cuadros clásicos.', 1, NULL, 'biblioteca', NULL, 'pasillo', '../img/sala_arte.png'), 
 ('oficina_capitan', 'Oficina del Capitán', 'Lujosa pero desordenada. Caja fuerte grande.', 1, NULL, 'sala_electrica', 'pasillo', NULL, '../img/oficina_capitan.png'), 
 ('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, 'oficina_capitan', NULL, NULL, NULL, '../img/sala_electrica.png');
+
+INSERT OR IGNORE INTO eventos_interactivos 
+(id_sala, nombre_objeto, xmin, xmax, ymin, ymax, tipo_accion, contenido_accion, requiere_item, script) VALUES 
+('banos_inicio', 'informe inicial', 17.0, 29.0, 65.0, 85.0, 'leer_archivo', '1', '', 'abrirMenuArchivo');
+
 
 -- NOTAS DE HISTORIA PRINCIPAL Y PISTAS 
 INSERT OR IGNORE INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, imagen_url) VALUES
