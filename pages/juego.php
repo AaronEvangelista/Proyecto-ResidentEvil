@@ -15,6 +15,15 @@ $sala = $query_sala->fetch(PDO::FETCH_ASSOC);
 $query_enemigos = $pdo->prepare("SELECT * FROM estado_enemigos WHERE sala_ubicacion = ? AND estado = 'vivo'");
 $query_enemigos->execute([$id_sala_actual]);
 $enemigo_presente = $query_enemigos->fetch();
+
+// 5. Consultar eventos interactivos de la sala
+$query_eventos = $pdo->prepare("SELECT * FROM eventos_interactivos WHERE id_sala = ?");
+$query_eventos->execute([$id_sala_actual]);
+$eventos = $query_eventos->fetchAll(PDO::FETCH_ASSOC);
+
+// 6. Consultar todos los archivos para el visor
+$query_archivos = $pdo->query("SELECT * FROM catalogo_archivos");
+$archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -25,168 +34,12 @@ $enemigo_presente = $query_enemigos->fetch();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resident Evil - <?php echo $sala['nombre_visual']; ?></title>
 
-    <style>
-        /* RESET DE NAVEGADOR */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body,
-        html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            /* Evita scrollbars */
-            background-color: #000;
-            font-family: 'Courier New', Courier, monospace;
-        }
-
-        /* CONTENEDOR PRINCIPAL: PANTALLA COMPLETA */
-        #game-container {
-            width: 100vw;
-            height: 100vh;
-            /* La imagen se adapta dinámicamente aquí */
-            background-image: url('<?php echo $sala['imagen_url']; ?>');
-            background-size: cover;
-            /* Ocupa toda la pantalla */
-            background-position: center;
-            /* Centrada */
-            background-repeat: no-repeat;
-
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: relative;
-            transition: background-image 0.5s ease-in-out;
-            /* Suaviza el cambio de sala */
-        }
-
-        /* CAPA SUPERIOR: NOMBRE DE LA SALA */
-        .hud-top {
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
-            color: #ccc;
-            padding: 20px;
-            text-align: right;
-            font-size: 1.2rem;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
-
-        /* CONTROLES DE NAVEGACIÓN: FLECHAS */
-        .navigation-controls {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            height: 60%;
-            pointer-events: none;
-            /* Las cajas no bloquean clics, los enlaces sí */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .nav-btn {
-            pointer-events: auto;
-            text-decoration: none;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 4rem;
-            position: absolute;
-            transition: all 0.3s;
-            text-shadow: 0px 0px 10px rgba(0, 0, 0, 0.9);
-        }
-
-        .nav-btn:hover {
-            color: #ff0000;
-            transform: scale(1.2);
-            text-shadow: 0px 0px 20px #ff0000;
-        }
-
-        /* Posicionamiento de flechas */
-        .north {
-            top: 0;
-        }
-
-        .south {
-            bottom: 0;
-        }
-
-        .east {
-            right: 0;
-        }
-
-        .west {
-            left: 0;
-        }
-
-        /* CUADRO DE TEXTO INFERIOR */
-        .message-box {
-            background: rgba(0, 0, 0, 0.75);
-            border-top: 3px solid #333;
-            color: #eee;
-            padding: 25px 50px;
-            min-height: 120px;
-            z-index: 10;
-        }
-
-        .message-box p {
-            font-size: 1.1rem;
-            line-height: 1.5;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        /* MENÚ DE PAUSA */
-        #pause-menu {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid #555;
-            padding: 40px;
-            text-align: center;
-            z-index: 100;
-            display: flex;
-            /* Se cambia a none por JS pero usará flex */
-            flex-direction: column;
-            gap: 20px;
-            min-width: 300px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 1);
-        }
-
-        #pause-menu h2 {
-            color: #ff0000;
-            font-size: 2rem;
-            margin-bottom: 20px;
-            letter-spacing: 5px;
-        }
-
-        #pause-menu button {
-            background: #222;
-            color: #fff;
-            border: 1px solid #555;
-            padding: 15px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        #pause-menu button:hover {
-            background: #ff0000;
-            color: #fff;
-            border-color: #ff0000;
-        }
-    </style>
+    <link rel="stylesheet" href="../styles/juego.css">
 </head>
 
 <body>
     <!-- MENÚ DE PAUSA -->
-    <div id="game-container">
+    <div id="game-container" style="background-image: url('<?php echo $sala['imagen_url']; ?>');">
 
         <!-- MENÚ DE PAUSA -->
         <div id="pause-menu" style="display: none;">
@@ -219,12 +72,38 @@ $enemigo_presente = $query_enemigos->fetch();
             <p><?php echo $sala['descripcion']; ?></p>
         </div>
 
+        <!-- RENDERIZAR EVENTOS DESDE LA DB -->
+        <?php foreach ($eventos as $ev): ?>
+            <div class="hotspot" style="left: <?php echo $ev['xmin']; ?>%; 
+                        top: <?php echo $ev['ymin']; ?>%; 
+                        width: <?php echo ($ev['xmax'] - $ev['xmin']); ?>%; 
+                        height: <?php echo ($ev['ymax'] - $ev['ymin']); ?>%;"
+                title="<?php echo $ev['nombre_objeto']; ?>" onclick='ejecutarEvento(<?php echo json_encode($ev); ?>)'>
+            </div>
+        <?php endforeach; ?>
+
+        <!-- VISOR DE NOTAS (MODAL) -->
+        <div id="note-viewer" style="display: none;">
+            <div class="note-container">
+                <img src="../img/nota.png" alt="Papel de nota" class="note-paper" id="note-img">
+                <div class="note-content">
+                    <h3 id="note-title">Título de la Nota</h3>
+                    <div id="note-body">Cuerpo de la nota...</div>
+                </div>
+                <button id="btn-cerrar-nota">CERRAR (ESC)</button>
+            </div>
+        </div>
+
     </div>
 
     <script src="../js/movimientos.js"></script>
+    <script src="../js/interacciones.js"></script>
     <script src="../js/eventos_este.js"></script>
     <script src="../js/eventos_oeste.js"></script>
     <script>
+        // Pasar archivos a JS
+        const catalogoArchivos = <?php echo json_encode($archivos); ?>;
+
         // Lógica de tensión para tu API de Python
         const tension = "<?php echo $enemigo_presente ? 'alta' : 'baja'; ?>";
         console.log("Sistema de sonido: Nivel " + tension);
