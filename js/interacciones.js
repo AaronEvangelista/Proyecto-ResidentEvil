@@ -1,5 +1,5 @@
 
-function ejecutarEvento(evento) {
+function ejecutarEvento(evento, event) {
     console.log("Interactuando con:", evento);
 
     mostrarMensajeEnPantalla(`Has examinado: ${evento.nombre_objeto}`);
@@ -12,8 +12,17 @@ function ejecutarEvento(evento) {
                 break;
 
             case 'recoger_item':
-                console.log("Acción: Recoger item ID", evento.contenido_accion);
-                mostrarMensajeEnPantalla(`[ITEM] Has obtenido: ${evento.nombre_objeto}`);
+            case 'recoger_arma':
+                const tipo = (evento.tipo_accion === 'recoger_arma') ? 'arma' : 'item';
+                console.log(`Acción: Recoger ${tipo} ID`, evento.contenido_accion);
+                mostrarMensajeEnPantalla(`[OBJETO] Has obtenido: ${evento.nombre_objeto}`);
+                
+                // 1. Registrar recogida y añadir al inventario
+                registrarRecogida(evento.id_evento, tipo, evento.contenido_accion);
+
+                // 2. Ocultar el elemento visualmente
+                const target = event.currentTarget;
+                if (target) target.style.display = 'none';
                 break;
 
             case 'puzzle':
@@ -72,6 +81,29 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCerrar.addEventListener('click', cerrarNota);
     }
 });
+
+function registrarRecogida(idEvento, tipoObjeto, idObjeto) {
+    fetch('../api/recoger_objeto.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            id_evento: idEvento,
+            tipo_objeto: tipoObjeto,
+            id_objeto: idObjeto
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log("Evento y objeto registrados:", idEvento);
+        } else {
+            console.error("Error al registrar:", data.error);
+        }
+    })
+    .catch(error => console.error("Error en la petición:", error));
+}
 
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {

@@ -17,9 +17,64 @@ $query_enemigos->execute([$id_sala_actual]);
 $enemigo_presente = $query_enemigos->fetch();
 
 // 5. Consultar eventos interactivos de la sala
+$id_partida = $_SESSION['id_partida'] ?? 1;
+
+// Filtrar eventos ya completados (recogidos)
+$query_completados = $pdo->prepare("SELECT id_evento FROM eventos_completados WHERE id_partida = ?");
+$query_completados->execute([$id_partida]);
+$completados = $query_completados->fetchAll(PDO::FETCH_COLUMN);
+
 $query_eventos = $pdo->prepare("SELECT * FROM eventos_interactivos WHERE id_sala = ?");
 $query_eventos->execute([$id_sala_actual]);
 $eventos = $query_eventos->fetchAll(PDO::FETCH_ASSOC);
+
+// Pool de Loot Aleatorio (Buscamos por nombre para evitar errores de ID)
+$loot_pool_names = ['Hierba Verde', 'Cuchillo Defensivo', 'Pólvora Gris', 'Cinta de Guardado'];
+$placeholders = implode(',', array_fill(0, count($loot_pool_names), '?'));
+$query_loot = $pdo->prepare("SELECT * FROM catalogo_items WHERE nombre IN ($placeholders)");
+$query_loot->execute($loot_pool_names);
+
+$items_pool = [];
+while ($row = $query_loot->fetch(PDO::FETCH_ASSOC)) {
+    $items_pool[$row['id_item']] = $row;
+}
+
+foreach ($eventos as $key => &$ev) {
+    if (in_array($ev['id_evento'], $completados)) {
+        unset($eventos[$key]);
+        continue;
+    }
+
+    if ($ev['contenido_accion'] === 'random') {
+        // Si no hay items en el pool, no mostramos nada para evitar el error
+        if (empty($items_pool)) {
+            unset($eventos[$key]);
+            continue;
+        }
+
+        if (rand(1, 100) > 85) { // 85% de probabilidad de que aparezca
+            unset($eventos[$key]);
+            continue;
+        }
+
+        $item_data = $items_pool[array_rand($items_pool)];
+        $ev['nombre_objeto'] = $item_data['nombre'];
+        $ev['contenido_accion'] = $item_data['id_item'];
+        $ev['imagen_item'] = $item_data['imagen_url'];
+    } elseif ($ev['tipo_accion'] === 'recoger_item' && is_numeric($ev['contenido_accion'])) {
+        // Cargar imagen para items fijos
+        $id_item = $ev['contenido_accion'];
+        $stmt_item = $pdo->prepare("SELECT imagen_url FROM catalogo_items WHERE id_item = ?");
+        $stmt_item->execute([$id_item]);
+        $ev['imagen_item'] = $stmt_item->fetchColumn();
+    } elseif ($ev['tipo_accion'] === 'recoger_arma' && is_numeric($ev['contenido_accion'])) {
+        // Cargar imagen para armas fijas
+        $id_arma = $ev['contenido_accion'];
+        $stmt_arma = $pdo->prepare("SELECT imagen_url FROM catalogo_armas WHERE id_arma = ?");
+        $stmt_arma->execute([$id_arma]);
+        $ev['imagen_item'] = $stmt_arma->fetchColumn();
+    }
+}
 
 // 6. Consultar todos los archivos para el visor
 $query_archivos = $pdo->query("SELECT * FROM catalogo_archivos");
@@ -35,6 +90,7 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
     <title>Resident Evil - <?php echo $sala['nombre_visual']; ?></title>
 
     <link rel="stylesheet" href="../styles/juego.css">
+    <link rel="stylesheet" href="../styles/inventario.css">
 </head>
 
 <body>
@@ -51,6 +107,7 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
 
         <div class="hud-top">
             <span class="location-name"><?php echo $sala['nombre_visual']; ?></span>
+            <button id="btn-inventario" class="hud-btn">INVENTARIO (TAB)</button>
         </div>
 
         <div class="navigation-controls">
@@ -74,11 +131,16 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
 
         <!-- RENDERIZAR EVENTOS DESDE LA DB -->
         <?php foreach ($eventos as $ev): ?>
-            <div class="hotspot" style="left: <?php echo $ev['xmin']; ?>%; 
+            <div class="hotspot <?php echo !empty($ev['imagen_item']) ? 'has-item' : ''; ?>" style="left: <?php echo $ev['xmin']; ?>%; 
                         top: <?php echo $ev['ymin']; ?>%; 
                         width: <?php echo ($ev['xmax'] - $ev['xmin']); ?>%; 
                         height: <?php echo ($ev['ymax'] - $ev['ymin']); ?>%;"
-                title="<?php echo $ev['nombre_objeto']; ?>" onclick='ejecutarEvento(<?php echo json_encode($ev); ?>)'>
+                title="<?php echo $ev['nombre_objeto']; ?>"
+                onclick='ejecutarEvento(<?php echo json_encode($ev); ?>, event)'>
+
+                <?php if (!empty($ev['imagen_item'])): ?>
+                    <img src="<?php echo $ev['imagen_item']; ?>" alt="Objeto" class="item-visual">
+                <?php endif; ?>
             </div>
         <?php endforeach; ?>
 
@@ -94,10 +156,26 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
 
+        <!-- INVENTARIO (MODAL) -->
+        <div id="inventory-screen" style="display: none;">
+            <div class="inventory-container">
+                <h2>INVENTARIO</h2>
+                <div class="inventory-grid" id="inventory-grid">
+                    <!-- Los slots se generarán dinámicamente -->
+                </div>
+                <div class="item-details" id="item-details">
+                    <h3 id="detail-name">Selecciona un objeto</h3>
+                    <p id="detail-description">Pasa el ratón sobre un objeto para ver sus detalles.</p>
+                </div>
+                <button id="btn-cerrar-inventario">CERRAR (ESC)</button>
+            </div>
+        </div>
+
     </div>
 
     <script src="../js/movimientos.js"></script>
     <script src="../js/interacciones.js"></script>
+    <script src="../js/inventario.js"></script>
     <script src="../js/eventos_este.js"></script>
     <script src="../js/eventos_oeste.js"></script>
     <script>

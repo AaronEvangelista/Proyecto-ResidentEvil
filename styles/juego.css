@@ -109,7 +109,6 @@ html {
     margin: 0 auto;
 }
 
-/* MENÚ DE PAUSA */
 #pause-menu {
     position: absolute;
     top: 50%;
@@ -121,7 +120,6 @@ html {
     text-align: center;
     z-index: 100;
     display: flex;
-    /* Se cambia a none por JS pero usará flex */
     flex-direction: column;
     gap: 20px;
     min-width: 300px;
@@ -136,9 +134,9 @@ html {
 }
 
 #pause-menu button {
-    background: #ffffff;
-    color: #fff;
-    border: 1px solid #ffffff;
+    background: #979494;
+    color: #da0e0e;
+    border: 1px solid #353232;
     padding: 15px;
     font-family: 'Courier New', Courier, monospace;
     font-size: 1.2rem;
@@ -152,7 +150,6 @@ html {
     border-color: #ff0000;
 }
 
-/* Estilo para las zonas interactivas (Hotspots) */
 .hotspot {
     position: absolute;
     cursor: pointer;
@@ -162,10 +159,33 @@ html {
 }
 
 .hotspot:hover {
-    /* Sin efectos visuales por petición del usuario */
+    background: rgba(255, 255, 255, 0.1);
 }
 
-/* VISOR DE NOTAS (MODAL) */
+.hotspot.has-item {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.item-visual {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 8px rgba(0, 255, 0, 0.5)); 
+    animation: pulsarItem 2.5s infinite ease-in-out;
+    pointer-events: none;
+}
+
+@keyframes pulsarItem {
+    0%, 100% { 
+        transform: scale(0.85); 
+        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
+    }
+    50% { 
+        transform: scale(1); 
+        filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
+    }
+}
+
 #note-viewer {
     position: absolute;
     top: 0;
