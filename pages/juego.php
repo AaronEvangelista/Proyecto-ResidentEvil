@@ -185,8 +185,7 @@ $enemigo_presente = $query_enemigos->fetch();
 </head>
 
 <body>
-    <img id="mi-escenario" src="<?php echo $sala['imagen_url']; ?>" alt="<?php echo $sala['nombre_visual']; ?>"
-        style="width: 100%; height: 100%; object-fit: cover;">
+    <!-- MENÚ DE PAUSA -->
     <div id="game-container">
 
         <!-- MENÚ DE PAUSA -->
@@ -233,5 +232,3 @@ $enemigo_presente = $query_enemigos->fetch();
         // Aquí podrías añadir el fetch a tu sound_service.py
     </script>
 </body>
-
-</html>

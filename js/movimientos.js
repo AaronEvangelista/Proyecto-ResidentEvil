@@ -51,24 +51,24 @@ const gameActions = {
   salirJuegoOPausa: function () {
     mostrarMensajeEnPantalla("Juego en Pausa.");
     estadoActual = ESTADOS_JUEGO.PAUSA;
-    
+
     // Mostrar el menú de pausa centrado
     const pauseMenu = document.getElementById('pause-menu');
     if (pauseMenu) pauseMenu.style.display = 'flex';
   },
-  reanudarJuego: function() {
+  reanudarJuego: function () {
     mostrarMensajeEnPantalla("Juego reanudado.");
     estadoActual = ESTADOS_JUEGO.INTERACTIVO;
-    
+
     // Ocultar el menú de pausa
     const pauseMenu = document.getElementById('pause-menu');
     if (pauseMenu) pauseMenu.style.display = 'none';
   },
-  cargarPartida: function() {
+  cargarPartida: function () {
     mostrarMensajeEnPantalla("Cargando partida... (Funcionalidad pendiente)");
     // Aquí iría la redirección a cargar_partida.php o llamada AJAX
   },
-  salirAlMenuPrincipal: function() {
+  salirAlMenuPrincipal: function () {
     mostrarMensajeEnPantalla("Saliendo del juego...");
     // Redirigir al índice principal
     window.location.href = '../index.php';
@@ -106,13 +106,13 @@ const gameActions = {
 
 // Listeners para los botones del menú de pausa
 document.addEventListener("DOMContentLoaded", () => {
-    const btnContinuar = document.getElementById('btn-continuar');
-    const btnCargar = document.getElementById('btn-cargar');
-    const btnSalir = document.getElementById('btn-salir');
+  const btnContinuar = document.getElementById('btn-continuar');
+  const btnCargar = document.getElementById('btn-cargar');
+  const btnSalir = document.getElementById('btn-salir');
 
-    if (btnContinuar) btnContinuar.addEventListener('click', gameActions.reanudarJuego);
-    if (btnCargar) btnCargar.addEventListener('click', gameActions.cargarPartida);
-    if (btnSalir) btnSalir.addEventListener('click', gameActions.salirAlMenuPrincipal);
+  if (btnContinuar) btnContinuar.addEventListener('click', gameActions.reanudarJuego);
+  if (btnCargar) btnCargar.addEventListener('click', gameActions.cargarPartida);
+  if (btnSalir) btnSalir.addEventListener('click', gameActions.salirAlMenuPrincipal);
 });
 
 window.addEventListener("keydown", (e) => {
@@ -158,10 +158,10 @@ window.addEventListener("keydown", (e) => {
         gameActions.huir();
       }
       break;
-      
+
     case ESTADOS_JUEGO.PAUSA:
       if (key === "escape") {
-          gameActions.reanudarJuego();
+        gameActions.reanudarJuego();
       }
       break;
   }
