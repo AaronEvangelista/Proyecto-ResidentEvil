@@ -185,7 +185,8 @@ $enemigo_presente = $query_enemigos->fetch();
 </head>
 
 <body>
-
+    <img id="mi-escenario" src="<?php echo $sala['imagen_url']; ?>" alt="<?php echo $sala['nombre_visual']; ?>"
+        style="width: 100%; height: 100%; object-fit: cover;">
     <div id="game-container">
 
         <!-- MENÚ DE PAUSA -->
@@ -222,6 +223,8 @@ $enemigo_presente = $query_enemigos->fetch();
     </div>
 
     <script src="../js/movimientos.js"></script>
+    <script src="../js/eventos_este.js"></script>
+    <script src="../js/eventos_oeste.js"></script>
     <script>
         // Lógica de tensión para tu API de Python
         const tension = "<?php echo $enemigo_presente ? 'alta' : 'baja'; ?>";

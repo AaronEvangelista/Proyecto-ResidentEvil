@@ -122,6 +122,21 @@ CREATE TABLE IF NOT EXISTS estado_enemigos (
     FOREIGN KEY(id_partida) REFERENCES partida(id_partida),
     FOREIGN KEY(id_enemigo) REFERENCES catalogo_enemigos(id_enemigo)
 );
+
+CREATE TABLE IF NOT EXISTS eventos_interactivos(
+    id_evento INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_sala TEXT NOT NULL,
+    nombre_objeto TEXT NOT NULL,
+    xmin FLOAT NOT NULL,
+    xmax FLOAT NOT NULL,
+    ymin FLOAT NOT NULL,
+    ymax FLOAT NOT NULL,
+    tipo_accion TEXT NOT NULL,
+    contenido_accion TEXT NOT NULL,
+    requiere_item TEXT NOT NULL,
+    script TEXT NOT NULL,
+    FOREIGN KEY(id_sala) REFERENCES catalogo_salas(id_sala) on delete cascade
+)
 ";
 
 $db->exec($esquema);
@@ -192,6 +207,81 @@ INSERT OR IGNORE INTO catalogo_salas (id_sala, nombre_visual, descripcion, capit
 ('oficina_capitan', 'Oficina del Capitán', 'Lujosa pero desordenada. Caja fuerte grande.', 1, NULL, 'sala_electrica', 'pasillo', NULL, '../img/oficina_capitan.png'), 
 ('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, 'oficina_capitan', NULL, NULL, NULL, '../img/sala_electrica.png');
 
+-- INSERTAR EVENTOS
+INSERT OR IGNORE INTO eventos_interactivos 
+(id_sala, nombre_objeto, xmin, xmax, ymin, ymax, tipo_accion, contenido_accion, requiere_item, script) VALUES 
+
+-- BAÑOS
+('banos_inicio', 'NOTA 1 INICIO DEL BROTE', 17.0, 29.0, 65.0, 85.0, 'leer_archivo', '1', '', 'abrirMenuArchivo'),
+('banos_inicio', 'NOTA OCULTA 6', 32.0, 37.0, 66.0, 69.0, 'leer_archivo', '15', '', 'abrirMenuArchivo'),
+
+-- LOBBY PRINCIPAL
+('lobby_principal', 'ESTATUA', 39.0, 62.0, 26.0, 74.0, 'puzzle', 'medallones', '', 'abrirMenuPuzzle'),
+('lobby_principal', 'PISTOLA', 90.0, 98.0, 54.0, 60.0, 'recoger_arma', '1', '', 'añadirInventario'),
+('lobby_principal', 'ITEM RANDOM', 14.0, 16.0, 62.0, 63.0, 'recoger_item', 'random', '', 'añadirInventario'),
+
+-- SALA DE ESPERA
+('sala_espera', 'NOTA 3', 85.0, 94.0, 72.0, 77.0, 'leer_archivo', '3', '', 'abrirMenuArchivo'),
+('sala_espera', 'PISTA CUADERNO LEON', 11.0, 20.0, 62.0, 68.0, 'leer_archivo', '8', '', 'abrirMenuArchivo'),
+('sala_espera', 'ITEM RANDOM', 55.0, 59.0, 61.0, 62.0, 'recoger_item', 'random', '', 'añadirInventario'),
+
+-- OFICINA OESTE
+('oficina_oeste', 'NOTA 2', 37.0, 40.0, 35.0, 42.0, 'leer_archivo', '2', '', 'abrirMenuArchivo'),
+('oficina_oeste', 'NOTA OCULTA 1', 96.0, 99.0, 71.0, 72.0, 'leer_archivo', '10', '', 'abrirMenuArchivo'),
+('oficina_oeste', 'CAJA FUERTE PORTATIL', 53.0, 59.0, 82.0, 86.0, 'recoger_item', '10', '', 'añadirInventario'),
+('oficina_oeste', 'CAJÓN CON LLAVE', 12.0, 16.0, 77.0, 81.0, 'abrir_contenedor', 'item', 'Llave de Pica', 'intentarAbrir'),
+('oficina_oeste', 'PUNTO DE GUARDADO', 13.0, 21.0, 67.0, 72.0, 'guardar', 'maquina_escribir', 'Cinta de Guardado', 'abrirMenuGuardado'),
+
+-- ARCHIVOS
+('sala_archivos', 'NOTA 6', 56.0, 60.0, 68.0, 71.0, 'leer_archivo', '6', '', 'abrirMenuArchivo'),
+('sala_archivos', 'MEDALLON UNICORNIO', 71.0, 79.0, 73.0, 82.0, 'recoger_item', '8', '', 'añadirInventario'),
+('sala_archivos', 'ITEM RANDOM', 68.0, 72.0, 38.0, 42.0, 'recoger_item', 'random', '', 'añadirInventario'),
+('sala_archivos', 'ITEM RANDOM', 12.0, 16.0, 47.0, 52.0, 'recoger_item', 'random', '', 'añadirInventario'),
+
+-- OFICINA ESTE
+('oficina_este', 'NOTA 4', 21.0, 25.0, 64.0, 66.0, 'leer_archivo', '4', '', 'abrirMenuArchivo'),
+('oficina_este', 'LLAVE PICA', 86.0, 91.0, 79.0, 83.0, 'recoger_item', '12', '', 'añadirInventario'),
+('oficina_este', 'PUERTA PARA CORTAR', 59.0, 63.0, 44.0, 50.0, 'desbloquear', 'puerta', 'Cortacadenas', 'usarHerramienta'),
+('oficina_este', 'ITEM RANDOM', 74.0, 78.0, 52.0, 57.0, 'recoger_item', 'random', '', 'añadirInventario'),
+
+-- OFICINA CAPITÁN
+('oficina_capitan', 'NOTA 7', 57.0, 59.0, 80.0, 81.0, 'leer_archivo', '7', '', 'abrirMenuArchivo'),
+('oficina_capitan', 'CAJA FUERTE CORTACADENAS', 48.0, 54.0, 56.0, 70.0, 'recoger_item', '13', '', 'añadirInventario'),
+('oficina_capitan', 'BOTELLA RON', 26.0, 30.0, 84.0, 94.0, 'recoger_item', 'consumible', '', 'añadirInventario'),
+('oficina_capitan', 'NOTA OCULTA 4', 85.0, 92.0, 87.0, 98.0, 'leer_archivo', '13', '', 'abrirMenuArchivo'),
+('oficina_capitan', 'PUERTA IZQ', 4.0, 12.0, 36.0, 94.0, 'transicion', 'sala_electrica', '', 'cambiarSala'),
+('oficina_capitan', 'ITEM RANDOM', 61.0, 64.0, 59.0, 63.0, 'recoger_item', 'random', '', 'añadirInventario'),
+
+-- SALA ELÉCTRICA
+('sala_electrica', 'PUZZLE FUSIBLES', 16.0, 22.0, 24.0, 42.0, 'puzzle', 'electricidad', '', 'abrirMenuPuzzle'),
+('sala_electrica', 'NOTA OCULTA 2', 86.0, 94.0, 64.0, 74.0, 'leer_archivo', '11', '', 'abrirMenuArchivo'),
+('sala_electrica', 'ITEM RANDOM', 77.0, 80.0, 19.0, 25.0, 'recoger_item', 'random', '', 'añadirInventario'),
+
+-- PASILLO (2F)
+('pasillo', 'ESTATUA LEON', 32.0, 50.0, 25.0, 74.0, 'recoger_item', '7', '', 'añadirInventario'),
+('pasillo', 'ITEM RANDOM', 11.0, 15.0, 25.0, 30.0, 'recoger_item', 'random', '', 'añadirInventario'),
+('pasillo', 'ITEM RANDOM', 75.0, 78.0, 47.0, 51.0, 'recoger_item', 'random', '', 'añadirInventario'),
+
+-- SALA ARTE
+('sala_arte', 'ESTATUA DONCELLA', 44.0, 55.0, 26.0, 80.0, 'recoger_item', '9', '', 'añadirInventario'),
+('sala_arte', 'NOTA OCULTA 5', 64.0, 67.0, 76.0, 79.0, 'leer_archivo', '14', '', 'abrirMenuArchivo'),
+('sala_arte', 'ITEM RANDOM', 30.0, 33.0, 67.0, 70.0, 'recoger_item', 'random', '', 'añadirInventario'),
+
+-- BIBLIOTECA
+('biblioteca', 'NOTA 5', 68.0, 71.0, 62.0, 62.0, 'leer_archivo', '5', '', 'abrirMenuArchivo'),
+('biblioteca', 'NOTA OCULTA 3', 42.0, 45.0, 81.0, 83.0, 'leer_archivo', '12', '', 'abrirMenuArchivo'),
+('biblioteca', 'ITEM RANDOM', 8.0, 11.0, 63.0, 66.0, 'recoger_item', 'random', '', 'añadirInventario'),
+
+-- SALA DESCANSO
+('sala_descanso', 'ESCOPETA ROTA', 58.0, 60.0, 49.0, 76.0, 'recoger_item', 'arma_rota', '', 'añadirInventario'),
+('sala_descanso', 'CAJA FUERTE PORTATIL', 2.0, 7.0, 61.0, 65.0, 'recoger_item', '10', '', 'añadirInventario'),
+('sala_descanso', 'GUARDADO', 17.0, 33.0, 63.0, 82.0, 'guardar', 'maquina_escribir', 'Cinta de Guardado', 'abrirMenuGuardado'),
+('sala_descanso', 'ITEM RANDOM', 84.0, 87.0, 22.0, 28.0, 'recoger_item', 'random', '', 'añadirInventario'),
+
+-- SALA INTERROGATORIOS
+('sala_interrogatorios', 'PROTOCOLO DE CIERRE', 37.0, 45.0, 69.0, 77.0, 'leer_archivo', '9', '', 'abrirMenuArchivo'),
+('sala_interrogatorios', 'NOTA OCULTA 7', 27.0, 31.0, 47.0, 54.0, 'leer_archivo', '16', '', 'abrirMenuArchivo');
+
 -- NOTAS DE HISTORIA PRINCIPAL Y PISTAS 
 INSERT OR IGNORE INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, imagen_url) VALUES
 ('NOTA 1: Informe inicial', 'ambos', 'Fecha: 19 de septiembre. Hemos recibido múltiples llamadas sobre disturbios en la zona este. Al principio parecían ataques aislados, pero todos los testigos describen lo mismo: gente extremadamente agresiva… que no responde al dolor. El capitán ha ordenado aumentar la vigilancia. Personalmente, creo que esto va a peor.', NULL),
@@ -204,23 +294,16 @@ INSERT OR IGNORE INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, im
 ('Cuaderno de Leon (Pista)', 'ambos', 'Día 1: Las puertas del lobby están selladas. Parece que el código de la salida está relacionado con tres estatuas... Lobo, Águila y Serpiente.', NULL),
 ('Protocolo de Cierre (Pista)', 'ambos', 'Nivel de amenaza crítico. Salida del garaje bloqueada. Requiere inserción de los tres medallones tácticos en el panel inferior.', NULL),
 
--- 2. NOTAS OCULTAS - RUTA CHICA 
-('NOTA OCULTA 1: Carta sellada', 'chica', 'No deberíamos haber aceptado ese “apoyo corporativo”. Dijeron que era para mejorar la seguridad… pero lo único que han traído son cajas selladas y órdenes que no podemos cuestionar. Nadie sabe qué hay realmente en el subsuelo de la ciudad. Y sinceramente… no quiero saberlo.', NULL),
-('NOTA OCULTA 2: Informe técnico escondido', 'chica', 'Proyecto: T-Virus (fase de pruebas urbanas). Objetivo: evaluar comportamiento en entorno real. Resultados iniciales: Alta tasa de infección, propagación incontrolable. Recomendación: aislamiento total de la zona afectada. Nota: Las fuerzas locales no deben conocer el alcance real del experimento.', NULL),
-('NOTA OCULTA 3: Grabación privada', 'chica', '[Voz distorsionada] La comisaría funcionará como punto de contención. Si el virus se extiende, los supervivientes acudirán allí por instinto. Es el lugar perfecto para observar la evolución del sujeto infectado… en masa. [Fin]', NULL),
-('NOTA OCULTA 4: Diario científico fragmentado', 'chica', 'Día 3: El sujeto mantiene movilidad tras la muerte cerebral. Día 5: Responde a estímulos sonoros. Día 7: Hambre constante. Día 8: He dejado de verlo como una persona. Día 9: Creo que yo soy el siguiente.', NULL),
-('NOTA OCULTA 5: Plano oculto de la comisaría', 'chica', 'El edificio no es lo que parece. Existen accesos sellados que conectan con instalaciones subterráneas. Solo personal autorizado puede acceder. Código de acceso: [BORRADO]', NULL),
-('NOTA OCULTA 6: Mensaje cifrado', 'chica', 'Si estás leyendo esto, ya sabes la verdad. No intentes escapar por la ciudad. Van a borrar todo. Incluyéndonos.', NULL),
-('NOTA OCULTA 7: Última confesión', 'chica', 'Yo autoricé la entrada de los contenedores. Firmé los permisos. Ignoré las advertencias. Pensé que era solo otro contrato… otra donación… Si alguien encuentra esto: esto es culpa nuestra.', NULL),
+-- NOTAS OCULTAS
+('NOTA OCULTA 1', 'ambos', 'Fecha: 19 de septiembre. Hemos recibido múltiples llamadas sobre disturbios en la zona este. Al principio parecían ataques aislados, pero todos los testigos describen lo mismo: gente extremadamente agresiva… que no responde al dolor. El capitán ha ordenado aumentar la vigilancia. Personalmente, creo que esto va a peor.', NULL),
+('NOTA OCULTA 2: Correspondencia corporativa', 'ambos', 'No deberíamos haber aceptado ese “apoyo”. Dijeron que era para mejorar la seguridad, pero solo han traído cajas selladas y órdenes extrañas. El Capitán ha recibido pagos de una cuenta fantasma. Nadie sabe qué hay realmente en el subsuelo, y los que preguntan, simplemente desaparecen.', NULL), 
+('NOTA OCULTA 3: Informe Técnico T-102', 'ambos', 'Proyecto: T-Virus. Objetivo: evaluar propagación en entorno real. Resultados: Alta tasa de infección. Recomendación: Aislamiento total. Las fuerzas locales funcionarán como punto de contención para observar la evolución de los sujetos infectados en masa. No deben conocer el alcance real del experimento.', NULL), 
+('NOTA OCULTA 4: Bitácora forense', 'ambos', 'Las heridas se vuelven necróticas en minutos. Traté de amputarle el brazo al oficial Gómez para detener la infección, pero el miembro amputado… seguía teniendo espasmos. El cerebro está muerto, pero el cuerpo sigue buscando alimento. Ya no son humanos, son solo estómagos con piernas.', NULL), 
+('NOTA OCULTA 5: Aviso de supervivencia', 'ambos', '¡NO VAYAN A LAS ALCANTARILLAS! Están subiendo por los túneles. No son los muertos de la calle, son otra cosa… no tienen piel, tienen garras y cazan por el sonido. Si escuchas un chasquido metálico o un roce en el techo, ya estás muerto.', NULL), 
+('NOTA OCULTA 6: Orden de contención final', 'ambos', 'Directiva de Limpieza: El perímetro de la ciudad se cerrará permanentemente a las 00:00. Ningún civil, policía o personal médico está autorizado a salir. Disparen a matar a cualquiera que se acerque a los muros. No debe quedar ningún testigo que pueda hablar sobre el origen del brote.', NULL), 
+('NOTA OCULTA 7: Última confesión', 'ambos', 'Yo firmé los permisos. Ignoré las advertencias por dinero. Escondí la muestra del virus en el cuarto del generador principal, pero esa aberración gigante mató a todo mi equipo antes de llegar. Si lees esto: no confíes en el helicóptero de extracción. Nos han abandonado para borrar el rastro.', NULL); 
 
--- 3. NOTAS OCULTAS - RUTA CHICO 
-('NOTA OCULTA 1: Registro de guardia', 'chico', 'Ayer trajeron a un tipo que mordió a dos oficiales en la calle. Lo metimos en la celda 3. No reacciona al dolor, no parpadea. Le dimos con las porras y ni siquiera se quejó. El Capitán dice que es solo pánico inducido por drogas, pero los que fueron mordidos hoy tienen una fiebre altísima y los ojos inyectados en sangre.', NULL),
-('NOTA OCULTA 2: Memorándum denegado', 'chico', 'SOLICITUD DENEGADA. Bajo ninguna circunstancia se debe distribuir munición pesada o armamento antidisturbios a los oficiales de patrulla. Órdenes estrictas de los benefactores corporativos: dejen que la situación \"se desarrolle\" con el equipo estándar.', NULL),
-('NOTA OCULTA 3: Transcripción de radio interceptada', 'chico', '[Canal Táctico Cifrado] Equipo Echo a Base. La contención del recinto ha fallado. Repito, contención fallida. Base: Entendido, Echo. Los \"Limpiadores\" están en camino. Abandone a las fuerzas locales. Aseguren la muestra y eliminen cualquier cabo suelto.', NULL),
-('NOTA OCULTA 4: Bitácora forense', 'chico', 'Las heridas se vuelven necróticas en cuestión de minutos. La coagulación se detiene por completo. Traté de amputarle el brazo al oficial Gómez para detener la infección, pero el miembro amputado… seguía teniendo espasmos. Ya no es humano. El cerebro está muerto, pero el cuerpo sigue buscando alimento.', NULL),
-('NOTA OCULTA 5: Mensaje en la pared', 'chico', 'NO VAYAN A LAS ALCANTARILLAS. Están subiendo por los túneles. No son los muertos de la calle. Son otra cosa. Tienen garras. No tienen piel. Cazan por el sonido.', NULL),
-('NOTA OCULTA 6: Orden de evacuación VIP', 'chico', 'Lista de Extracción Prioritaria. Solo personal de nivel 4 o superior. El perímetro de la ciudad se cerrará permanentemente a las 00:00 horas. Directiva: Ningún civil, policía o personal médico está autorizado a salir. Disparen a matar a cualquiera que se acerque a los muros.', NULL),
-('NOTA OCULTA 7: Nota ensangrentada de un mercenario', 'chico', 'Aseguramos la muestra del virus, pero esa maldita aberración gigante mató a Jenkins. Escondí el maletín en el cuarto del generador principal. Si algún desgraciado sigue vivo y lee esto… no confíes en el helicóptero de extracción. Nos traicionaron a todos.', NULL);
+
 
 -- LOGROS GLOBALES
 INSERT OR IGNORE INTO catalogo_logros (nombre, descripcion) VALUES 
