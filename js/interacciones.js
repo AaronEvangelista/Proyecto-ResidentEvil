@@ -34,9 +34,8 @@ function ejecutarEvento(evento, event) {
                 break;
 
             case 'guardar':
-                mostrarMensajeEnPantalla("[GUARDADO] ¿Deseas usar una cinta para guardar?");
-                if (typeof abrirMenuGuardado === 'function') {
-                    abrirMenuGuardado();
+                if (confirm("¿Deseas guardar tu progreso en la máquina de escribir?")) {
+                    guardarPartida();
                 }
                 break;
 
@@ -103,6 +102,25 @@ function registrarRecogida(idEvento, tipoObjeto, idObjeto) {
         }
     })
     .catch(error => console.error("Error en la petición:", error));
+}
+
+function guardarPartida() {
+    mostrarMensajeEnPantalla("Guardando...");
+    fetch('../api/guardar_partida.php', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarMensajeEnPantalla("[ÉXITO] Progreso guardado.");
+        } else {
+            mostrarMensajeEnPantalla("[ERROR] No se pudo guardar: " + data.error);
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        mostrarMensajeEnPantalla("[ERROR] Fallo en la conexión.");
+    });
 }
 
 window.addEventListener('keydown', (e) => {

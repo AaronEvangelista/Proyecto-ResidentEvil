@@ -16,13 +16,46 @@ $query_enemigos = $pdo->prepare("SELECT * FROM estado_enemigos WHERE sala_ubicac
 $query_enemigos->execute([$id_sala_actual]);
 $enemigo_presente = $query_enemigos->fetch();
 
-// 5. Consultar eventos interactivos de la sala
-$id_partida = $_SESSION['id_partida'] ?? 1;
+// 5. Gestión de Partida y Sesión
+$id_usuario = $_SESSION['usuario_id'] ?? null;
 
-// Filtrar eventos ya completados (recogidos)
+if (!$id_usuario) {
+    header('Location: ../sessions/login.php');
+    exit;
+}
+
+// Buscar o crear partida para el usuario
+$stmt_partida = $pdo->prepare("SELECT id_partida FROM partida WHERE id_usuario = ? ORDER BY fecha_guardado DESC LIMIT 1");
+$stmt_partida->execute([$id_usuario]);
+$partida = $stmt_partida->fetch();
+
+if (!$partida) {
+    // Crear partida por defecto si no existe
+    $stmt_crear = $pdo->prepare("INSERT INTO partida (id_usuario, ruta, sala_actual) VALUES (?, 'chico', 'banos_inicio')");
+    $stmt_crear->execute([$id_usuario]);
+    $id_partida = $pdo->lastInsertId();
+} else {
+    $id_partida = $partida['id_partida'];
+}
+
+$_SESSION['id_partida'] = $id_partida;
+
+// Inicializar contenedores de sesión si no existen
+if (!isset($_SESSION['eventos_recogidos_sesion'])) {
+    $_SESSION['eventos_recogidos_sesion'] = [];
+}
+if (!isset($_SESSION['inventario_sesion'])) {
+    $_SESSION['inventario_sesion'] = [];
+}
+
+// 6. Consultar eventos y filtrar
+// Mezclamos lo que ya estaba en la DB (partida guardada) con lo de la sesión actual
 $query_completados = $pdo->prepare("SELECT id_evento FROM eventos_completados WHERE id_partida = ?");
 $query_completados->execute([$id_partida]);
-$completados = $query_completados->fetchAll(PDO::FETCH_COLUMN);
+$completados_db = $query_completados->fetchAll(PDO::FETCH_COLUMN);
+
+// Combinar DB + Sesión
+$completados = array_unique(array_merge($completados_db, $_SESSION['eventos_recogidos_sesion']));
 
 $query_eventos = $pdo->prepare("SELECT * FROM eventos_interactivos WHERE id_sala = ?");
 $query_eventos->execute([$id_sala_actual]);
@@ -164,8 +197,11 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
                     <!-- Los slots se generarán dinámicamente -->
                 </div>
                 <div class="item-details" id="item-details">
-                    <h3 id="detail-name">Selecciona un objeto</h3>
-                    <p id="detail-description">Pasa el ratón sobre un objeto para ver sus detalles.</p>
+                    <div style="flex-grow: 1;">
+                        <h3 id="detail-name">Selecciona un objeto</h3>
+                        <p id="detail-description">Pasa el ratón sobre un objeto para ver sus detalles.</p>
+                    </div>
+                    <button id="btn-examinar" class="hud-btn" style="display: none; height: fit-content; align-self: flex-start;">EXAMINAR</button>
                 </div>
                 <button id="btn-cerrar-inventario">CERRAR (ESC)</button>
             </div>

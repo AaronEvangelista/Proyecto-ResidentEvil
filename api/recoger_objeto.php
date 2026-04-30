@@ -13,35 +13,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($id_evento) {
         try {
-            $pdo->beginTransaction();
+            // 1. Guardar en la SESIÓN (Progreso temporal)
+            if (!isset($_SESSION['eventos_recogidos_sesion'])) {
+                $_SESSION['eventos_recogidos_sesion'] = [];
+            }
+            if (!in_array($id_evento, $_SESSION['eventos_recogidos_sesion'])) {
+                $_SESSION['eventos_recogidos_sesion'][] = $id_evento;
+            }
 
-            // 1. Registrar que el evento ha sido completado
-            $stmt = $pdo->prepare("INSERT OR IGNORE INTO eventos_completados (id_partida, id_evento) VALUES (?, ?)");
-            $stmt->execute([$id_partida, $id_evento]);
-
-            // 2. Añadir al inventario
+            // 2. Añadir al inventario de SESIÓN
             if ($tipo_objeto && $id_objeto) {
-                // Encontrar el primer slot libre (0-7)
-                $stmt_slots = $pdo->prepare("SELECT posicion_slot FROM inventario WHERE id_partida = ? AND posicion_slot IS NOT NULL");
-                $stmt_slots->execute([$id_partida]);
-                $slots_ocupados = $stmt_slots->fetchAll(PDO::FETCH_COLUMN);
-                
-                $slot_libre = 0;
-                for ($i = 0; $i < 8; $i++) {
-                    if (!in_array($i, $slots_ocupados)) {
-                        $slot_libre = $i;
-                        break;
-                    }
+                if (!isset($_SESSION['inventario_sesion'])) {
+                    $_SESSION['inventario_sesion'] = [];
                 }
-
-                $stmt_inv = $pdo->prepare("INSERT INTO inventario (id_partida, tipo_objeto, id_objeto, cantidad, posicion_slot) VALUES (?, ?, ?, 1, ?)");
-                $stmt_inv->execute([$id_partida, $tipo_objeto, $id_objeto, $slot_libre]);
+                
+                // Buscamos un slot libre en la sesión (considerando lo que hay en DB + sesión)
+                // Para simplificar, por ahora lo dejamos como una lista que el get_inventario procesará
+                $_SESSION['inventario_sesion'][] = [
+                    'tipo_objeto' => $tipo_objeto,
+                    'id_objeto' => $id_objeto,
+                    'cantidad' => 1
+                ];
             }
             
-            $pdo->commit();
-            echo json_encode(['success' => true]);
-        } catch (PDOException $e) {
-            if ($pdo->inTransaction()) $pdo->rollBack();
+            echo json_encode(['success' => true, 'message' => 'Objeto recogido en sesión']);
+        } catch (Exception $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }
     } else {

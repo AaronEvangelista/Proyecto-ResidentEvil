@@ -122,7 +122,6 @@ window.addEventListener("keydown", (e) => {
     case ESTADOS_JUEGO.INTERACTIVO:
       if (["w", "a", "s", "d"].includes(key)) {
         if (!teclasPresionadas[key]) {
-          // Evitar spam si dejas la tecla presionada
           teclasPresionadas[key] = true;
           gameActions.elegirRuta(key);
         }

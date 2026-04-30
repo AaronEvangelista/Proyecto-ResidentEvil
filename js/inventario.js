@@ -11,9 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCerrarInv.addEventListener('click', cerrarInventario);
     }
 
-    // Abrir con TAB
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab') {
+        // Inventario con TAB o E
+        if (e.key === 'Tab' || e.key.toLowerCase() === 'e') {
             e.preventDefault();
             if (inventoryScreen.style.display === 'none' || inventoryScreen.style.display === '') {
                 abrirInventario();
@@ -44,24 +44,22 @@ function cerrarInventario() {
 }
 
 let draggedItemInfo = null;
+let selectedItem = null;
 
 function renderizarInventario(items) {
     const grid = document.getElementById('inventory-grid');
     grid.innerHTML = '';
 
-    // Mapear items por su posición
     const itemMap = {};
     items.forEach(item => {
         itemMap[item.posicion_slot] = item;
     });
 
-    // Generar 8 slots fijos
     for (let i = 0; i < 8; i++) {
         const slot = document.createElement('div');
         slot.className = 'inventory-slot';
         slot.dataset.slotIndex = i;
 
-        // Eventos de Drop
         slot.addEventListener('dragover', (e) => {
             e.preventDefault();
             slot.classList.add('drag-over');
@@ -75,16 +73,21 @@ function renderizarInventario(items) {
             e.preventDefault();
             slot.classList.remove('drag-over');
             const targetSlotIndex = parseInt(slot.dataset.slotIndex);
-            
+
             if (draggedItemInfo && draggedItemInfo.sourceSlotIndex !== targetSlotIndex) {
-                moverObjeto(draggedItemInfo.idRegistro, targetSlotIndex);
+                const targetItem = itemMap[targetSlotIndex];
+                
+                if (targetItem) {
+                    combinarObjetos(draggedItemInfo.idRegistro, targetItem.id_registro, targetSlotIndex);
+                } else {
+                    moverObjeto(draggedItemInfo.idRegistro, targetSlotIndex);
+                }
             }
         });
-        
+
         if (itemMap[i]) {
             const item = itemMap[i];
-            
-            // Contenedor arrastrable
+
             const itemElement = document.createElement('div');
             itemElement.className = 'item-draggable';
             itemElement.draggable = true;
@@ -92,8 +95,7 @@ function renderizarInventario(items) {
                 <img src="${item.imagen_url}" alt="${item.nombre}" draggable="false">
                 ${item.cantidad > 1 ? `<span class="item-quantity">x${item.cantidad}</span>` : ''}
             `;
-            
-            // Eventos de Drag
+
             itemElement.addEventListener('dragstart', (e) => {
                 draggedItemInfo = {
                     idRegistro: item.id_registro,
@@ -113,15 +115,61 @@ function renderizarInventario(items) {
             });
 
             itemElement.addEventListener('mouseleave', () => {
-                document.getElementById('detail-name').innerText = "Selecciona un objeto";
-                document.getElementById('detail-description').innerText = "Pasa el ratón sobre un objeto para ver sus detalles.";
+                if (!selectedItem) {
+                    document.getElementById('detail-name').innerText = "Selecciona un objeto";
+                    document.getElementById('detail-description').innerText = "Pasa el ratón sobre un objeto para ver sus detalles.";
+                } else {
+                    document.getElementById('detail-name').innerText = selectedItem.nombre;
+                    document.getElementById('detail-description').innerText = selectedItem.descripcion;
+                }
+            });
+
+            // Seleccionar para examinar
+            itemElement.addEventListener('click', () => {
+                document.querySelectorAll('.inventory-slot').forEach(s => s.style.borderColor = '#333');
+                slot.style.borderColor = '#ff0000';
+                
+                selectedItem = item;
+                document.getElementById('detail-name').innerText = item.nombre;
+                document.getElementById('detail-description').innerText = item.descripcion;
+                
+                const btnExaminar = document.getElementById('btn-examinar');
+                if (btnExaminar) {
+                    btnExaminar.style.display = 'block';
+                    btnExaminar.onclick = () => examinarObjeto(item);
+                }
             });
 
             slot.appendChild(itemElement);
         }
-        
+
         grid.appendChild(slot);
     }
+}
+
+function combinarObjetos(idOrigen, idDestino, targetSlotIndex) {
+    fetch('../api/combinar_objetos.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            id_registro_arrastrado: idOrigen,
+            id_registro_destino: idDestino
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.action === 'combined') {
+            if (typeof mostrarMensajeEnPantalla === 'function') {
+                mostrarMensajeEnPantalla("[COMBINACIÓN] " + data.message);
+            } else {
+                alert(data.message);
+            }
+            abrirInventario();
+        } else if (data.action === 'swap') {
+            moverObjeto(idOrigen, targetSlotIndex);
+        }
+    })
+    .catch(error => console.error("Error al combinar:", error));
 }
 
 function moverObjeto(idRegistro, nuevoSlot) {
@@ -138,10 +186,30 @@ function moverObjeto(idRegistro, nuevoSlot) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            abrirInventario(); // Recargar tras mover
+            abrirInventario();
         } else {
             console.error("Error al mover objeto:", data.error);
         }
     })
     .catch(error => console.error("Error en la petición:", error));
+}
+
+function examinarObjeto(item) {
+    const noteViewer = document.getElementById('note-viewer');
+    const noteTitle = document.getElementById('note-title');
+    const noteBody = document.getElementById('note-body');
+    const noteImg = document.getElementById('note-img');
+
+    if (noteViewer && noteTitle && noteBody && noteImg) {
+        noteTitle.innerText = item.nombre;
+        noteBody.innerText = item.descripcion + "\n\n(Objeto examinado)";
+        
+        noteImg.src = item.imagen_url;
+        noteImg.style.width = '300px';
+        noteImg.style.height = 'auto';
+        noteImg.style.margin = '0 auto';
+        noteImg.style.display = 'block';
+
+        noteViewer.style.display = 'flex';
+    }
 }
