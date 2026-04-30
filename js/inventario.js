@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.addEventListener('keydown', (e) => {
-        // Inventario con TAB o E
         if (e.key === 'Tab' || e.key.toLowerCase() === 'e') {
             e.preventDefault();
             if (inventoryScreen.style.display === 'none' || inventoryScreen.style.display === '') {
@@ -76,7 +75,7 @@ function renderizarInventario(items) {
 
             if (draggedItemInfo && draggedItemInfo.sourceSlotIndex !== targetSlotIndex) {
                 const targetItem = itemMap[targetSlotIndex];
-                
+
                 if (targetItem) {
                     combinarObjetos(draggedItemInfo.idRegistro, targetItem.id_registro, targetSlotIndex);
                 } else {
@@ -128,11 +127,11 @@ function renderizarInventario(items) {
             itemElement.addEventListener('click', () => {
                 document.querySelectorAll('.inventory-slot').forEach(s => s.style.borderColor = '#333');
                 slot.style.borderColor = '#ff0000';
-                
+
                 selectedItem = item;
                 document.getElementById('detail-name').innerText = item.nombre;
                 document.getElementById('detail-description').innerText = item.descripcion;
-                
+
                 const btnExaminar = document.getElementById('btn-examinar');
                 if (btnExaminar) {
                     btnExaminar.style.display = 'block';
@@ -156,20 +155,20 @@ function combinarObjetos(idOrigen, idDestino, targetSlotIndex) {
             id_registro_destino: idDestino
         })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success && data.action === 'combined') {
-            if (typeof mostrarMensajeEnPantalla === 'function') {
-                mostrarMensajeEnPantalla("[COMBINACIÓN] " + data.message);
-            } else {
-                alert(data.message);
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.action === 'combined') {
+                if (typeof mostrarMensajeEnPantalla === 'function') {
+                    mostrarMensajeEnPantalla("[COMBINACIÓN] " + data.message);
+                } else {
+                    alert(data.message);
+                }
+                abrirInventario();
+            } else if (data.action === 'swap') {
+                moverObjeto(idOrigen, targetSlotIndex);
             }
-            abrirInventario();
-        } else if (data.action === 'swap') {
-            moverObjeto(idOrigen, targetSlotIndex);
-        }
-    })
-    .catch(error => console.error("Error al combinar:", error));
+        })
+        .catch(error => console.error("Error al combinar:", error));
 }
 
 function moverObjeto(idRegistro, nuevoSlot) {
@@ -183,15 +182,15 @@ function moverObjeto(idRegistro, nuevoSlot) {
             nuevo_slot: nuevoSlot
         })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            abrirInventario();
-        } else {
-            console.error("Error al mover objeto:", data.error);
-        }
-    })
-    .catch(error => console.error("Error en la petición:", error));
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                abrirInventario();
+            } else {
+                console.error("Error al mover objeto:", data.error);
+            }
+        })
+        .catch(error => console.error("Error en la petición:", error));
 }
 
 function examinarObjeto(item) {
@@ -203,7 +202,7 @@ function examinarObjeto(item) {
     if (noteViewer && noteTitle && noteBody && noteImg) {
         noteTitle.innerText = item.nombre;
         noteBody.innerText = item.descripcion + "\n\n(Objeto examinado)";
-        
+
         noteImg.src = item.imagen_url;
         noteImg.style.width = '300px';
         noteImg.style.height = 'auto';

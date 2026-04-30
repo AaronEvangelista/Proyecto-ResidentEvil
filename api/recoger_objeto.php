@@ -13,7 +13,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($id_evento) {
         try {
-            // 1. Guardar en la SESIÓN (Progreso temporal)
             if (!isset($_SESSION['eventos_recogidos_sesion'])) {
                 $_SESSION['eventos_recogidos_sesion'] = [];
             }
@@ -21,21 +20,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['eventos_recogidos_sesion'][] = $id_evento;
             }
 
-            // 2. Añadir al inventario de SESIÓN
             if ($tipo_objeto && $id_objeto) {
                 if (!isset($_SESSION['inventario_sesion'])) {
                     $_SESSION['inventario_sesion'] = [];
                 }
-                
-                // Buscamos un slot libre en la sesión (considerando lo que hay en DB + sesión)
-                // Para simplificar, por ahora lo dejamos como una lista que el get_inventario procesará
+
                 $_SESSION['inventario_sesion'][] = [
                     'tipo_objeto' => $tipo_objeto,
                     'id_objeto' => $id_objeto,
                     'cantidad' => 1
                 ];
             }
-            
+
             echo json_encode(['success' => true, 'message' => 'Objeto recogido en sesión']);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
