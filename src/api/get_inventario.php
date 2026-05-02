@@ -1,13 +1,12 @@
 <?php
 session_start();
-require_once '../includes/conexion.php';
+require_once '../../includes/conexion.php';
 
 header('Content-Type: application/json');
 
 $id_partida = $_SESSION['id_partida'] ?? 1;
 
 try {
-    // 1. Obtener Items
     $query_items = $pdo->prepare("
         SELECT i.*, c.nombre, c.descripcion, c.imagen_url, c.tipo
         FROM inventario i
@@ -18,7 +17,6 @@ try {
     $query_items->execute([$id_partida]);
     $items = $query_items->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. Obtener Armas
     $query_armas = $pdo->prepare("
         SELECT i.*, c.nombre, c.descripcion, c.imagen_url, 'arma' as tipo
         FROM inventario i
@@ -31,7 +29,6 @@ try {
 
     $inventario_db = array_merge($items, $armas);
 
-    // 3. Mezclar con lo que hay en SESIÓN (Sin guardar todavía)
     $inventario_sesion_raw = $_SESSION['inventario_sesion'] ?? [];
     $slots_ocupados = array_column($inventario_db, 'posicion_slot');
 
@@ -43,22 +40,20 @@ try {
         }
         $st->execute([$s_item['id_objeto']]);
         $cat = $st->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($cat) {
             $nuevo = array_merge($s_item, $cat);
-            // Asignar primer slot libre
             for ($i = 0; $i < 8; $i++) {
-                 if (!in_array($i, $slots_ocupados)) {
-                     $nuevo['posicion_slot'] = $i;
-                     $slots_ocupados[] = $i;
-                     break;
-                 }
+                if (!in_array($i, $slots_ocupados)) {
+                    $nuevo['posicion_slot'] = $i;
+                    $slots_ocupados[] = $i;
+                    break;
+                }
             }
             $inventario_db[] = $nuevo;
         }
     }
 
-    // Ordenar todo por posicion_slot
     usort($inventario_db, function ($a, $b) {
         return ($a['posicion_slot'] ?? 99) <=> ($b['posicion_slot'] ?? 99);
     });

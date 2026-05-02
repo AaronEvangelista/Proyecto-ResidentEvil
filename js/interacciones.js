@@ -51,7 +51,7 @@ function ejecutarEvento(evento, event) {
 }
 
 function registrarRecogida(idEvento, tipoObjeto, idObjeto) {
-    fetch('../api/recoger_objeto.php', {
+    fetch('../src/api/recoger_objeto.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -77,7 +77,7 @@ function abrirMenuGuardado() {
     const menu = document.getElementById('save-menu');
     const ribbonSpan = document.getElementById('ribbon-count');
 
-    fetch('../api/get_save_slots.php')
+    fetch('../src/api/get_save_slots.php')
         .then(r => r.json())
         .then(data => {
             if (data.success) {
@@ -121,7 +121,7 @@ function cerrarMenuGuardado() {
 }
 
 function guardarEnSlot(slotNumero) {
-    fetch('../api/guardar_partida.php', {
+    fetch('../src/api/guardar_partida.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slot_numero: slotNumero })

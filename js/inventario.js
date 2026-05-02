@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function abrirInventario() {
-    fetch('../api/get_inventario.php')
+    fetch('../src/api/get_inventario.php')
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -147,7 +147,7 @@ function renderizarInventario(items) {
 }
 
 function combinarObjetos(idOrigen, idDestino, targetSlotIndex) {
-    fetch('../api/combinar_objetos.php', {
+    fetch('../src/api/combinar_objetos.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -172,7 +172,7 @@ function combinarObjetos(idOrigen, idDestino, targetSlotIndex) {
 }
 
 function moverObjeto(idRegistro, nuevoSlot) {
-    fetch('../api/mover_objeto.php', {
+    fetch('../src/api/mover_objeto.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

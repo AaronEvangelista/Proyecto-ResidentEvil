@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../includes/conexion.php';
+require_once '../../includes/conexion.php';
 
 header('Content-Type: application/json');
 
@@ -114,7 +114,6 @@ try {
     foreach ($items_actuales as $it) {
         $slot = $it['posicion_slot'];
         if ($slot === null || in_array($slot, $slots_ocupados)) {
-            // Buscar nuevo slot
             for ($i = 0; $i < 8; $i++) {
                 if (!in_array($i, $slots_ocupados)) {
                     $slot = $i;
