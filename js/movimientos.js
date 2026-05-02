@@ -14,7 +14,6 @@ const teclasPresionadas = {
   d: false,
 };
 
-// Función de ayuda para mostrar mensajes en la pantalla del juego
 function mostrarMensajeEnPantalla(mensaje) {
   const messageBox = document.querySelector(".message-box p");
   if (messageBox) {
@@ -34,7 +33,6 @@ const gameActions = {
     const flecha = document.querySelector(`.nav-btn${selector}`);
     if (flecha) {
       mostrarMensajeEnPantalla(`Avanzando hacia la siguiente sala...`);
-      // Simular un clic en el enlace para cambiar de página
       window.location.href = flecha.href;
     } else {
       mostrarMensajeEnPantalla(
@@ -52,7 +50,6 @@ const gameActions = {
     mostrarMensajeEnPantalla("Juego en Pausa.");
     estadoActual = ESTADOS_JUEGO.PAUSA;
 
-    // Mostrar el menú de pausa centrado
     const pauseMenu = document.getElementById('pause-menu');
     if (pauseMenu) pauseMenu.style.display = 'flex';
   },
@@ -60,17 +57,14 @@ const gameActions = {
     mostrarMensajeEnPantalla("Juego reanudado.");
     estadoActual = ESTADOS_JUEGO.INTERACTIVO;
 
-    // Ocultar el menú de pausa
     const pauseMenu = document.getElementById('pause-menu');
     if (pauseMenu) pauseMenu.style.display = 'none';
   },
   cargarPartida: function () {
     mostrarMensajeEnPantalla("Cargando partida... (Funcionalidad pendiente)");
-    // Aquí iría la redirección a cargar_partida.php o llamada AJAX
   },
   salirAlMenuPrincipal: function () {
     mostrarMensajeEnPantalla("Saliendo del juego...");
-    // Redirigir al índice principal
     window.location.href = '../index.php';
   },
   combinarItems: function () {
@@ -88,23 +82,22 @@ const gameActions = {
     estadoActual = ESTADOS_JUEGO.INTERACTIVO;
   },
   disparar: function () {
-    mostrarMensajeEnPantalla("💥 ¡PUM! Has disparado al enemigo.");
+    mostrarMensajeEnPantalla(" Has disparado al enemigo.");
   },
   huir: function () {
     mostrarMensajeEnPantalla(
-      "🏃 Has huido del combate de forma cobarde. Volviendo a la exploración.",
+      " Has huido del combate de forma cobarde. Volviendo a la exploración.",
     );
     estadoActual = ESTADOS_JUEGO.INTERACTIVO;
   },
   entrarEnBatalla: function () {
     mostrarMensajeEnPantalla(
-      "💀 ¡PELIGRO! Has entrado en modo combate.<br> Opciones: [G] Disparar - [H] Huir",
+      "Has entrado en modo combate.<br> Opciones: [G] Disparar - [H] Huir",
     );
     estadoActual = ESTADOS_JUEGO.BATALLA;
   },
 };
 
-// Listeners para los botones del menú de pausa
 document.addEventListener("DOMContentLoaded", () => {
   const btnContinuar = document.getElementById('btn-continuar');
   const btnCargar = document.getElementById('btn-cargar');
@@ -122,7 +115,6 @@ window.addEventListener("keydown", (e) => {
     case ESTADOS_JUEGO.INTERACTIVO:
       if (["w", "a", "s", "d"].includes(key)) {
         if (!teclasPresionadas[key]) {
-          // Evitar spam si dejas la tecla presionada
           teclasPresionadas[key] = true;
           gameActions.elegirRuta(key);
         }

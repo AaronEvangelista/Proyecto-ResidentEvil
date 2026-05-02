@@ -1,0 +1,275 @@
+/* RESET DE NAVEGADOR */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body,
+html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    /* Evita scrollbars */
+    background-color: #000;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* CONTENEDOR PRINCIPAL: PANTALLA COMPLETA */
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    background-size: cover;
+    /* Ocupa toda la pantalla */
+    background-position: center;
+    /* Centrada */
+    background-repeat: no-repeat;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    transition: background-image 0.5s ease-in-out;
+    /* Suaviza el cambio de sala */
+}
+
+/* CAPA SUPERIOR: NOMBRE DE LA SALA */
+.hud-top {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+    color: #ccc;
+    padding: 20px;
+    text-align: right;
+    font-size: 1.2rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+/* CONTROLES DE NAVEGACIÓN: FLECHAS */
+.navigation-controls {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    height: 60%;
+    pointer-events: none;
+    /* Las cajas no bloquean clics, los enlaces sí */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.nav-btn {
+    pointer-events: auto;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 4rem;
+    position: absolute;
+    transition: all 0.3s;
+    text-shadow: 0px 0px 10px rgba(0, 0, 0, 0.9);
+}
+
+.nav-btn:hover {
+    color: #ff0000;
+    transform: scale(1.2);
+    text-shadow: 0px 0px 20px #ff0000;
+}
+
+/* Posicionamiento de flechas */
+.north {
+    top: 0;
+}
+
+.south {
+    bottom: 0;
+}
+
+.east {
+    right: 0;
+}
+
+.west {
+    left: 0;
+}
+
+/* CUADRO DE TEXTO INFERIOR */
+.message-box {
+    background: rgba(0, 0, 0, 0.75);
+    border-top: 3px solid #333;
+    color: #eee;
+    padding: 25px 50px;
+    min-height: 120px;
+    z-index: 10;
+}
+
+.message-box p {
+    font-size: 1.1rem;
+    line-height: 1.5;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+#pause-menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #555;
+    padding: 40px;
+    text-align: center;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 300px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 1);
+}
+
+#pause-menu h2 {
+    color: #ff0000;
+    font-size: 2rem;
+    margin-bottom: 20px;
+    letter-spacing: 5px;
+}
+
+#pause-menu button {
+    background: #979494;
+    color: #da0e0e;
+    border: 1px solid #353232;
+    padding: 15px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#pause-menu button:hover {
+    background: #ff0000;
+    color: #fff;
+    border-color: #ff0000;
+}
+
+.hotspot {
+    position: absolute;
+    cursor: pointer;
+    z-index: 5;
+    transition: all 0.3s;
+    border-radius: 5px;
+}
+
+.hotspot:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.hotspot.has-item {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.item-visual {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 8px rgba(0, 255, 0, 0.5)); 
+    animation: pulsarItem 2.5s infinite ease-in-out;
+    pointer-events: none;
+}
+
+@keyframes pulsarItem {
+    0%, 100% { 
+        transform: scale(0.85); 
+        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
+    }
+    50% { 
+        transform: scale(1); 
+        filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
+    }
+}
+
+#note-viewer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.note-container {
+    position: relative;
+    max-width: 600px;
+    width: 90%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.note-paper {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.5));
+}
+
+.note-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 60px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    color: #ff0101;
+    /* Color blanco para el texto */
+    font-family: 'Times New Roman', serif;
+    overflow-y: auto;
+}
+
+#note-title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 5px;
+    text-align: center;
+}
+
+#note-body {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    /* Mantiene los saltos de línea */
+}
+
+#btn-cerrar-nota {
+    position: absolute;
+    bottom: -60px;
+    background: #111;
+    color: #eee;
+    border: 1px solid #555;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-family: 'Courier New', Courier, monospace;
+    transition: all 0.3s;
+}
+
+#btn-cerrar-nota:hover {
+    background: #ff0000;
+    border-color: #ff0000;
+}

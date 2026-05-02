@@ -136,7 +136,17 @@ CREATE TABLE IF NOT EXISTS eventos_interactivos(
     requiere_item TEXT NOT NULL,
     script TEXT NOT NULL,
     FOREIGN KEY(id_sala) REFERENCES catalogo_salas(id_sala) on delete cascade
-)
+);
+
+CREATE TABLE IF NOT EXISTS eventos_completados (
+    id_registro INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_partida INTEGER NOT NULL,
+    id_evento INTEGER NOT NULL,
+    fecha_recogida DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(id_partida) REFERENCES partida(id_partida),
+    FOREIGN KEY(id_evento) REFERENCES eventos_interactivos(id_evento),
+    UNIQUE(id_partida, id_evento)
+);
 ";
 
 $db->exec($esquema);
