@@ -32,7 +32,7 @@ try {
     $inventario_sesion_raw = $_SESSION['inventario_sesion'] ?? [];
     $slots_ocupados = array_column($inventario_db, 'posicion_slot');
 
-    foreach ($inventario_sesion_raw as $s_item) {
+    foreach ($inventario_sesion_raw as $index => $s_item) {
         if ($s_item['tipo_objeto'] === 'arma') {
             $st = $pdo->prepare("SELECT nombre, descripcion, imagen_url FROM catalogo_armas WHERE id_arma = ?");
         } else {
@@ -50,6 +50,7 @@ try {
                     break;
                 }
             }
+            $nuevo['id_registro'] = 'session_' . $index;
             $inventario_db[] = $nuevo;
         }
     }

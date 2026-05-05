@@ -65,10 +65,20 @@ $eventos = $query_eventos->fetchAll(PDO::FETCH_ASSOC);
 
 // Pool de Loot (Items consumibles y Claves)
 $loot_pool_names = [
-    'Hierba Verde', 'Cuchillo Defensivo', 'Pólvora Gris', 'Cinta de Guardado',
-    'Munición de Pistola', 'Munición de Escopeta', 'Munición de Fusil',
-    'Medallon de León', 'Medallon de Unicornio', 'Medallon de Doncella',
-    'Caja Fuerte Portatil', 'Llave de Diamante', 'Llave de Pica', 'Cortacadenas'
+    'Hierba Verde',
+    'Cuchillo Defensivo',
+    'Pólvora Gris',
+    'Cinta de Guardado',
+    'Munición de Pistola',
+    'Munición de Escopeta',
+    'Munición de Fusil',
+    'Medallon de León',
+    'Medallon de Unicornio',
+    'Medallon de Doncella',
+    'Caja Fuerte Portatil',
+    'Llave de Diamante',
+    'Llave de Pica',
+    'Cortacadenas'
 ];
 $placeholders = implode(',', array_fill(0, count($loot_pool_names), '?'));
 $query_loot = $pdo->prepare("SELECT * FROM catalogo_items WHERE nombre IN ($placeholders)");
@@ -316,17 +326,19 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
 
         <!-- RENDERIZAR EVENTOS DESDE LA DB -->
         <?php foreach ($eventos as $ev): ?>
-            <div class="hotspot <?php echo !empty($ev['imagen_item']) ? 'has-item' : ''; ?>" style="left: <?php echo $ev['xmin']; ?>%; 
-                        top: <?php echo $ev['ymin']; ?>%; 
-                        width: <?php echo ($ev['xmax'] - $ev['xmin']); ?>%; 
-                        height: <?php echo ($ev['ymax'] - $ev['ymin']); ?>%;"
-                title="<?php echo $ev['nombre_objeto']; ?>"
-                onclick='ejecutarEvento(<?php echo json_encode($ev); ?>, event)'>
+            <?php if (!in_array($ev['id_evento'], $completados)): ?>
+                <div class="hotspot <?php echo !empty($ev['imagen_item']) ? 'has-item' : ''; ?>" style="left: <?php echo $ev['xmin']; ?>%; 
+                            top: <?php echo $ev['ymin']; ?>%; 
+                            width: <?php echo ($ev['xmax'] - $ev['xmin']); ?>%; 
+                            height: <?php echo ($ev['ymax'] - $ev['ymin']); ?>%;"
+                    title="<?php echo $ev['nombre_objeto']; ?>"
+                    onclick='ejecutarEvento(<?php echo json_encode($ev); ?>, event)'>
 
-                <?php if (!empty($ev['imagen_item'])): ?>
-                    <img src="<?php echo $ev['imagen_item']; ?>" alt="Objeto" class="item-visual">
-                <?php endif; ?>
-            </div>
+                    <?php if (!empty($ev['imagen_item'])): ?>
+                        <img src="<?php echo $ev['imagen_item']; ?>" alt="Objeto" class="item-visual">
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         <?php endforeach; ?>
 
         <!-- VISOR DE NOTAS (MODAL) -->
@@ -341,12 +353,10 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
 
-        <!-- INVENTARIO (MODAL) -->
         <div id="inventory-screen" style="display: none;">
             <div class="inventory-container">
                 <h2>INVENTARIO</h2>
                 <div class="inventory-grid" id="inventory-grid">
-                    <!-- Los slots se generarán dinámicamente -->
                 </div>
                 <div class="item-details" id="item-details" style="display: flex;">
                     <div style="flex-grow: 1;">
@@ -355,14 +365,14 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <button id="btn-examinar" class="hud-btn" style="display: none;">EXAMINAR</button>
-                        <button id="btn-eliminar" class="hud-btn" style="display: none; background-color: #600;">ELIMINAR</button>
+                        <button id="btn-eliminar" class="hud-btn"
+                            style="display: none; background-color: #600;">ELIMINAR</button>
                     </div>
                 </div>
                 <button id="btn-cerrar-inventario">CERRAR (ESC)</button>
             </div>
         </div>
 
-        <!-- MENÚ DE GUARDADO (MODAL) -->
         <div id="save-menu" style="display: none;">
             <div class="save-container">
                 <div class="save-header">
