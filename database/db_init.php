@@ -156,19 +156,20 @@ $inserts = "
 -- Insertar Armas
 INSERT OR IGNORE INTO catalogo_armas (nombre, dano_porcentaje, ruta_exclusiva, descripcion, imagen_url) VALUES
 ('Pistola M19', 25, 'ambos', 'Arma reglamentaria. Daño bajo. La munición se crea combinando 2 pólvoras grises.', '../img/PistolaM19.png'),
-('Escopeta W-870', 75, 'chico', 'Ideal para distancias cortas. Daño letal. La munición se crea con 1 pólvora amarilla y 1 gris.', '../img/EscopetaW-870.webp'),
-('Fusil de Cerrojo', 75, 'chica', 'Alta precisión y gran poder de detención. La munición se crea con 1 pólvora roja y 1 gris.', '../img/FusildeCerrojo.webp'),
-('Granada de Fragmentación', 100, 'ambos', 'Eliminación instantánea de enemigos comunes. Creada al combinar 2 pólvoras amarillas (chico) o 2 rojas (chica).', '../img/GranadaDeFragmentación.jpg');
+('Escopeta W-870', 75, 'chico', 'Ideal para distancias cortas. Daño letal. La munición se crea con 1 pólvora amarilla y 1 gris.', '../img/EscopetaW-870.png'),
+('Fusil de Cerrojo', 75, 'chica', 'Alta precisión y gran poder de detención. La munición se crea con 1 pólvora roja y 1 gris.',  '../img/FusildeCerrojo.png'),
+('Granada de Fragmentación', 100, 'ambos', 'Eliminación instantánea de enemigos comunes. Creada al combinar 2 pólvoras amarillas (chico) o 2 rojas (chica).', '../img/GranadaDeFragmentación.png');
 
 -- Insertar Ítems
 INSERT OR IGNORE INTO catalogo_items (nombre, tipo, ruta_exclusiva, descripcion, imagen_url) VALUES
-('Hierba Verde', 'curacion', 'ambos', 'Planta medicinal local. Cura un 25% de salud. Se pueden combinar hasta 3 juntas (100% de salud).', '../img/Verde_hierva.webp'),
-('Cuchillo Defensivo', 'defensa', 'ambos', 'Permite evitar un mordisco y escapar sin recibir daño. Se consume tras su uso.', '../img/Cuchillo_Defensivo.webp'),
+('Hierba Verde', 'curacion', 'ambos', 'Planta medicinal local. Cura un 25% de salud. Se pueden combinar hasta 3 juntas (100% de salud).', '../img/Verde_hierva.png'),
+('Cuchillo Defensivo', 'defensa', 'ambos', 'Permite evitar un mordisco y escapar sin recibir daño. Se consume tras su uso.', '../img/Cuchillo_Defensivo.png'),
 ('Pólvora Gris', 'fabricacion', 'ambos', 'Pólvora común. Requiere combinarse con otras pólvoras para ser útil.', '../img/polvora_gris.png'),
 ('Pólvora Amarilla', 'fabricacion', 'chico', 'Combínala con gris para cartuchos de escopeta, o con otra amarilla para una granada.', '../img/polvora_amarilla.png'),
 ('Pólvora Roja', 'fabricacion', 'chica', 'Combínala con gris para munición de fusil, o con otra roja para una granada.', '../img/Pólvora_roja.png'),
 ('Cinta de Guardado', 'clave', 'ambos', 'Una cinta magnética para máquina de escribir. Permite registrar tu progreso una sola vez. Úsala con sabiduría.', '../img/cinta_de_tinta.webp'),
-('Medallon de León', 'clave', 'ambos', 'Un pesado medallon de plata con el emblema de un león', '../img/medallon_de_leon.png'),
+('Medallon de León', 'clave', 'ambos', 'Un pesado medallon de plata con el emblema de un león', '../img/medallon_de_leon.png
+'),
 ('Medallon de Unicornio', 'clave', 'ambos', 'Un pesado medallon de bronce con el emblema de un unicornio', '../img/medallon_de_unicornio.png'),
 ('Medallon de Doncella', 'clave', 'ambos', 'Un pesado medallon de oro con el emblema de una doncella', '../img/medallon_de_doncella.png'),
 ('Caja Fuerte Portatil', 'clave', 'ambos', 'Una pequeña caja fuerte con combinación, si la consigues abrir puede traer buenas recompensas', '../img/Caja_Fuerte_Portatil.png'),
