@@ -152,14 +152,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
+    if (e.key.toLowerCase() === 'escape') {
         const viewer = document.getElementById('note-viewer');
-        if (viewer.style.display === 'flex') {
+        if (viewer && viewer.style.display === 'flex') {
             viewer.style.display = 'none';
         }
 
         const saveMenu = document.getElementById('save-menu');
-        if (saveMenu.style.display === 'flex') {
+        if (saveMenu && saveMenu.style.display === 'flex') {
             cerrarMenuGuardado();
         }
     }

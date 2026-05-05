@@ -348,12 +348,15 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
                 <div class="inventory-grid" id="inventory-grid">
                     <!-- Los slots se generarán dinámicamente -->
                 </div>
-                <div class="item-details" id="item-details">
+                <div class="item-details" id="item-details" style="display: flex;">
                     <div style="flex-grow: 1;">
                         <h3 id="detail-name">Selecciona un objeto</h3>
                         <p id="detail-description">Pasa el ratón sobre un objeto para ver sus detalles.</p>
                     </div>
-                    <button id="btn-examinar" class="hud-btn" style="display: none; height: fit-content; align-self: flex-start;">EXAMINAR</button>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button id="btn-examinar" class="hud-btn" style="display: none;">EXAMINAR</button>
+                        <button id="btn-eliminar" class="hud-btn" style="display: none; background-color: #600;">ELIMINAR</button>
+                    </div>
                 </div>
                 <button id="btn-cerrar-inventario">CERRAR (ESC)</button>
             </div>
@@ -399,8 +402,6 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
     <script src="../js/movimientos.js"></script>
     <script src="../js/interacciones.js"></script>
     <script src="../js/inventario.js"></script>
-    <script src="../js/eventos_este.js"></script>
-    <script src="../js/eventos_oeste.js"></script>
     <script>
         const catalogoArchivos = <?php echo json_encode($archivos); ?>;
         const tension = "<?php echo $enemigo_presente ? 'alta' : 'baja'; ?>";

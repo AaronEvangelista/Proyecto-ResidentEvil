@@ -14,13 +14,7 @@ const teclasPresionadas = {
   d: false,
 };
 
-function mostrarMensajeEnPantalla(mensaje) {
-  const messageBox = document.querySelector(".message-box p");
-  if (messageBox) {
-    messageBox.innerHTML = `<strong>> ${mensaje}</strong>`;
-  }
-  console.log(mensaje);
-}
+// La función mostrarMensajeEnPantalla ahora es gestionada centralmente en interacciones.js
 
 const gameActions = {
   elegirRuta: function (direccion) {
@@ -42,7 +36,7 @@ const gameActions = {
   },
   abrirMenuInventario: function () {
     mostrarMensajeEnPantalla(
-      "[Menú de Inventario Abierto]<br> Opciones: [F] Combinar - [I] Examinar - [ESC] Salir",
+      "[Menú de Inventario Abierto]<br> Opciones: [I] Examinar - [ESC] Salir",
     );
     estadoActual = ESTADOS_JUEGO.INVENTARIO;
   },
@@ -111,6 +105,22 @@ document.addEventListener("DOMContentLoaded", () => {
 window.addEventListener("keydown", (e) => {
   const key = e.key.toLowerCase();
 
+  // Bloquear movimientos si el inventario o una nota están visibles
+  const invVisible = document.getElementById('inventory-screen').style.display === 'flex';
+  const noteVisible = document.getElementById('note-viewer').style.display === 'flex';
+  const saveVisible = document.getElementById('save-menu').style.display === 'flex';
+
+  if (invVisible || noteVisible || saveVisible) {
+    if (key === 'escape') {
+      // Dejar que los otros scripts manejen el cierre con Escape
+      return;
+    }
+    // Bloquear cualquier otra tecla de movimiento si hay menús abiertos
+    if (["w", "a", "s", "d"].includes(key)) {
+      return;
+    }
+  }
+
   switch (estadoActual) {
     case ESTADOS_JUEGO.INTERACTIVO:
       if (["w", "a", "s", "d"].includes(key)) {
@@ -118,9 +128,6 @@ window.addEventListener("keydown", (e) => {
           teclasPresionadas[key] = true;
           gameActions.elegirRuta(key);
         }
-      }
-      if (key === "e") {
-        gameActions.abrirMenuInventario();
       }
       if (key === "escape") {
         gameActions.salirJuegoOPausa();
@@ -131,9 +138,6 @@ window.addEventListener("keydown", (e) => {
       break;
 
     case ESTADOS_JUEGO.INVENTARIO:
-      if (key === "f") {
-        gameActions.combinarItems();
-      }
       if (key === "i") {
         gameActions.examinarItem();
       }
