@@ -49,11 +49,44 @@ function ejecutarEvento(evento, event) {
       }
       break;
 
+    case "leer_archivo":
     case "nota":
       const noteViewer = document.getElementById("note-viewer");
-      document.getElementById("note-title").innerText = evento.nombre_objeto;
-      document.getElementById("note-body").innerText = evento.contenido_accion;
-      noteViewer.style.display = "flex";
+      const titleEl = document.getElementById("note-title");
+      const bodyEl = document.getElementById("note-body");
+      const imgEl = document.getElementById("note-img");
+
+      if (evento.tipo_accion === "leer_archivo") {
+        const idArchivo = evento.contenido_accion;
+        const archivo = typeof catalogoArchivos !== "undefined" 
+          ? catalogoArchivos.find((a) => a.id_archivo == idArchivo)
+          : null;
+
+        if (archivo) {
+          titleEl.innerText = archivo.nombre;
+          bodyEl.innerText = archivo.informacion;
+          if (archivo.imagen_url && imgEl) {
+            imgEl.src = archivo.imagen_url;
+            imgEl.style.display = "block";
+          } else if (imgEl) {
+            imgEl.src = "../img/nota.png"; // Imagen por defecto
+          }
+        } else {
+          titleEl.innerText = evento.nombre_objeto;
+          bodyEl.innerText = "No se pudo cargar el contenido del archivo.";
+        }
+      } else {
+        titleEl.innerText = evento.nombre_objeto;
+        bodyEl.innerText = evento.contenido_accion;
+      }
+
+      if (noteViewer) {
+        noteViewer.style.display = "flex";
+        // Actualizar estado si existe el sistema de estados
+        if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+          estadoActual = ESTADOS_JUEGO.PAUSA; // O un estado específico para lectura
+        }
+      }
       break;
 
     case "puzzle":
@@ -544,6 +577,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnCerrarNota) {
     btnCerrarNota.addEventListener("click", () => {
       document.getElementById("note-viewer").style.display = "none";
+      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+        estadoActual = ESTADOS_JUEGO.INTERACTIVO;
+      }
     });
   }
 
@@ -559,35 +595,53 @@ window.addEventListener("keydown", (e) => {
     const viewer = document.getElementById("note-viewer");
     if (viewer && viewer.style.display === "flex") {
       viewer.style.display = "none";
+      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+        estadoActual = ESTADOS_JUEGO.INTERACTIVO;
+      }
     }
 
     const saveMenu = document.getElementById("save-menu");
     if (saveMenu && saveMenu.style.display === "flex") {
       cerrarMenuGuardado();
+      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+        estadoActual = ESTADOS_JUEGO.INTERACTIVO;
+      }
     }
 
     // ESC también cierra el puzzle de medallones
     const medallonesPuzzle = document.getElementById("medallones-puzzle");
     if (medallonesPuzzle && medallonesPuzzle.style.display === "flex") {
       cerrarMenuMedallones();
+      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+        estadoActual = ESTADOS_JUEGO.INTERACTIVO;
+      }
     }
 
     // ESC también cierra la estatua puzzle
     const estatuaPuzzle = document.getElementById("estatua-puzzle");
     if (estatuaPuzzle && estatuaPuzzle.style.display === "flex") {
       cerrarEstatuaPuzzle();
+      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+        estadoActual = ESTADOS_JUEGO.INTERACTIVO;
+      }
     }
 
     // ESC también cierra la portable
     const portableSafe = document.getElementById("portable-safe-puzzle");
     if (portableSafe && portableSafe.style.display === "flex") {
       cerrarPortableSafe();
+      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+        estadoActual = ESTADOS_JUEGO.INTERACTIVO;
+      }
     }
 
     // ESC también cierra la caja fuerte
     const cajaPuzzle = document.getElementById("caja-fuerte-puzzle");
     if (cajaPuzzle && cajaPuzzle.style.display === "flex") {
       cerrarCajaFuerte();
+      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+        estadoActual = ESTADOS_JUEGO.INTERACTIVO;
+      }
     }
   }
 });
