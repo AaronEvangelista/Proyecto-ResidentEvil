@@ -42,7 +42,6 @@ try {
     $stmt_comp = $pdo->prepare("INSERT OR IGNORE INTO eventos_completados (id_partida, id_evento) VALUES (?, ?)");
     $stmt_comp->execute([$id_partida, $id_evento]);
 
-    // Marcar en sesión
     if (!isset($_SESSION['eventos_recogidos_sesion'])) {
         $_SESSION['eventos_recogidos_sesion'] = [];
     }
@@ -61,7 +60,8 @@ try {
 
     echo json_encode([
         'success' => true,
-        'message' => 'Caja fuerte abierta. Has obtenido: Cortacadenas.'
+        'message' => 'Caja fuerte abierta. Has obtenido: Cortacadenas.',
+        'nombre_objeto' => 'Cortacadenas'
     ]);
 
 } catch (PDOException $e) {

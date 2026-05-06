@@ -5,6 +5,28 @@ function mostrarMensajeEnPantalla(mensaje) {
   }
 }
 
+function mostrarNotificacionCentrada(nombre) {
+  const notif = document.getElementById("item-notification");
+  const nameEl = document.getElementById("notif-item-name");
+  if (!notif || !nameEl) return;
+
+  nameEl.textContent = nombre;
+  notif.style.display = "flex";
+  
+  // Pequeño delay para la transición de entrada
+  setTimeout(() => {
+    notif.classList.add("show");
+  }, 10);
+
+  // Ocultar después de 3 segundos
+  setTimeout(() => {
+    notif.classList.remove("show");
+    setTimeout(() => {
+      notif.style.display = "none";
+    }, 300);
+  }, 3000);
+}
+
 function ejecutarEvento(evento, event) {
   console.log("Evento clickeado:", evento);
 
@@ -16,11 +38,15 @@ function ejecutarEvento(evento, event) {
       mostrarMensajeEnPantalla(
         `[OBJETO] Has obtenido: ${evento.nombre_objeto}`,
       );
+      mostrarNotificacionCentrada(evento.nombre_objeto);
 
       registrarRecogida(evento.id_evento, tipo, evento.contenido_accion);
 
       const target = event.currentTarget;
-      if (target) target.style.display = "none";
+      if (target) {
+        target.style.display = "none";
+        target.onclick = null; // Evitar re-clicks si tarda en desaparecer
+      }
       break;
 
     case "nota":
@@ -157,9 +183,114 @@ function abrirMenuPuzzle(tipo) {
     abrirPuzzleMedallones();
   } else if (tipo === "caja_fuerte") {
     abrirCajaFuerte();
+  } else if (tipo === "portable") {
+    // Esto se llama si el evento es directo, pero usualmente es desde inventario
+    abrirPortableSafe();
+  } else if (tipo.startsWith("puzzle_")) {
+    abrirEstatuaPuzzle(tipo);
   } else {
     mostrarMensajeEnPantalla(`[PUZZLE] Se requiere resolver: ${tipo}`);
   }
+}
+
+// ════════════════════════════════════════════════
+//  PUZZLE ESTATUAS (PARA OBTENER MEDALLONES)
+// ════════════════════════════════════════════════
+
+const SIMBOLOS_PUZZLE = [
+  "Leon", "Rama", "Ave", "Pez", "Escorpion", "Jarra", 
+  "Mujer", "Arco", "Serpiente", "Lobo", "Aguila", "Calavera"
+];
+
+let estatuaPuzzleState = {
+  tipo: "",
+  valores: [0, 0, 0] // Índices en SIMBOLOS_PUZZLE
+};
+
+function abrirEstatuaPuzzle(tipo) {
+  const modal = document.getElementById("estatua-puzzle");
+  if (!modal) return;
+
+  estatuaPuzzleState.tipo = tipo;
+  estatuaPuzzleState.valores = [0, 0, 0];
+
+  const titulos = {
+    "puzzle_leon": "ESTATUA DEL LEÓN",
+    "puzzle_unicornio": "ESTATUA DEL UNICORNIO",
+    "puzzle_doncella": "ESTATUA DE LA DONCELLA"
+  };
+
+  document.getElementById("estatua-titulo").textContent = titulos[tipo] || "ESTATUA";
+  document.getElementById("estatua-status").textContent = "";
+
+  actualizarVisualEstatua();
+  modal.style.display = "flex";
+}
+
+function cerrarEstatuaPuzzle() {
+  const modal = document.getElementById("estatua-puzzle");
+  if (modal) modal.style.display = "none";
+}
+
+function cambiarSimbolo(index, delta) {
+  let val = estatuaPuzzleState.valores[index] + delta;
+  if (val >= SIMBOLOS_PUZZLE.length) val = 0;
+  if (val < 0) val = SIMBOLOS_PUZZLE.length - 1;
+  
+  estatuaPuzzleState.valores[index] = val;
+  actualizarVisualEstatua();
+}
+
+function actualizarVisualEstatua() {
+  for (let i = 0; i < 3; i++) {
+    const valIdx = estatuaPuzzleState.valores[i];
+    document.getElementById(`symbol-${i}`).textContent = SIMBOLOS_PUZZLE[valIdx];
+  }
+}
+
+function intentarResolverEstatua() {
+  const comb = estatuaPuzzleState.valores.map(idx => SIMBOLOS_PUZZLE[idx]);
+  const btn = document.getElementById("btn-resolver-estatua");
+  const status = document.getElementById("estatua-status");
+
+  btn.disabled = true;
+  status.textContent = "Verificando...";
+
+  fetch("../src/api/resolver_puzzle_medallon.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ 
+      puzzle: estatuaPuzzleState.tipo,
+      combinacion: comb 
+    }),
+  })
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.success) {
+        cerrarEstatuaPuzzle();
+        mostrarMensajeEnPantalla("[ESTATUA] " + data.message);
+        mostrarNotificacionCentrada(data.nombre_objeto);
+        
+        // El hotspot se oculta automáticamente al recargar o si manejamos el DOM
+        // Pero como estamos en una SPA-like, podemos ocultarlo manualmente
+        const hotspots = document.querySelectorAll(".hotspot");
+        hotspots.forEach(h => {
+            // Buscamos el hotspot que corresponde a este puzzle
+            if (h.onclick && h.onclick.toString().includes(estatuaPuzzleState.tipo)) {
+                h.style.display = "none";
+            }
+        });
+      } else {
+        status.textContent = "⚠ " + data.error;
+      }
+    })
+    .catch((err) => {
+      console.error("Error al resolver estatua:", err);
+      status.textContent = "⚠ Error de conexión";
+    })
+    .finally(() => {
+      btn.disabled = false;
+    });
 }
 
 function abrirPuzzleMedallones() {
@@ -367,6 +498,7 @@ function intentarAbrirCaja() {
       if (data.success) {
         cerrarCajaFuerte();
         mostrarMensajeEnPantalla("[CAJA FUERTE] " + data.message);
+        mostrarNotificacionCentrada(data.nombre_objeto);
         // Ocultar la caja fuerte interactiva
         document.querySelectorAll(".hotspot").forEach((h) => {
           if (h.title.includes("CAJA FUERTE")) h.style.display = "none";
@@ -440,6 +572,18 @@ window.addEventListener("keydown", (e) => {
       cerrarMenuMedallones();
     }
 
+    // ESC también cierra la estatua puzzle
+    const estatuaPuzzle = document.getElementById("estatua-puzzle");
+    if (estatuaPuzzle && estatuaPuzzle.style.display === "flex") {
+      cerrarEstatuaPuzzle();
+    }
+
+    // ESC también cierra la portable
+    const portableSafe = document.getElementById("portable-safe-puzzle");
+    if (portableSafe && portableSafe.style.display === "flex") {
+      cerrarPortableSafe();
+    }
+
     // ESC también cierra la caja fuerte
     const cajaPuzzle = document.getElementById("caja-fuerte-puzzle");
     if (cajaPuzzle && cajaPuzzle.style.display === "flex") {
@@ -447,3 +591,114 @@ window.addEventListener("keydown", (e) => {
     }
   }
 });
+// ════════════════════════════════════════════════
+//  PUZZLE CAJA FUERTE PORTÁTIL
+// ════════════════════════════════════════════════
+
+let portableSafeState = {
+  active: false,
+  idRegistro: null,
+  sequence: [], // Orden correcto de botones
+  currentIndex: 0, // Cuántos ha acertado seguidos
+  lights: [] // Referencias a los elementos DOM de las luces
+};
+
+function abrirPortableSafe(idRegistro = null) {
+  const modal = document.getElementById("portable-safe-puzzle");
+  if (!modal) return;
+
+  portableSafeState.active = true;
+  portableSafeState.idRegistro = idRegistro;
+  portableSafeState.currentIndex = 0;
+  
+  // Generar secuencia aleatoria de 0 a 7
+  const buttons = [0, 1, 2, 3, 4, 5, 6, 7];
+  portableSafeState.sequence = buttons.sort(() => Math.random() - 0.5);
+
+  document.getElementById("portable-status").textContent = "";
+  
+  // Generar luces en círculo
+  const ring = document.getElementById("light-ring");
+  // Limpiar luces previas pero mantener el logo si existe
+  const dots = ring.querySelectorAll('.light-dot');
+  dots.forEach(d => d.remove());
+
+  portableSafeState.lights = [];
+  for (let i = 0; i < 8; i++) {
+    const dot = document.createElement("div");
+    dot.className = "light-dot";
+    
+    // Posicionamiento circular
+    const angle = (i * 45) - 90; // Empezar arriba
+    const radius = 70;
+    const x = Math.cos(angle * (Math.PI / 180)) * radius;
+    const y = Math.sin(angle * (Math.PI / 180)) * radius;
+    
+    dot.style.left = `calc(50% + ${x}px - 7.5px)`;
+    dot.style.top = `calc(50% + ${y}px - 7.5px)`;
+    
+    ring.appendChild(dot);
+    portableSafeState.lights.push(dot);
+  }
+
+  modal.style.display = "flex";
+}
+
+function cerrarPortableSafe() {
+  const modal = document.getElementById("portable-safe-puzzle");
+  if (modal) modal.style.display = "none";
+  portableSafeState.active = false;
+}
+
+function pressPortableButton(btnIndex) {
+  if (!portableSafeState.active) return;
+
+  const expectedBtn = portableSafeState.sequence[portableSafeState.currentIndex];
+
+  if (btnIndex === expectedBtn) {
+    // Acierto
+    portableSafeState.lights[portableSafeState.currentIndex].classList.add("active");
+    portableSafeState.currentIndex++;
+
+    if (portableSafeState.currentIndex === 8) {
+      resolverPortableSafe();
+    }
+  } else {
+    // Fallo: Reset
+    portableSafeState.currentIndex = 0;
+    portableSafeState.lights.forEach(l => l.classList.remove("active"));
+    
+    const status = document.getElementById("portable-status");
+    status.textContent = "ERROR: SECUENCIA REINICIADA";
+    setTimeout(() => { if(status && status.textContent.includes("ERROR")) status.textContent = ""; }, 1000);
+  }
+}
+
+function resolverPortableSafe() {
+  const status = document.getElementById("portable-status");
+  status.style.color = "#00ff00";
+  status.textContent = "ACCESO CONCEDIDO";
+
+  fetch("../src/api/resolver_portable.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id_registro: portableSafeState.idRegistro }),
+  })
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.success) {
+        setTimeout(() => {
+          cerrarPortableSafe();
+          mostrarNotificacionCentrada(data.nombre_objeto);
+          mostrarMensajeEnPantalla(`[PORTÁTIL] ${data.message}`);
+          if (typeof abrirInventario === "function") abrirInventario();
+        }, 1500);
+      } else {
+        status.style.color = "#ff3333";
+        status.textContent = data.error;
+      }
+    })
+    .catch((err) => {
+      console.error("Error al resolver portable:", err);
+    });
+}

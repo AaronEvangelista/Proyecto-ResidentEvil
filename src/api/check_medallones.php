@@ -10,13 +10,10 @@ if (!$id_partida) {
     exit;
 }
 
-// IDs fijos de los medallones en catalogo_items
-// 7 = Medallón de León, 8 = Medallón de Unicornio, 9 = Medallón de Doncella
 $medallones_ids = [7, 8, 9];
 $tiene = [];
 
 try {
-    // Buscar en la base de datos (partida guardada)
     foreach ($medallones_ids as $id) {
         $stmt = $pdo->prepare("
             SELECT COUNT(*) FROM inventario 
@@ -28,14 +25,13 @@ try {
         }
     }
 
-    // Buscar también en la sesión activa (objetos recogidos sin guardar)
     foreach ($_SESSION['inventario_sesion'] ?? [] as $s_item) {
         if (
             $s_item['tipo_objeto'] === 'item' &&
-            in_array((int)$s_item['id_objeto'], $medallones_ids) &&
-            !in_array((int)$s_item['id_objeto'], $tiene)
+            in_array((int) $s_item['id_objeto'], $medallones_ids) &&
+            !in_array((int) $s_item['id_objeto'], $tiene)
         ) {
-            $tiene[] = (int)$s_item['id_objeto'];
+            $tiene[] = (int) $s_item['id_objeto'];
         }
     }
 

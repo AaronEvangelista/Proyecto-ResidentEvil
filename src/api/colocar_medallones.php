@@ -15,11 +15,9 @@ if (!$id_partida) {
     exit;
 }
 
-// IDs fijos: 7=León, 8=Unicornio, 9=Doncella
 $medallones_requeridos = [7, 8, 9];
 
 try {
-    // ─── 1. Localizar los medallones en la BD ────────────────────────────────
     $medallones_en_db = [];
     foreach ($medallones_requeridos as $id_medallon) {
         $stmt = $pdo->prepare("
@@ -34,22 +32,20 @@ try {
         }
     }
 
-    // ─── 2. Localizar los medallones en la sesión activa ─────────────────────
     $inventario_sesion = $_SESSION['inventario_sesion'] ?? [];
     $medallones_en_sesion = [];
     foreach ($inventario_sesion as $key => $s_item) {
         if (
             $s_item['tipo_objeto'] === 'item' &&
-            in_array((int)$s_item['id_objeto'], $medallones_requeridos)
+            in_array((int) $s_item['id_objeto'], $medallones_requeridos)
         ) {
-            $id = (int)$s_item['id_objeto'];
-            if (!isset($medallones_en_db[$id])) {         // Priorizar DB
+            $id = (int) $s_item['id_objeto'];
+            if (!isset($medallones_en_db[$id])) {
                 $medallones_en_sesion[$id] = $key;
             }
         }
     }
 
-    // ─── 3. Verificar que existen los 3 ─────────────────────────────────────
     $encontrados = array_unique(
         array_merge(array_keys($medallones_en_db), array_keys($medallones_en_sesion))
     );
@@ -57,25 +53,22 @@ try {
         if (!in_array($req, $encontrados)) {
             echo json_encode([
                 'success' => false,
-                'error'   => 'No tienes los tres medallones. Sigue explorando la comisaría.'
+                'error' => 'No tienes los tres medallones. Sigue explorando la comisaría.'
             ]);
             exit;
         }
     }
 
-    // ─── 4. Eliminar los medallones del inventario DB ────────────────────────
     foreach ($medallones_en_db as $id_medallon => $id_registro) {
         $stmt = $pdo->prepare("DELETE FROM inventario WHERE id_registro = ?");
         $stmt->execute([$id_registro]);
     }
 
-    // ─── 5. Eliminar los medallones de la sesión ─────────────────────────────
     foreach ($medallones_en_sesion as $id_medallon => $key) {
         unset($_SESSION['inventario_sesion'][$key]);
     }
     $_SESSION['inventario_sesion'] = array_values($_SESSION['inventario_sesion'] ?? []);
 
-    // ─── 6. Marcar el evento de la estatua como completado ───────────────────
     $stmt_evento = $pdo->prepare("
         SELECT id_evento FROM eventos_interactivos
         WHERE id_sala = 'lobby_principal' AND tipo_accion = 'puzzle' AND contenido_accion = 'medallones'

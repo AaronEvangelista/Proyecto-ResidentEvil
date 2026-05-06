@@ -43,8 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $resultado_tipo = 'item';
             $es_granada = false;
 
-            // La lógica de pólvoras ha sido eliminada por petición del usuario.
-            // Aquí se pueden añadir futuras combinaciones (ej: hierbas).
 
             if ($resultado_nombre) {
                 if ($es_granada) {

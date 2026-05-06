@@ -71,14 +71,7 @@ $loot_pool_names = [
     'Cinta de Guardado',
     'Munición de Pistola',
     'Munición de Escopeta',
-    'Munición de Fusil',
-    'Medallon de León',
-    'Medallon de Unicornio',
-    'Medallon de Doncella',
-    'Caja Fuerte Portatil',
-    'Llave de Diamante',
-    'Llave de Pica',
-    'Cortacadenas'
+    'Munición de Fusil'
 ];
 $placeholders = implode(',', array_fill(0, count($loot_pool_names), '?'));
 $query_loot = $pdo->prepare("SELECT * FROM catalogo_items WHERE nombre IN ($placeholders)");
@@ -304,7 +297,7 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
             width: 680px;
             background: linear-gradient(160deg, #0d0d0d, #1a1010);
             border: 1px solid #5a1a1a;
-            box-shadow: 0 0 40px rgba(180, 20, 20, 0.3), inset 0 0 60px rgba(0,0,0,0.5);
+            box-shadow: 0 0 40px rgba(180, 20, 20, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5);
             padding: 36px 40px 30px;
             position: relative;
         }
@@ -312,7 +305,9 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
         .medallones-container::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0;
+            top: 0;
+            left: 0;
+            right: 0;
             height: 2px;
             background: linear-gradient(90deg, transparent, #c00, transparent);
         }
@@ -372,7 +367,7 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
         /* Estado: disponible para colocar */
         .medallon-slot.available .medallon-slot-inner {
             border-color: #cc9900;
-            box-shadow: 0 0 18px rgba(180, 130, 0, 0.4), inset 0 0 20px rgba(180,130,0,0.05);
+            box-shadow: 0 0 18px rgba(180, 130, 0, 0.4), inset 0 0 20px rgba(180, 130, 0, 0.05);
             cursor: pointer;
             animation: pulseGold 1.5s ease-in-out infinite;
         }
@@ -380,7 +375,7 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
         /* Estado: ya colocado */
         .medallon-slot.placed .medallon-slot-inner {
             border-color: #00cc66;
-            box-shadow: 0 0 22px rgba(0, 180, 80, 0.5), inset 0 0 20px rgba(0,180,80,0.08);
+            box-shadow: 0 0 22px rgba(0, 180, 80, 0.5), inset 0 0 20px rgba(0, 180, 80, 0.08);
         }
 
         /* Estado: no disponible */
@@ -391,8 +386,15 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
         }
 
         @keyframes pulseGold {
-            0%, 100% { box-shadow: 0 0 14px rgba(180,130,0,0.3), inset 0 0 20px rgba(180,130,0,0.05); }
-            50% { box-shadow: 0 0 28px rgba(220,170,0,0.6), inset 0 0 30px rgba(220,170,0,0.1); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 14px rgba(180, 130, 0, 0.3), inset 0 0 20px rgba(180, 130, 0, 0.05);
+            }
+
+            50% {
+                box-shadow: 0 0 28px rgba(220, 170, 0, 0.6), inset 0 0 30px rgba(220, 170, 0, 0.1);
+            }
         }
 
         .medallon-placeholder {
@@ -421,8 +423,15 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
         }
 
         @keyframes floatMedallon {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
         }
 
         .slot-label {
@@ -434,8 +443,13 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
             font-family: 'Courier New', monospace;
         }
 
-        .medallon-slot.available .slot-label { color: #cc9900; }
-        .medallon-slot.placed   .slot-label { color: #00cc66; }
+        .medallon-slot.available .slot-label {
+            color: #cc9900;
+        }
+
+        .medallon-slot.placed .slot-label {
+            color: #00cc66;
+        }
 
         .slot-icon-hint {
             position: absolute;
@@ -444,7 +458,11 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
             font-size: 0.65rem;
             color: #555;
         }
-        .medallon-slot.placed .slot-icon-hint { color: #00cc66; content: '✓'; }
+
+        .medallon-slot.placed .slot-icon-hint {
+            color: #00cc66;
+            content: '✓';
+        }
 
         /* Barra de estado */
         #medallones-status {
@@ -506,6 +524,286 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
         }
 
         /* ═══════════════════════════════════════
+           PUZZLE ESTATUAS (PARA OBTENER MEDALLONES)
+        ═══════════════════════════════════════ */
+        #estatua-puzzle {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            backdrop-filter: blur(10px);
+        }
+
+        .estatua-container {
+            width: 500px;
+            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+            border: 2px solid #444;
+            border-radius: 5px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            padding: 40px;
+            text-align: center;
+        }
+
+        .estatua-container h2 {
+            color: #ccaa44;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 5px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .estatua-container p {
+            color: #777;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .symbols-container {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .symbol-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .symbol-btn {
+            background: #222;
+            color: #888;
+            border: 1px solid #444;
+            width: 40px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .symbol-btn:hover {
+            background: #333;
+            color: #fff;
+            border-color: #666;
+        }
+
+        .symbol-value {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            background: #111;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #333;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+            text-transform: uppercase;
+            padding: 5px;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .estatua-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .estatua-btn {
+            flex: 1;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid #333;
+            transition: all 0.3s;
+        }
+
+        #btn-resolver-estatua {
+            background: #2a1a00;
+            color: #ccaa44;
+            border-color: #664422;
+        }
+
+        #btn-resolver-estatua:hover {
+            background: #4a2a00;
+            box-shadow: 0 0 15px #ccaa44;
+        }
+
+        #btn-cancelar-estatua {
+            background: #111;
+            color: #888;
+        }
+
+        #btn-cancelar-estatua:hover {
+            background: #333;
+            color: #ccc;
+        }
+
+        #estatua-status {
+            color: #ff3333;
+            margin-bottom: 20px;
+            min-height: 20px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        /* ═══════════════════════════════════════
+           NOTIFICACIÓN CENTRADA (HAS OBTENIDO...)
+        ═══════════════════════════════════════ */
+        #item-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ccaa44;
+            padding: 30px 60px;
+            color: #fff;
+            z-index: 5000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 0 100px rgba(0,0,0,0.9), 0 0 20px rgba(204, 170, 68, 0.3);
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+        }
+
+        #item-notification.show {
+            display: flex;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #item-notification .notif-label {
+            font-size: 0.8rem;
+            color: #ccaa44;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        #item-notification .notif-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            font-family: 'Courier New', monospace;
+        }
+
+        /* ═══════════════════════════════════════
+           PUZZLE CAJA FUERTE PORTÁTIL
+        ═══════════════════════════════════════ */
+        #portable-safe-puzzle {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.98);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 6000;
+            backdrop-filter: blur(15px);
+        }
+
+        .portable-container {
+            width: 380px;
+            background: #222;
+            padding: 30px;
+            border-radius: 20px;
+            border: 3px solid #444;
+            box-shadow: 0 0 50px rgba(0,0,0,1);
+            text-align: center;
+            position: relative;
+        }
+
+        .light-ring {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 30px;
+            position: relative;
+            background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
+            border-radius: 50%;
+            border: 10px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rpd-logo {
+            width: 80px;
+            opacity: 0.3;
+        }
+
+        .light-dot {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: #111;
+            border-radius: 50%;
+            box-shadow: inset 0 0 5px #000;
+            transition: all 0.2s;
+        }
+
+        .light-dot.active {
+            background: #00ff00;
+            box-shadow: 0 0 15px #00ff00, 0 0 5px #fff;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 0 40px;
+        }
+
+        .portable-btn {
+            aspect-ratio: 1;
+            background: radial-gradient(circle, #444, #222);
+            border: 2px solid #555;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #111;
+            transition: all 0.1s;
+        }
+
+        .portable-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #111;
+        }
+
+        .portable-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .portable-exit {
+            background: #442222;
+            color: #ffaaaa;
+            border: 1px solid #663333;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+
+        .portable-exit:hover { background: #552222; }
+
+        /* ═══════════════════════════════════════
            PUZZLE CAJA FUERTE
         ═══════════════════════════════════════ */
         #caja-fuerte-puzzle {
@@ -524,7 +822,7 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
             background: linear-gradient(160deg, #1a1a1a, #0a0a0a);
             border: 4px solid #333;
             border-radius: 10px;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(0,0,0,0.8);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(0, 0, 0, 0.8);
             padding: 40px;
             text-align: center;
         }
@@ -560,6 +858,7 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
             font-size: 1.2rem;
             transition: all 0.2s;
         }
+
         .dial-btn:hover {
             background: #333;
             color: #fff;
@@ -578,7 +877,7 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
             justify-content: center;
             align-items: center;
             border: 2px solid #555;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
         }
 
         .caja-fuerte-actions {
@@ -602,6 +901,7 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
             color: #f00;
             border-color: #600;
         }
+
         #btn-abrir-caja:hover {
             background: #4a0000;
             box-shadow: 0 0 15px #f00;
@@ -611,6 +911,7 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
             background: #111;
             color: #888;
         }
+
         #btn-cancelar-caja:hover {
             background: #333;
             color: #ccc;
@@ -796,38 +1097,96 @@ $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
         </div>
 
     </div>
-
         <!-- ═══════════════════════════════════════
-             PUZZLE CAJA FUERTE (MODAL)
+             PUZZLE ESTATUAS (MODAL)
         ═══════════════════════════════════════ -->
-        <div id="caja-fuerte-puzzle" style="display: none;">
-            <div class="caja-fuerte-container">
-                <h2>CERRADURA DE COMBINACIÓN</h2>
-                <div class="dials-container">
-                    <div class="dial-wrapper">
-                        <button class="dial-btn dial-up" onclick="cambiarDial(0, 1)">▲</button>
-                        <div class="dial-value" id="dial-0">0</div>
-                        <button class="dial-btn dial-down" onclick="cambiarDial(0, -1)">▼</button>
+        <div id="estatua-puzzle" style="display: none;">
+            <div class="estatua-container">
+                <h2 id="estatua-titulo">Estatua</h2>
+                <p>Ajusta los relieves para revelar su secreto</p>
+                <div class="symbols-container">
+                    <div class="symbol-wrapper">
+                        <button class="symbol-btn" onclick="cambiarSimbolo(0, 1)">▲</button>
+                        <div class="symbol-value" id="symbol-0">---</div>
+                        <button class="symbol-btn" onclick="cambiarSimbolo(0, -1)">▼</button>
                     </div>
-                    <div class="dial-wrapper">
-                        <button class="dial-btn dial-up" onclick="cambiarDial(1, 1)">▲</button>
-                        <div class="dial-value" id="dial-1">0</div>
-                        <button class="dial-btn dial-down" onclick="cambiarDial(1, -1)">▼</button>
+                    <div class="symbol-wrapper">
+                        <button class="symbol-btn" onclick="cambiarSimbolo(1, 1)">▲</button>
+                        <div class="symbol-value" id="symbol-1">---</div>
+                        <button class="symbol-btn" onclick="cambiarSimbolo(1, -1)">▼</button>
                     </div>
-                    <div class="dial-wrapper">
-                        <button class="dial-btn dial-up" onclick="cambiarDial(2, 1)">▲</button>
-                        <div class="dial-value" id="dial-2">0</div>
-                        <button class="dial-btn dial-down" onclick="cambiarDial(2, -1)">▼</button>
+                    <div class="symbol-wrapper">
+                        <button class="symbol-btn" onclick="cambiarSimbolo(2, 1)">▲</button>
+                        <div class="symbol-value" id="symbol-2">---</div>
+                        <button class="symbol-btn" onclick="cambiarSimbolo(2, -1)">▼</button>
                     </div>
                 </div>
-                <div id="caja-fuerte-status" style="color:#f00; margin-bottom: 20px; min-height: 20px; font-family: monospace;"></div>
-                <div class="caja-fuerte-actions">
-                    <button class="caja-btn" id="btn-abrir-caja" onclick="intentarAbrirCaja()">ABRIR</button>
-                    <button class="caja-btn" id="btn-cancelar-caja" onclick="cerrarCajaFuerte()">CANCELAR</button>
+                <div id="estatua-status"></div>
+                <div class="estatua-actions">
+                    <button class="estatua-btn" id="btn-resolver-estatua" onclick="intentarResolverEstatua()">CONFIRMAR</button>
+                    <button class="estatua-btn" id="btn-cancelar-estatua" onclick="cerrarEstatuaPuzzle()">SALIR</button>
                 </div>
             </div>
         </div>
 
+        <div id="caja-fuerte-puzzle" style="display: none;">
+        <div class="caja-fuerte-container">
+            <h2>CERRADURA DE COMBINACIÓN</h2>
+            <div class="dials-container">
+                <div class="dial-wrapper">
+                    <button class="dial-btn dial-up" onclick="cambiarDial(0, 1)">▲</button>
+                    <div class="dial-value" id="dial-0">0</div>
+                    <button class="dial-btn dial-down" onclick="cambiarDial(0, -1)">▼</button>
+                </div>
+                <div class="dial-wrapper">
+                    <button class="dial-btn dial-up" onclick="cambiarDial(1, 1)">▲</button>
+                    <div class="dial-value" id="dial-1">0</div>
+                    <button class="dial-btn dial-down" onclick="cambiarDial(1, -1)">▼</button>
+                </div>
+                <div class="dial-wrapper">
+                    <button class="dial-btn dial-up" onclick="cambiarDial(2, 1)">▲</button>
+                    <div class="dial-value" id="dial-2">0</div>
+                    <button class="dial-btn dial-down" onclick="cambiarDial(2, -1)">▼</button>
+                </div>
+            </div>
+            <div id="caja-fuerte-status"
+                style="color:#f00; margin-bottom: 20px; min-height: 20px; font-family: monospace;"></div>
+            <div class="caja-fuerte-actions">
+                <button class="caja-btn" id="btn-abrir-caja" onclick="intentarAbrirCaja()">ABRIR</button>
+                <button class="caja-btn" id="btn-cancelar-caja" onclick="cerrarCajaFuerte()">CANCELAR</button>
+            </div>
+        </div>
+    <!-- PUZZLE CAJA FUERTE PORTÁTIL -->
+    <div id="portable-safe-puzzle">
+        <div class="portable-container">
+            <div class="light-ring" id="light-ring">
+                <img src="../img/rpd_logo.png" class="rpd-logo" alt="RPD">
+                <!-- Luces generadas por JS -->
+            </div>
+            
+            <div class="button-grid">
+                <button class="portable-btn" onclick="pressPortableButton(0)"></button>
+                <button class="portable-btn" onclick="pressPortableButton(1)"></button>
+                <button class="portable-btn" onclick="pressPortableButton(2)"></button>
+                <button class="portable-btn" onclick="pressPortableButton(3)"></button>
+                <button class="portable-btn" onclick="pressPortableButton(4)"></button>
+                <button class="portable-btn" onclick="pressPortableButton(5)"></button>
+                <button class="portable-btn" onclick="pressPortableButton(6)"></button>
+                <button class="portable-btn" onclick="pressPortableButton(7)"></button>
+            </div>
+
+            <div id="portable-status" style="color: #ff3333; margin-bottom: 15px; font-family: monospace; font-size: 0.8rem; height: 1.2rem;"></div>
+
+            <div class="portable-actions">
+                <button class="portable-exit" onclick="cerrarPortableSafe()">SALIR (ESC)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICACIÓN CENTRADA -->
+    <div id="item-notification">
+        <div class="notif-label">OBJETO OBTENIDO</div>
+        <div class="notif-name" id="notif-item-name">Nombre del Item</div>
     </div>
 
     <script src="../js/movimientos.js"></script>

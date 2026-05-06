@@ -9,14 +9,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_registro = $data['id_registro'] ?? null;
     $id_partida = $_SESSION['id_partida'] ?? 1;
 
-    // Si es un objeto que solo existe en la sesión (aún no guardado en DB)
-    if (strpos((string)$id_registro, 'session_') === 0) {
-        $index = (int)str_replace('session_', '', $id_registro);
+    if (strpos((string) $id_registro, 'session_') === 0) {
+        $index = (int) str_replace('session_', '', $id_registro);
         if (isset($_SESSION['inventario_sesion'][$index])) {
+            $s_item = $_SESSION['inventario_sesion'][$index];
+
+            if ($s_item['tipo_objeto'] === 'arma') {
+                echo json_encode(['success' => false, 'error' => 'No puedes eliminar armas.']);
+                exit;
+            }
+
+            if ($s_item['tipo_objeto'] === 'item') {
+                $st = $pdo->prepare("SELECT tipo FROM catalogo_items WHERE id_item = ?");
+                $st->execute([$s_item['id_objeto']]);
+                if ($st->fetchColumn() === 'clave') {
+                    echo json_encode(['success' => false, 'error' => 'No puedes eliminar objetos clave.']);
+                    exit;
+                }
+            }
+
             unset($_SESSION['inventario_sesion'][$index]);
-            // Reindexar el array para evitar huecos numéricos
             $_SESSION['inventario_sesion'] = array_values($_SESSION['inventario_sesion']);
-            echo json_encode(['success' => true, 'message' => 'Objeto descartado (no guardado aún).']);
+            echo json_encode(['success' => true, 'message' => 'Objeto descartado.']);
         } else {
             echo json_encode(['success' => false, 'error' => 'No se encontró el objeto en la sesión actual.']);
         }
@@ -37,6 +51,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($tipo === 'arma') {
                 echo json_encode(['success' => false, 'error' => 'No puedes eliminar armas.']);
                 exit;
+            }
+
+            // Si es un item, verificar si es clave
+            if ($tipo === 'item') {
+                $stmt_clave = $pdo->prepare("
+                    SELECT tipo FROM catalogo_items ci
+                    JOIN inventario i ON ci.id_item = i.id_objeto
+                    WHERE i.id_registro = ?
+                ");
+                $stmt_clave->execute([$id_registro]);
+                $tipo_cat = $stmt_clave->fetchColumn();
+
+                if ($tipo_cat === 'clave') {
+                    echo json_encode(['success' => false, 'error' => 'No puedes eliminar objetos clave.']);
+                    exit;
+                }
             }
 
             $stmt_del = $pdo->prepare("DELETE FROM inventario WHERE id_registro = ? AND id_partida = ?");

@@ -27,7 +27,7 @@ window.addEventListener('keydown', (e) => {
     const saveMenu = document.getElementById('save-menu');
     const noteVisible = noteViewer && noteViewer.style.display === 'flex';
     const saveVisible = saveMenu && saveMenu.style.display === 'flex';
-    
+
     if (noteVisible || saveVisible) return;
 
     // Usar code o key para Tab
@@ -35,7 +35,7 @@ window.addEventListener('keydown', (e) => {
         console.log("Tecla Tab detectada");
         e.preventDefault();
         e.stopPropagation();
-        
+
         if (inventoryScreen.style.display === 'none' || inventoryScreen.style.display === '') {
             abrirInventario();
         } else {
@@ -172,8 +172,8 @@ function renderizarInventario(items) {
 
                 const btnEliminar = document.getElementById('btn-eliminar');
                 if (btnEliminar) {
-                    // Solo mostrar eliminar si NO es un arma
-                    if (item.tipo !== 'arma') {
+                    // Solo mostrar eliminar si NO es un arma Y NO es un objeto clave
+                    if (item.tipo !== 'arma' && item.tipo !== 'clave') {
                         btnEliminar.style.display = 'block';
                         btnEliminar.onclick = () => {
                             if (confirm(`¿Estás seguro de que quieres eliminar ${item.nombre}?`)) {
@@ -264,6 +264,14 @@ function examinarObjeto(item) {
     const noteImg = document.getElementById('note-img');
 
     if (noteViewer && noteTitle && noteBody && noteImg) {
+        if (item.nombre.toUpperCase().includes("CAJA FUERTE PORTATIL")) {
+            cerrarInventario();
+            if (typeof abrirPortableSafe === 'function') {
+                abrirPortableSafe(item.id_registro);
+            }
+            return;
+        }
+
         noteTitle.innerText = item.nombre;
         noteBody.innerText = item.descripcion + "\n\n(Objeto examinado)";
 

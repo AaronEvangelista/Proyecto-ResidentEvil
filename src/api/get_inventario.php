@@ -36,7 +36,7 @@ try {
         if ($s_item['tipo_objeto'] === 'arma') {
             $st = $pdo->prepare("SELECT nombre, descripcion, imagen_url FROM catalogo_armas WHERE id_arma = ?");
         } else {
-            $st = $pdo->prepare("SELECT nombre, descripcion, imagen_url FROM catalogo_items WHERE id_item = ?");
+            $st = $pdo->prepare("SELECT nombre, descripcion, imagen_url, tipo FROM catalogo_items WHERE id_item = ?");
         }
         $st->execute([$s_item['id_objeto']]);
         $cat = $st->fetch(PDO::FETCH_ASSOC);
