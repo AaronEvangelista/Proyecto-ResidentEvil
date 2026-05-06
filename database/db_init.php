@@ -92,6 +92,7 @@ CREATE TABLE IF NOT EXISTS partida (
     id_usuario INTEGER NOT NULL,
     ruta TEXT NOT NULL, -- 'chico' o 'chica'
     sala_actual TEXT NOT NULL,
+    slot_numero INTEGER DEFAULT 0, -- 0 para partida rápida/actual, 1-3 para slots fijos
     fecha_guardado DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(id_usuario) REFERENCES usuarios(id_usuario)
 );
