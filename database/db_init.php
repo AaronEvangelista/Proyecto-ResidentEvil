@@ -178,16 +178,20 @@ INSERT OR REPLACE INTO catalogo_items (nombre, tipo, ruta_exclusiva, descripcion
 ('Llave de Pica', 'clave', 'ambos', 'Una llave que tiene la forma de la pica', '../img/llave_de_pica.png'),
 ('Cortacadenas', 'clave', 'ambos', 'Herramienta útil para cortar cadenas que impidan el paso', '../img/corta_cadenas.png');
 
--- Insertar Enemigos
 INSERT OR REPLACE INTO catalogo_enemigos (nombre, tipo, vida_maxima, dano_base, esquive_base, precision_cabeza, precision_torso, precision_piernas, prob_aturdir_piernas, 
 multiplicador_cabeza, imagen_url) VALUES
-('Zombie Hombre', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_civil_hombre.png'),
-('Zombie Mujer', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_civil_mujer.png'),
-('Zombie Recluso', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_recluso.png'),
-('Zombie Uniforme', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_uniforme.png'),
-('Licker', 'mutante', 75, 50, 25, 15, 60, 45, 30, 2.5, '../img/licker.png'),
-('Lastre', 'zombie_pesado', 120, 15, 60, 20, 85, 40, 20, 1.5, '../img/laste_enemigo.png'),
-('Espasmo', 'zombie_agil', 40, 50, 15, 10, 50, 40, 60, 2.0, '../img/espasmo_enemigo.png'),
+-- Zombie Común: Equilibrado.
+('Zombie Hombre', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_civil_hombre2.0.png'),
+('Zombie Mujer', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_civil_mujer2.0.png'),
+('Zombie Recluso', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_recluso2.0.png'),
+('Zombie Uniforme', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_uniforme2.0.png'),
+-- Licker: Muy difícil de dar en la cabeza por su postura, pero vulnerable al torso.
+('Licker', 'mutante', 75, 50, 25, 15, 60, 45, 30, 2.5, '../img/licker2.0.png'),
+-- Lastre: Muy fácil de acertar (grande y lento), pero difícil de aturdir por su masa.
+('Lastre', 'zombie_pesado', 120, 15, 60, 20, 85, 40, 20, 1.5, '../img/lastre_enemigo2.0.png'),
+-- Espasmo: Muy difícil de apuntar (errático), pero si le das en las piernas se nota.
+('Espasmo', 'zombie_agil', 40, 50, 15, 10, 50, 40, 60, 2.0, '../img/espasmo_enemigo2.0.png'),
+-- FASE 1: El Recopilador (Científico Translúcido)
 ('El Recopilador - Fase 1', 'boss', 300, 35, 10, 20, 70, 50, 40, 2.0, '../img/boss_fase1.png'),
 ('El Recopilador - Fase 2', 'boss', 600, 55, 5, 15, 50, 40, 25, 3.0, '../img/boss_fase2.png'),
 ('El Recopilador - Fase 3', 'boss', 1000, 80, 5, 10, 60, 30, 10, 4.0, '../img/boss_fase3.png');

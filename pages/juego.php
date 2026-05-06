@@ -22,9 +22,22 @@ if (!$id_usuario) {
     exit;
 }
 
-$stmt_partida = $pdo->prepare("SELECT id_partida FROM partida WHERE id_usuario = ? AND slot_numero = 0 ORDER BY fecha_guardado DESC LIMIT 1");
-$stmt_partida->execute([$id_usuario]);
-$partida = $stmt_partida->fetch();
+try {
+    $stmt_partida = $pdo->prepare("SELECT id_partida FROM partida WHERE id_usuario = ? AND slot_numero = 0 ORDER BY fecha_guardado DESC LIMIT 1");
+    $stmt_partida->execute([$id_usuario]);
+    $partida = $stmt_partida->fetch();
+} catch (PDOException $e) {
+    // Si el error es por la columna faltante, la creamos dinámicamente
+    if (strpos($e->getMessage(), 'no such column: slot_numero') !== false) {
+        $pdo->exec("ALTER TABLE partida ADD COLUMN slot_numero INTEGER DEFAULT 0");
+        // Reintentamos la consulta
+        $stmt_partida = $pdo->prepare("SELECT id_partida FROM partida WHERE id_usuario = ? AND slot_numero = 0 ORDER BY fecha_guardado DESC LIMIT 1");
+        $stmt_partida->execute([$id_usuario]);
+        $partida = $stmt_partida->fetch();
+    } else {
+        throw $e;
+    }
+}
 
 $forzar_nueva = isset($_GET['new']);
 
