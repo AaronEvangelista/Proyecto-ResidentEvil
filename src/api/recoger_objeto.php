@@ -25,10 +25,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['inventario_sesion'] = [];
                 }
 
+                // Las armas empiezan con 6 balas; los ítems con cantidad 1
+                $cantidad_inicial = ($tipo_objeto === 'arma') ? 6 : 1;
                 $_SESSION['inventario_sesion'][] = [
                     'tipo_objeto' => $tipo_objeto,
-                    'id_objeto' => $id_objeto,
-                    'cantidad' => 1
+                    'id_objeto'   => $id_objeto,
+                    'cantidad'    => $cantidad_inicial
                 ];
             }
 
