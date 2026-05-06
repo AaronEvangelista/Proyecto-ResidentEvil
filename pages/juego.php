@@ -1,64 +1,135 @@
 <?php
-// 1. Conexión y sesión
 session_start();
 require_once '../includes/conexion.php';
 
-// 2. Determinar la sala actual
 $id_sala_actual = $_GET['sala'] ?? 'banos_inicio';
 
-// 3. Consultar los datos de la sala
+//1. CARGAR DATOS DE LA SALA
 $query_sala = $pdo->prepare("SELECT * FROM catalogo_salas WHERE id_sala = ?");
 $query_sala->execute([$id_sala_actual]);
 $sala = $query_sala->fetch(PDO::FETCH_ASSOC);
 
+if (!$sala) {
+    header("Location: juego.php?sala=banos_inicio");
+    exit;
+}
 $_SESSION['sala_actual'] = $id_sala_actual;
 
-// 4. Enemigos (para el script de sonido)
-$query_enemigos = $pdo->prepare("SELECT * FROM estado_enemigos WHERE sala_ubicacion = ? AND estado = 'vivo'");
-$query_enemigos->execute([$id_sala_actual]);
-$enemigo_presente = $query_enemigos->fetch();
-
-// 5. Gestión de Partida y Sesión
+//2. USUARIO / PARTIDA
 $id_usuario = $_SESSION['usuario_id'] ?? null;
-
 if (!$id_usuario) {
     header('Location: ../sessions/login.php');
     exit;
 }
 
-// Buscar o crear partida para el usuario
-$stmt_partida = $pdo->prepare("SELECT id_partida FROM partida WHERE id_usuario = ? ORDER BY fecha_guardado DESC LIMIT 1");
+$stmt_partida = $pdo->prepare("SELECT id_partida FROM partida WHERE id_usuario = ? AND slot_numero = 0 ORDER BY fecha_guardado DESC LIMIT 1");
 $stmt_partida->execute([$id_usuario]);
 $partida = $stmt_partida->fetch();
 
-if (!$partida) {
-    // Crear partida por defecto si no existe
-    $stmt_crear = $pdo->prepare("INSERT INTO partida (id_usuario, ruta, sala_actual) VALUES (?, 'chico', 'banos_inicio')");
+$forzar_nueva = isset($_GET['new']);
+
+if (!$partida || $forzar_nueva) {
+    $stmt_crear = $pdo->prepare("INSERT INTO partida (id_usuario, ruta, sala_actual, slot_numero) VALUES (?, 'chico', 'banos_inicio', 0)");
     $stmt_crear->execute([$id_usuario]);
     $id_partida = $pdo->lastInsertId();
+    $stmt_estado = $pdo->prepare("INSERT INTO estado_personaje (id_partida, vida_actual) VALUES (?, 100)");
+    $stmt_estado->execute([$id_partida]);
+    
+    //Limpiar inventario de sesión si es nueva partida
+    if ($forzar_nueva) {
+        $_SESSION['inventario_sesion'] = [];
+        $_SESSION['eventos_recogidos_sesion'] = [];
+    }
 } else {
     $id_partida = $partida['id_partida'];
+    
+    //Verificar si el jugador está muerto en esta partida. Si es así, resetear vida para que pueda jugar.
+    $st_check_v = $pdo->prepare("SELECT vida_actual FROM estado_personaje WHERE id_partida = ?");
+    $st_check_v->execute([$id_partida]);
+    $v_check = $st_check_v->fetchColumn();
+    if ($v_check !== false && (int)$v_check <= 0) {
+        $pdo->prepare("UPDATE estado_personaje SET vida_actual = 100 WHERE id_partida = ?")->execute([$id_partida]);
+    }
 }
-
 $_SESSION['id_partida'] = $id_partida;
 
-// Inicializar contenedores de sesión si no existen
-if (!isset($_SESSION['eventos_recogidos_sesion'])) {
-    $_SESSION['eventos_recogidos_sesion'] = [];
+//3. PROCESAR RETORNO DE COMBATE (VICTORIA / HUIDA)
+if (isset($_GET['muerto'], $_GET['id_reg'])) {
+    $id_reg = (int)$_GET['id_reg'];
+    $stmt_upd = $pdo->prepare("UPDATE estado_enemigos SET estado = 'muerto' WHERE id_registro = ? AND id_partida = ?");
+    $stmt_upd->execute([$id_reg, $id_partida]);
+    unset($_SESSION['huido_de'][$id_sala_actual]);
+    header("Location: juego.php?sala=" . $id_sala_actual);
+    exit;
 }
-if (!isset($_SESSION['inventario_sesion'])) {
-    $_SESSION['inventario_sesion'] = [];
+
+if (isset($_GET['huir'], $_GET['id_reg'])) {
+    if (!isset($_SESSION['huido_de'])) $_SESSION['huido_de'] = [];
+    $_SESSION['huido_de'][$id_sala_actual] = (int)$_GET['id_reg'];
+    header("Location: juego.php?sala=" . $id_sala_actual);
+    exit;
 }
 
-// 6. Consultar eventos y filtrar
-// Mezclamos lo que ya estaba en la DB (partida guardada) con lo de la sesión actual
-$query_completados = $pdo->prepare("SELECT id_evento FROM eventos_completados WHERE id_partida = ?");
-$query_completados->execute([$id_partida]);
-$completados_db = $query_completados->fetchAll(PDO::FETCH_COLUMN);
+//Inicializar huida
+if (!isset($_SESSION['huido_de'])) $_SESSION['huido_de'] = [];
+$id_reg_huido = $_SESSION['huido_de'][$id_sala_actual] ?? 0;
 
-// Combinar DB + Sesión
-$completados = array_unique(array_merge($completados_db, $_SESSION['eventos_recogidos_sesion']));
+//Limpiar marcas de huida de otras salas
+foreach (array_keys($_SESSION['huido_de']) as $s) {
+    if ($s !== $id_sala_actual) unset($_SESSION['huido_de'][$s]);
+}
 
+//4. GENERADOR DE ENEMIGOS (SPAWN) 
+//Salas con zombies básicos (IDs 1-4) → pueden reaparecer (40% al volver)
+$salas_respawn = [
+    'sala_espera'         => [1, 2, 3, 4],
+    'oficina_este'        => [1, 2, 3, 4],
+    'biblioteca'          => [1, 2, 3, 4],
+];
+//Salas con enemigos especiales → aparecen UNA sola vez, no respawnean
+$salas_unicas = [
+    'oficina_capitan'     => [6],   // Lastre
+    'pasillo'             => [7],   // Espasmo
+    'sala_interrogatorios'=> [7],   // Espasmo
+    'sala_arte'           => [5],   // Licker
+];
+
+$distribucion_enemigos = array_merge($salas_respawn, $salas_unicas);
+$puede_respawnear = isset($salas_respawn[$id_sala_actual]);
+
+if (isset($distribucion_enemigos[$id_sala_actual])) {
+    $q_existe = $pdo->prepare("SELECT id_registro FROM estado_enemigos WHERE id_partida = ? AND sala_ubicacion = ? AND estado = 'vivo' LIMIT 1");
+    $q_existe->execute([$id_partida, $id_sala_actual]);
+    $hay_vivo = $q_existe->fetchColumn();
+
+    if (!$hay_vivo) {
+        $q_veces = $pdo->prepare("SELECT COUNT(*) FROM estado_enemigos WHERE id_partida = ? AND sala_ubicacion = ?");
+        $q_veces->execute([$id_partida, $id_sala_actual]);
+        $veces_spawn = (int)$q_veces->fetchColumn();
+        
+        if ($veces_spawn === 0 || ($puede_respawnear && rand(1, 100) <= 40)) {
+            $pool = $distribucion_enemigos[$id_sala_actual];
+            $id_enemigo_eleg = $pool[array_rand($pool)];
+            
+            $q_vida = $pdo->prepare("SELECT vida_maxima FROM catalogo_enemigos WHERE id_enemigo = ?");
+            $q_vida->execute([$id_enemigo_eleg]);
+            $vida_base = $q_vida->fetchColumn();
+
+            $pdo->prepare("INSERT INTO estado_enemigos (id_partida, id_enemigo, sala_ubicacion, vida_restante, estado) VALUES (?, ?, ?, ?, 'vivo')")
+                ->execute([$id_partida, $id_enemigo_eleg, $id_sala_actual, $vida_base]);
+        }
+    }
+}
+
+//5. DETECTAR ENEMIGO ACTUAL
+$q_ep = $pdo->prepare("SELECT ee.*, ce.nombre, ce.imagen_url FROM estado_enemigos ee JOIN catalogo_enemigos ce ON ee.id_enemigo = ce.id_enemigo WHERE ee.id_partida = ? AND ee.sala_ubicacion = ? AND ee.estado = 'vivo' LIMIT 1");
+$q_ep->execute([$id_partida, $id_sala_actual]);
+$enemigo_presente = $q_ep->fetch(PDO::FETCH_ASSOC);
+
+$hay_combate = ($enemigo_presente && $id_reg_huido != $enemigo_presente['id_registro']);
+
+//6. EVENTOS Y VIDA 
+if (!isset($_SESSION['eventos_recogidos_sesion'])) $_SESSION['eventos_recogidos_sesion'] = [];
 $query_eventos = $pdo->prepare("SELECT * FROM eventos_interactivos WHERE id_sala = ?");
 $query_eventos->execute([$id_sala_actual]);
 $eventos = $query_eventos->fetchAll(PDO::FETCH_ASSOC);
@@ -91,6 +162,8 @@ while ($row = $query_loot->fetch(PDO::FETCH_ASSOC)) {
     }
 }
 
+$completados = $_SESSION['eventos_recogidos_sesion'] ?? [];
+
 foreach ($eventos as $key => &$ev) {
     if (in_array($ev['id_evento'], $completados)) {
         unset($eventos[$key]);
@@ -98,13 +171,12 @@ foreach ($eventos as $key => &$ev) {
     }
 
     if ($ev['contenido_accion'] === 'random') {
-        // Probabilidad de aparición: 60% (antes 15%)
+        // Probabilidad de aparición: 60%
         if (rand(1, 100) > 60) {
             unset($eventos[$key]);
             continue;
         }
 
-        // Selección con pesos: 50% munición, 30% consumibles, 20% clave (si hay)
         $rand_val = rand(1, 100);
         $item_data = null;
 
@@ -115,7 +187,6 @@ foreach ($eventos as $key => &$ev) {
         } elseif (!empty($key_items_pool)) {
             $item_data = $key_items_pool[array_rand($key_items_pool)];
         } else {
-            // Fallback
             $combined = array_merge($items_pool, $ammo_pool, $key_items_pool);
             if (!empty($combined)) {
                 $item_data = $combined[array_rand($combined)];
@@ -130,1073 +201,198 @@ foreach ($eventos as $key => &$ev) {
             unset($eventos[$key]);
         }
     } elseif ($ev['tipo_accion'] === 'recoger_item' && is_numeric($ev['contenido_accion'])) {
-        // Cargar imagen para items fijos
         $id_item = $ev['contenido_accion'];
         $stmt_item = $pdo->prepare("SELECT imagen_url FROM catalogo_items WHERE id_item = ?");
         $stmt_item->execute([$id_item]);
         $ev['imagen_item'] = $stmt_item->fetchColumn();
     } elseif ($ev['tipo_accion'] === 'recoger_arma' && is_numeric($ev['contenido_accion'])) {
-        // Cargar imagen para armas fijas
         $id_arma = $ev['contenido_accion'];
         $stmt_arma = $pdo->prepare("SELECT imagen_url FROM catalogo_armas WHERE id_arma = ?");
         $stmt_arma->execute([$id_arma]);
         $ev['imagen_item'] = $stmt_arma->fetchColumn();
     }
 }
-
-// 6. Consultar todos los archivos para el visor
 $query_archivos = $pdo->query("SELECT * FROM catalogo_archivos");
 $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
-?>
 
+$st_vida = $pdo->prepare("SELECT vida_actual FROM estado_personaje WHERE id_partida = ?");
+$st_vida->execute([$id_partida]);
+$vida_p = $st_vida->fetchColumn() ?: 100;
+?>
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resident Evil - <?php echo $sala['nombre_visual']; ?></title>
-
+    <title>Resident Evil - <?php echo htmlspecialchars($sala['nombre_visual']); ?></title>
     <link rel="stylesheet" href="../styles/juego.css">
     <link rel="stylesheet" href="../styles/inventario.css">
     <style>
-        /* Estilos Premium para el Menú de Guardado */
-        #save-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            backdrop-filter: blur(5px);
-        }
-
-        .save-container {
-            width: 600px;
-            background: #111;
-            border: 2px solid #333;
-            padding: 30px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            position: relative;
-        }
-
-        .save-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-
-        .save-header h2 {
-            margin: 0;
-            color: #ff0000;
-            letter-spacing: 2px;
-            font-size: 1.5rem;
-        }
-
-        .ink-ribbon-count {
-            background: #222;
-            padding: 5px 15px;
-            border: 1px solid #444;
-            color: #aaa;
-            font-size: 0.9rem;
-        }
-
-        .save-hint {
-            color: #888;
-            font-style: italic;
-            margin-bottom: 20px;
-        }
-
-        .save-slots {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .save-slot {
-            display: flex;
-            align-items: center;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .save-slot:hover {
-            background: #252525;
-            border-color: #ff0000;
-            transform: translateX(10px);
-        }
-
-        .slot-number {
-            font-size: 1.5rem;
-            color: #444;
-            margin-right: 20px;
-            font-family: 'Courier New', Courier, monospace;
-        }
-
-        .save-slot:hover .slot-number {
-            color: #ff0000;
-        }
-
-        .slot-info {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
-
-        .slot-status {
-            color: #eee;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-
-        .slot-date {
-            font-size: 0.8rem;
-            color: #666;
-        }
-
-        #btn-cancelar-guardado {
-            width: 100%;
-            background: #333;
-            border: none;
-            color: #fff;
-            padding: 10px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        #btn-cancelar-guardado:hover {
-            background: #444;
-        }
-
-        /* ═══════════════════════════════════════
-           PUZZLE MEDALLONES
-        ═══════════════════════════════════════ */
-        #medallones-puzzle {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.92);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-            backdrop-filter: blur(8px);
-        }
-
-        .medallones-container {
-            width: 680px;
-            background: linear-gradient(160deg, #0d0d0d, #1a1010);
-            border: 1px solid #5a1a1a;
-            box-shadow: 0 0 40px rgba(180, 20, 20, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5);
-            padding: 36px 40px 30px;
-            position: relative;
-        }
-
-        .medallones-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #c00, transparent);
-        }
-
-        .medallones-header {
-            text-align: center;
-            margin-bottom: 28px;
-            border-bottom: 1px solid #2a1010;
-            padding-bottom: 18px;
-        }
-
-        .medallones-header h2 {
-            margin: 0 0 8px;
-            color: #cc3333;
-            font-size: 1.3rem;
-            letter-spacing: 4px;
-            font-family: 'Courier New', monospace;
-        }
-
-        .medallones-header p {
-            margin: 0;
-            color: #888;
-            font-size: 0.8rem;
-            letter-spacing: 1px;
-        }
-
-        /* Base de la estatua con los 3 slots */
-        .medallones-base {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 24px;
-        }
-
-        .medallon-slot {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .medallon-slot-inner {
-            width: 150px;
-            height: 160px;
-            border: 2px solid #333;
-            background: #111;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-
-        /* Estado: disponible para colocar */
-        .medallon-slot.available .medallon-slot-inner {
-            border-color: #cc9900;
-            box-shadow: 0 0 18px rgba(180, 130, 0, 0.4), inset 0 0 20px rgba(180, 130, 0, 0.05);
-            cursor: pointer;
-            animation: pulseGold 1.5s ease-in-out infinite;
-        }
-
-        /* Estado: ya colocado */
-        .medallon-slot.placed .medallon-slot-inner {
-            border-color: #00cc66;
-            box-shadow: 0 0 22px rgba(0, 180, 80, 0.5), inset 0 0 20px rgba(0, 180, 80, 0.08);
-        }
-
-        /* Estado: no disponible */
-        .medallon-slot.unavailable .medallon-slot-inner {
-            border-color: #2a2a2a;
-            opacity: 0.45;
-            cursor: not-allowed;
-        }
-
-        @keyframes pulseGold {
-
-            0%,
-            100% {
-                box-shadow: 0 0 14px rgba(180, 130, 0, 0.3), inset 0 0 20px rgba(180, 130, 0, 0.05);
-            }
-
-            50% {
-                box-shadow: 0 0 28px rgba(220, 170, 0, 0.6), inset 0 0 30px rgba(220, 170, 0, 0.1);
-            }
-        }
-
-        .medallon-placeholder {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-            opacity: 0.18;
-            filter: grayscale(100%);
-        }
-
-        .medallon-placed {
-            position: absolute;
-            inset: 0;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-        }
-
-        .medallon-placed img {
-            width: 90px;
-            height: 90px;
-            object-fit: contain;
-            filter: drop-shadow(0 0 8px rgba(0, 220, 100, 0.7));
-            animation: floatMedallon 2s ease-in-out infinite;
-        }
-
-        @keyframes floatMedallon {
-
-            0%,
-            100% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-5px);
-            }
-        }
-
-        .slot-label {
-            position: absolute;
-            bottom: 8px;
-            font-size: 0.65rem;
-            letter-spacing: 2px;
-            color: #666;
-            font-family: 'Courier New', monospace;
-        }
-
-        .medallon-slot.available .slot-label {
-            color: #cc9900;
-        }
-
-        .medallon-slot.placed .slot-label {
-            color: #00cc66;
-        }
-
-        .slot-icon-hint {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            font-size: 0.65rem;
-            color: #555;
-        }
-
-        .medallon-slot.placed .slot-icon-hint {
-            color: #00cc66;
-            content: '✓';
-        }
-
-        /* Barra de estado */
-        #medallones-status {
-            text-align: center;
-            font-size: 0.8rem;
-            color: #999;
-            letter-spacing: 1px;
-            margin-bottom: 22px;
-            min-height: 20px;
-            font-family: 'Courier New', monospace;
-        }
-
-        /* Acciones */
-        .medallones-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        #btn-colocar-medallones {
-            flex: 1;
-            padding: 12px;
-            background: linear-gradient(135deg, #7a0000, #550000);
-            border: 1px solid #cc0000;
-            color: #fff;
-            letter-spacing: 3px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Courier New', monospace;
-        }
-
-        #btn-colocar-medallones:not(:disabled):hover {
-            background: linear-gradient(135deg, #aa0000, #770000);
-            box-shadow: 0 0 20px rgba(200, 0, 0, 0.5);
-            transform: translateY(-1px);
-        }
-
-        #btn-colocar-medallones:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            border-color: #333;
-        }
-
-        #btn-cancelar-medallones {
-            padding: 12px 20px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            color: #888;
-            cursor: pointer;
-            letter-spacing: 2px;
-            font-size: 0.8rem;
-            transition: all 0.2s ease;
-            font-family: 'Courier New', monospace;
-        }
-
-        #btn-cancelar-medallones:hover {
-            background: #252525;
-            color: #ccc;
-        }
-
-        /* ═══════════════════════════════════════
-           PUZZLE ESTATUAS (PARA OBTENER MEDALLONES)
-        ═══════════════════════════════════════ */
-        #estatua-puzzle {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.95);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-            backdrop-filter: blur(10px);
-        }
-
-        .estatua-container {
-            width: 500px;
-            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
-            border: 2px solid #444;
-            border-radius: 5px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            padding: 40px;
-            text-align: center;
-        }
-
-        .estatua-container h2 {
-            color: #ccaa44;
-            font-family: 'Courier New', monospace;
-            margin-bottom: 5px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
-
-        .estatua-container p {
-            color: #777;
-            font-size: 0.9rem;
-            margin-bottom: 30px;
-        }
-
-        .symbols-container {
-            display: flex;
-            justify-content: center;
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .symbol-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .symbol-btn {
-            background: #222;
-            color: #888;
-            border: 1px solid #444;
-            width: 40px;
-            height: 30px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: all 0.2s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .symbol-btn:hover {
-            background: #333;
-            color: #fff;
-            border-color: #666;
-        }
-
-        .symbol-value {
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: #e0e0e0;
-            font-family: 'Courier New', monospace;
-            background: #111;
-            width: 100px;
-            height: 100px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 2px solid #333;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
-            text-transform: uppercase;
-            padding: 5px;
-            text-align: center;
-            word-break: break-word;
-        }
-
-        .estatua-actions {
-            display: flex;
-            gap: 15px;
-        }
-
-        .estatua-btn {
-            flex: 1;
-            padding: 12px;
-            font-family: 'Courier New', monospace;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            border: 2px solid #333;
-            transition: all 0.3s;
-        }
-
-        #btn-resolver-estatua {
-            background: #2a1a00;
-            color: #ccaa44;
-            border-color: #664422;
-        }
-
-        #btn-resolver-estatua:hover {
-            background: #4a2a00;
-            box-shadow: 0 0 15px #ccaa44;
-        }
-
-        #btn-cancelar-estatua {
-            background: #111;
-            color: #888;
-        }
-
-        #btn-cancelar-estatua:hover {
-            background: #333;
-            color: #ccc;
-        }
-
-        #estatua-status {
-            color: #ff3333;
-            margin-bottom: 20px;
-            min-height: 20px;
-            font-family: monospace;
-            font-size: 0.8rem;
-        }
-
-        /* ═══════════════════════════════════════
-           NOTIFICACIÓN CENTRADA (HAS OBTENIDO...)
-        ═══════════════════════════════════════ */
-        #item-notification {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.8);
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid #ccaa44;
-            padding: 30px 60px;
-            color: #fff;
-            z-index: 5000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            box-shadow: 0 0 100px rgba(0,0,0,0.9), 0 0 20px rgba(204, 170, 68, 0.3);
-            pointer-events: none;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            opacity: 0;
-        }
-
-        #item-notification.show {
-            display: flex;
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        #item-notification .notif-label {
-            font-size: 0.8rem;
-            color: #ccaa44;
-            letter-spacing: 4px;
-            margin-bottom: 10px;
-            font-family: 'Courier New', monospace;
-        }
-
-        #item-notification .notif-name {
-            font-size: 1.8rem;
-            font-weight: bold;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
-            font-family: 'Courier New', monospace;
-        }
-
-        /* ═══════════════════════════════════════
-           PUZZLE CAJA FUERTE PORTÁTIL
-        ═══════════════════════════════════════ */
-        #portable-safe-puzzle {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.98);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 6000;
-            backdrop-filter: blur(15px);
-        }
-
-        .portable-container {
-            width: 380px;
-            background: #222;
-            padding: 30px;
-            border-radius: 20px;
-            border: 3px solid #444;
-            box-shadow: 0 0 50px rgba(0,0,0,1);
-            text-align: center;
-            position: relative;
-        }
-
-        .light-ring {
-            width: 180px;
-            height: 180px;
-            margin: 0 auto 30px;
-            position: relative;
-            background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
-            border-radius: 50%;
-            border: 10px solid #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .rpd-logo {
-            width: 80px;
-            opacity: 0.3;
-        }
-
-        .light-dot {
-            position: absolute;
-            width: 15px;
-            height: 15px;
-            background: #111;
-            border-radius: 50%;
-            box-shadow: inset 0 0 5px #000;
-            transition: all 0.2s;
-        }
-
-        .light-dot.active {
-            background: #00ff00;
-            box-shadow: 0 0 15px #00ff00, 0 0 5px #fff;
-        }
-
-        .button-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
-            padding: 0 40px;
-        }
-
-        .portable-btn {
-            aspect-ratio: 1;
-            background: radial-gradient(circle, #444, #222);
-            border: 2px solid #555;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 5px 0 #111;
-            transition: all 0.1s;
-        }
-
-        .portable-btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 2px 0 #111;
-        }
-
-        .portable-actions {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .portable-exit {
-            background: #442222;
-            color: #ffaaaa;
-            border: 1px solid #663333;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-family: monospace;
-        }
-
-        .portable-exit:hover { background: #552222; }
-
-        /* ═══════════════════════════════════════
-           PUZZLE CAJA FUERTE
-        ═══════════════════════════════════════ */
-        #caja-fuerte-puzzle {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.95);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-            backdrop-filter: blur(8px);
-        }
-
-        .caja-fuerte-container {
-            width: 400px;
-            background: linear-gradient(160deg, #1a1a1a, #0a0a0a);
-            border: 4px solid #333;
-            border-radius: 10px;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(0, 0, 0, 0.8);
-            padding: 40px;
-            text-align: center;
-        }
-
-        .caja-fuerte-container h2 {
-            color: #aaa;
-            font-family: 'Courier New', monospace;
-            margin-bottom: 30px;
-            letter-spacing: 2px;
-        }
-
-        .dials-container {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .dial-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .dial-btn {
-            background: #222;
-            color: #888;
-            border: 1px solid #444;
-            width: 50px;
-            height: 30px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: all 0.2s;
-        }
-
-        .dial-btn:hover {
-            background: #333;
-            color: #fff;
-            border-color: #666;
-        }
-
-        .dial-value {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #e0e0e0;
-            font-family: 'Courier New', Courier, monospace;
-            background: #000;
-            width: 70px;
-            height: 80px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 2px solid #555;
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
-        }
-
-        .caja-fuerte-actions {
-            display: flex;
-            gap: 15px;
-        }
-
-        .caja-btn {
-            flex: 1;
-            padding: 12px;
-            font-family: 'Courier New', monospace;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            border: 2px solid #333;
-            transition: all 0.3s;
-        }
-
-        #btn-abrir-caja {
-            background: #2a0000;
-            color: #f00;
-            border-color: #600;
-        }
-
-        #btn-abrir-caja:hover {
-            background: #4a0000;
-            box-shadow: 0 0 15px #f00;
-        }
-
-        #btn-cancelar-caja {
-            background: #111;
-            color: #888;
-        }
-
-        #btn-cancelar-caja:hover {
-            background: #333;
-            color: #ccc;
-        }
+        .vats-life-container { position: fixed; bottom: 20px; left: 20px; width: 250px; background: rgba(0,0,0,0.7); border: 1px solid #333; padding: 10px; z-index: 1000; }
+        .vats-label { color: #00ff66; font-size: 10px; letter-spacing: 1px; margin-bottom: 5px; }
+        .vats-hp-fill { height: 12px; transition: width 0.5s; }
+        .hp-fine { background: #00ff66; box-shadow: 0 0 10px #00ff66; }
+        .hp-caution { background: #ffcc00; box-shadow: 0 0 10px #ffcc00; }
+        .hp-danger { background: #ff4444; box-shadow: 0 0 10px #ff4444; }
+
+        /* Estilos del Enemigo en Pantalla */
+        .enemy-encounter {
+            position: absolute; left: 30%; top: 15%; width: 40%; height: 70%;
+            z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: crosshair; transition: transform 0.3s;
+        }
+        /* Estilos de Combate (Integrados de main) */
+        .enemy-encounter:hover { transform: scale(1.05); }
+        .enemy-encounter img { height: 90%; filter: drop-shadow(0 0 15px rgba(255,0,0,0.6)); animation: creature-pulse 2s infinite; }
+        .enemy-label { background: rgba(0,0,0,0.85); color: #ff0000; padding: 8px 15px; border: 1px solid #ff0000; font-family: 'Courier New', monospace; font-size: 0.9rem; text-align: center; margin-top: -20px; box-shadow: 0 0 10px red; }
+        
+        @keyframes creature-pulse { 0%, 100% { filter: drop-shadow(0 0 10px red); } 50% { filter: drop-shadow(0 0 25px red); } }
+        
+        .nav-blocked { opacity: 0; pointer-events: none; transition: opacity 0.5s; }
     </style>
 </head>
-
 <body>
-    <!-- MENÚ DE PAUSA -->
-    <div id="game-container" style="background-image: url('<?php echo $sala['imagen_url']; ?>');">
 
-        <!-- MENÚ DE PAUSA -->
-        <div id="pause-menu" style="display: none;">
-            <h2>PAUSA</h2>
-            <button id="btn-continuar">Continuar (ESC)</button>
-            <button id="btn-cargar">Cargar Partida</button>
-            <button id="btn-salir">Salir del Juego</button>
+<div class="vats-life-container">
+    <div class="vats-label">CONDITION: <?php 
+        if ($vida_p >= 75) echo "FINE"; 
+        elseif ($vida_p >= 30) echo "CAUTION"; 
+        else echo "DANGER"; 
+    ?></div>
+    <div style="background: #002200; height: 12px; width: 100%; border: 1px solid #00ff66;">
+        <div class="vats-hp-fill <?php 
+            echo ($vida_p >= 75 ? "hp-fine" : ($vida_p >= 30 ? "hp-caution" : "hp-danger")); 
+        ?>" style="width:<?php echo $vida_p; ?>%;"></div>
+    </div>
+</div>
+
+<div id="game-container" style="background-image: url('<?php echo $sala['imagen_url']; ?>');">
+
+    <div class="hud-top">
+        <span class="location-name"><?php echo htmlspecialchars($sala['nombre_visual']); ?></span>
+        <button id="btn-inventario" class="hud-btn">INVENTARIO (TAB)</button>
+    </div>
+
+    <div class="navigation-controls <?php echo $hay_combate ? 'nav-blocked' : ''; ?>">
+        <?php if ($sala['norte']): ?><a href="juego.php?sala=<?php echo $sala['norte']; ?>" class="nav-btn north">▲</a><?php endif; ?>
+        <?php if ($sala['sur']):   ?><a href="juego.php?sala=<?php echo $sala['sur'];   ?>" class="nav-btn south">▼</a><?php endif; ?>
+        <?php if ($sala['este']):  ?><a href="juego.php?sala=<?php echo $sala['este'];  ?>" class="nav-btn east" >►</a><?php endif; ?>
+        <?php if ($sala['oeste']): ?><a href="juego.php?sala=<?php echo $sala['oeste']; ?>" class="nav-btn west" >◄</a><?php endif; ?>
+    </div>
+
+    <div class="message-box">
+        <p><?php echo $hay_combate ? "¡Un engendro bloquea el camino!" : $sala['descripcion']; ?></p>
+    </div>
+
+    <?php if ($hay_combate): ?>
+    <div class="enemy-encounter" onclick="window.location.href='combate.php?id_registro=<?php echo $enemigo_presente['id_registro']; ?>&vuelta=<?php echo $id_sala_actual; ?>'">
+        <img src="<?php echo $enemigo_presente['imagen_url']; ?>" alt="Enemigo">
+        <div class="enemy-label">
+            <strong>ADVERTENCIA:</strong> ENEMIGO CERCANO<br>
+            <small>PULSA PARA INICIAR COMBATE</small>
         </div>
+    </div>
+    <?php endif; ?>
 
-        <div class="hud-top">
-            <span class="location-name"><?php echo $sala['nombre_visual']; ?></span>
-            <button id="btn-inventario" class="hud-btn">INVENTARIO (TAB)</button>
-        </div>
-
-        <div class="navigation-controls">
-            <?php if ($sala['norte']): ?>
-                <a href="juego.php?sala=<?php echo $sala['norte']; ?>" class="nav-btn north">▲</a>
-            <?php endif; ?>
-            <?php if ($sala['sur']): ?>
-                <a href="juego.php?sala=<?php echo $sala['sur']; ?>" class="nav-btn south">▼</a>
-            <?php endif; ?>
-            <?php if ($sala['este']): ?>
-                <a href="juego.php?sala=<?php echo $sala['este']; ?>" class="nav-btn east">►</a>
-            <?php endif; ?>
-            <?php if ($sala['oeste']): ?>
-                <a href="juego.php?sala=<?php echo $sala['oeste']; ?>" class="nav-btn west">◄</a>
-            <?php endif; ?>
-        </div>
-
-        <div class="message-box">
-            <p><?php echo $sala['descripcion']; ?></p>
-        </div>
-
-        <!-- RENDERIZAR EVENTOS DESDE LA DB -->
+    <?php if (!$hay_combate): ?>
         <?php foreach ($eventos as $ev): ?>
-            <?php if (!in_array($ev['id_evento'], $completados)): ?>
-                <div class="hotspot <?php echo !empty($ev['imagen_item']) ? 'has-item' : ''; ?>" style="left: <?php echo $ev['xmin']; ?>%; 
-                            top: <?php echo $ev['ymin']; ?>%; 
-                            width: <?php echo ($ev['xmax'] - $ev['xmin']); ?>%; 
-                            height: <?php echo ($ev['ymax'] - $ev['ymin']); ?>%;"
-                    title="<?php echo $ev['nombre_objeto']; ?>"
-                    onclick='ejecutarEvento(<?php echo json_encode($ev); ?>, event)'>
-
-                    <?php if (!empty($ev['imagen_item'])): ?>
-                        <img src="<?php echo $ev['imagen_item']; ?>" alt="Objeto" class="item-visual">
-                    <?php endif; ?>
-                </div>
-            <?php endif; ?>
+            <div class="hotspot <?php echo !empty($ev['imagen_item']) ? 'has-item' : ''; ?>" 
+                 style="left:<?php echo $ev['xmin']; ?>%; top:<?php echo $ev['ymin']; ?>%; width:<?php echo ($ev['xmax']-$ev['xmin']); ?>%; height:<?php echo ($ev['ymax']-$ev['ymin']); ?>%;"
+                 onclick='ejecutarEvento(<?php echo json_encode($ev); ?>, event)'>
+                <?php if (!empty($ev['imagen_item'])): ?>
+                    <img src="<?php echo $ev['imagen_item']; ?>" alt="Objeto" class="item-visual">
+                <?php endif; ?>
+            </div>
         <?php endforeach; ?>
+    <?php endif; ?>
 
-        <!-- VISOR DE NOTAS (MODAL) -->
-        <div id="note-viewer" style="display: none;">
-            <div class="note-container">
-                <img src="../img/nota.png" alt="Papel de nota" class="note-paper" id="note-img">
-                <div class="note-content">
-                    <h3 id="note-title">Título de la Nota</h3>
-                    <div id="note-body">Cuerpo de la nota...</div>
+    <!-- MODALES Y MENÚS -->
+    <div id="inventory-screen" style="display: none;">
+        <div class="inventory-container">
+            <h2>INVENTARIO</h2>
+            <div class="inventory-grid" id="inventory-grid"></div>
+            <div class="item-details" id="item-details" style="display: flex;">
+                <div style="flex-grow: 1;">
+                    <h3 id="detail-name">Selecciona un objeto</h3>
+                    <p id="detail-description">Pasa el ratón sobre un objeto para ver sus detalles.</p>
                 </div>
-                <button id="btn-cerrar-nota">CERRAR (ESC)</button>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="btn-examinar" class="hud-btn" style="display: none;">EXAMINAR</button>
+                    <button id="btn-eliminar" class="hud-btn" style="display: none; background-color: #600;">ELIMINAR</button>
+                </div>
             </div>
+            <button id="btn-cerrar-inventario">CERRAR (ESC)</button>
         </div>
-
-        <div id="inventory-screen" style="display: none;">
-            <div class="inventory-container">
-                <h2>INVENTARIO</h2>
-                <div class="inventory-grid" id="inventory-grid">
-                </div>
-                <div class="item-details" id="item-details" style="display: flex;">
-                    <div style="flex-grow: 1;">
-                        <h3 id="detail-name">Selecciona un objeto</h3>
-                        <p id="detail-description">Pasa el ratón sobre un objeto para ver sus detalles.</p>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button id="btn-examinar" class="hud-btn" style="display: none;">EXAMINAR</button>
-                        <button id="btn-eliminar" class="hud-btn"
-                            style="display: none; background-color: #600;">ELIMINAR</button>
-                    </div>
-                </div>
-                <button id="btn-cerrar-inventario">CERRAR (ESC)</button>
-            </div>
-        </div>
-
-        <div id="save-menu" style="display: none;">
-            <div class="save-container">
-                <div class="save-header">
-                    <h2>MÁQUINA DE ESCRIBIR</h2>
-                    <div class="ink-ribbon-count">CINTAS: <span id="ribbon-count">0</span></div>
-                </div>
-                <p class="save-hint">Selecciona un slot para guardar tu progreso.</p>
-                <div class="save-slots">
-                    <div class="save-slot" data-slot="1">
-                        <span class="slot-number">01</span>
-                        <div class="slot-info">
-                            <span class="slot-status">VACÍO</span>
-                            <span class="slot-date">--/--/-- --:--</span>
-                        </div>
-                    </div>
-                    <div class="save-slot" data-slot="2">
-                        <span class="slot-number">02</span>
-                        <div class="slot-info">
-                            <span class="slot-status">VACÍO</span>
-                            <span class="slot-date">--/--/-- --:--</span>
-                        </div>
-                    </div>
-                    <div class="save-slot" data-slot="3">
-                        <span class="slot-number">03</span>
-                        <div class="slot-info">
-                            <span class="slot-status">VACÍO</span>
-                            <span class="slot-date">--/--/-- --:--</span>
-                        </div>
-                    </div>
-                </div>
-                <button id="btn-cancelar-guardado" class="hud-btn">CANCELAR</button>
-            </div>
-        </div>
-
-        <!-- ═══════════════════════════════════════
-             PUZZLE MEDALLONES (MODAL)
-        ═══════════════════════════════════════ -->
-        <div id="medallones-puzzle" style="display: none;">
-            <div class="medallones-container">
-
-                <div class="medallones-header">
-                    <h2>✦ ESTATUA DE LOS MEDALLONES ✦</h2>
-                    <p>Coloca los tres medallones en sus ranuras correspondientes</p>
-                </div>
-
-                <div class="medallones-base">
-
-                    <!-- Slot León (id_item = 7) -->
-                    <div class="medallon-slot" id="slot-leon" data-medallon="7">
-                        <div class="medallon-slot-inner">
-                            <img src="../img/medallon_de_leon.png" alt="León" class="medallon-placeholder">
-                            <div class="medallon-placed" id="placed-leon">
-                                <img src="../img/medallon_de_leon.png" alt="Medallón de León">
-                            </div>
-                            <span class="slot-label">LEÓN</span>
-                        </div>
-                    </div>
-
-                    <!-- Slot Unicornio (id_item = 8) -->
-                    <div class="medallon-slot" id="slot-unicornio" data-medallon="8">
-                        <div class="medallon-slot-inner">
-                            <img src="../img/medallon_de_unicornio.png" alt="Unicornio" class="medallon-placeholder">
-                            <div class="medallon-placed" id="placed-unicornio">
-                                <img src="../img/medallon_de_unicornio.png" alt="Medallón de Unicornio">
-                            </div>
-                            <span class="slot-label">UNICORNIO</span>
-                        </div>
-                    </div>
-
-                    <!-- Slot Doncella (id_item = 9) -->
-                    <div class="medallon-slot" id="slot-doncella" data-medallon="9">
-                        <div class="medallon-slot-inner">
-                            <img src="../img/medallon_de_doncella.png" alt="Doncella" class="medallon-placeholder">
-                            <div class="medallon-placed" id="placed-doncella">
-                                <img src="../img/medallon_de_doncella.png" alt="Medallón de Doncella">
-                            </div>
-                            <span class="slot-label">DONCELLA</span>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div id="medallones-status">Verificando inventario...</div>
-
-                <div class="medallones-actions">
-                    <button id="btn-colocar-medallones" disabled>ACTIVAR ESTATUA</button>
-                    <button id="btn-cancelar-medallones" onclick="cerrarMenuMedallones()">CANCELAR</button>
-                </div>
-
-            </div>
-        </div>
-
     </div>
-        <!-- ═══════════════════════════════════════
-             PUZZLE ESTATUAS (MODAL)
-        ═══════════════════════════════════════ -->
-        <div id="estatua-puzzle" style="display: none;">
-            <div class="estatua-container">
-                <h2 id="estatua-titulo">Estatua</h2>
-                <p>Ajusta los relieves para revelar su secreto</p>
-                <div class="symbols-container">
-                    <div class="symbol-wrapper">
-                        <button class="symbol-btn" onclick="cambiarSimbolo(0, 1)">▲</button>
-                        <div class="symbol-value" id="symbol-0">---</div>
-                        <button class="symbol-btn" onclick="cambiarSimbolo(0, -1)">▼</button>
-                    </div>
-                    <div class="symbol-wrapper">
-                        <button class="symbol-btn" onclick="cambiarSimbolo(1, 1)">▲</button>
-                        <div class="symbol-value" id="symbol-1">---</div>
-                        <button class="symbol-btn" onclick="cambiarSimbolo(1, -1)">▼</button>
-                    </div>
-                    <div class="symbol-wrapper">
-                        <button class="symbol-btn" onclick="cambiarSimbolo(2, 1)">▲</button>
-                        <div class="symbol-value" id="symbol-2">---</div>
-                        <button class="symbol-btn" onclick="cambiarSimbolo(2, -1)">▼</button>
-                    </div>
-                </div>
-                <div id="estatua-status"></div>
-                <div class="estatua-actions">
-                    <button class="estatua-btn" id="btn-resolver-estatua" onclick="intentarResolverEstatua()">CONFIRMAR</button>
-                    <button class="estatua-btn" id="btn-cancelar-estatua" onclick="cerrarEstatuaPuzzle()">SALIR</button>
-                </div>
+
+    <div id="note-viewer" style="display: none;">
+        <div class="note-container">
+            <img src="../img/nota.png" alt="Papel de nota" class="note-paper" id="note-img">
+            <div class="note-content">
+                <h3 id="note-title">Título de la Nota</h3>
+                <div id="note-body">Cuerpo de la nota...</div>
             </div>
+            <button id="btn-cerrar-nota">CERRAR (ESC)</button>
         </div>
+    </div>
 
-        <div id="caja-fuerte-puzzle" style="display: none;">
-        <div class="caja-fuerte-container">
-            <h2>CERRADURA DE COMBINACIÓN</h2>
-            <div class="dials-container">
-                <div class="dial-wrapper">
-                    <button class="dial-btn dial-up" onclick="cambiarDial(0, 1)">▲</button>
-                    <div class="dial-value" id="dial-0">0</div>
-                    <button class="dial-btn dial-down" onclick="cambiarDial(0, -1)">▼</button>
-                </div>
-                <div class="dial-wrapper">
-                    <button class="dial-btn dial-up" onclick="cambiarDial(1, 1)">▲</button>
-                    <div class="dial-value" id="dial-1">0</div>
-                    <button class="dial-btn dial-down" onclick="cambiarDial(1, -1)">▼</button>
-                </div>
-                <div class="dial-wrapper">
-                    <button class="dial-btn dial-up" onclick="cambiarDial(2, 1)">▲</button>
-                    <div class="dial-value" id="dial-2">0</div>
-                    <button class="dial-btn dial-down" onclick="cambiarDial(2, -1)">▼</button>
-                </div>
+    <div id="save-menu" style="display: none;">
+        <div class="save-container">
+            <div class="save-header"><h2>MÁQUINA DE ESCRIBIR</h2><div class="ink-ribbon-count">CINTAS: <span id="ribbon-count">0</span></div></div>
+            <div class="save-slots">
+                <div class="save-slot" data-slot="1"><span class="slot-number">01</span><div class="slot-info"><span class="slot-status">VACÍO</span></div></div>
+                <div class="save-slot" data-slot="2"><span class="slot-number">02</span><div class="slot-info"><span class="slot-status">VACÍO</span></div></div>
+                <div class="save-slot" data-slot="3"><span class="slot-number">03</span><div class="slot-info"><span class="slot-status">VACÍO</span></div></div>
             </div>
-            <div id="caja-fuerte-status"
-                style="color:#f00; margin-bottom: 20px; min-height: 20px; font-family: monospace;"></div>
-            <div class="caja-fuerte-actions">
-                <button class="caja-btn" id="btn-abrir-caja" onclick="intentarAbrirCaja()">ABRIR</button>
-                <button class="caja-btn" id="btn-cancelar-caja" onclick="cerrarCajaFuerte()">CANCELAR</button>
-            </div>
+            <button id="btn-cancelar-guardado" class="hud-btn">CANCELAR</button>
         </div>
-    <!-- PUZZLE CAJA FUERTE PORTÁTIL -->
-    <div id="portable-safe-puzzle">
-        <div class="portable-container">
-            <div class="light-ring" id="light-ring">
-                <img src="../img/rpd_logo.png" class="rpd-logo" alt="RPD">
-                <!-- Luces generadas por JS -->
-            </div>
-            
-            <div class="button-grid">
-                <button class="portable-btn" onclick="pressPortableButton(0)"></button>
-                <button class="portable-btn" onclick="pressPortableButton(1)"></button>
-                <button class="portable-btn" onclick="pressPortableButton(2)"></button>
-                <button class="portable-btn" onclick="pressPortableButton(3)"></button>
-                <button class="portable-btn" onclick="pressPortableButton(4)"></button>
-                <button class="portable-btn" onclick="pressPortableButton(5)"></button>
-                <button class="portable-btn" onclick="pressPortableButton(6)"></button>
-                <button class="portable-btn" onclick="pressPortableButton(7)"></button>
-            </div>
+    </div>
 
-            <div id="portable-status" style="color: #ff3333; margin-bottom: 15px; font-family: monospace; font-size: 0.8rem; height: 1.2rem;"></div>
-
-            <div class="portable-actions">
-                <button class="portable-exit" onclick="cerrarPortableSafe()">SALIR (ESC)</button>
+    <!-- PUZZLE MEDALLONES -->
+    <div id="medallones-puzzle" style="display: none;">
+        <div class="medallones-container">
+            <div class="medallones-header"><h2>✦ ESTATUA DE LOS MEDALLONES ✦</h2><p>Coloca los tres medallones</p></div>
+            <div class="medallones-base">
+                <div class="medallon-slot" id="slot-leon" data-medallon="7"><div class="medallon-slot-inner"><img src="../img/medallon_de_leon.png" class="medallon-placeholder"><div class="medallon-placed" id="placed-leon"><img src="../img/medallon_de_leon.png"></div><span class="slot-label">LEÓN</span></div></div>
+                <div class="medallon-slot" id="slot-unicornio" data-medallon="8"><div class="medallon-slot-inner"><img src="../img/medallon_de_unicornio.png" class="medallon-placeholder"><div class="medallon-placed" id="placed-unicornio"><img src="../img/medallon_de_unicornio.png"></div><span class="slot-label">UNICORNIO</span></div></div>
+                <div class="medallon-slot" id="slot-doncella" data-medallon="9"><div class="medallon-slot-inner"><img src="../img/medallon_de_doncella.png" class="medallon-placeholder"><div class="medallon-placed" id="placed-doncella"><img src="../img/medallon_de_doncella.png"></div><span class="slot-label">DONCELLA</span></div></div>
+            </div>
+            <div id="medallones-status">Verificando...</div>
+            <div class="medallones-actions">
+                <button id="btn-colocar-medallones" disabled>ACTIVAR ESTATUA</button>
+                <button id="btn-cancelar-medallones" onclick="cerrarMenuMedallones()">CANCELAR</button>
             </div>
         </div>
     </div>
 
-    <!-- NOTIFICACIÓN CENTRADA -->
-    <div id="item-notification">
-        <div class="notif-label">OBJETO OBTENIDO</div>
-        <div class="notif-name" id="notif-item-name">Nombre del Item</div>
+    <!-- PUZZLE ESTATUAS -->
+    <div id="estatua-puzzle" style="display: none;">
+        <div class="estatua-container">
+            <h2 id="estatua-titulo">Estatua</h2>
+            <div class="symbols-container">
+                <div class="symbol-wrapper"><button class="symbol-btn" onclick="cambiarSimbolo(0, 1)">▲</button><div class="symbol-value" id="symbol-0">---</div><button class="symbol-btn" onclick="cambiarSimbolo(0, -1)">▼</button></div>
+                <div class="symbol-wrapper"><button class="symbol-btn" onclick="cambiarSimbolo(1, 1)">▲</button><div class="symbol-value" id="symbol-1">---</div><button class="symbol-btn" onclick="cambiarSimbolo(1, -1)">▼</button></div>
+                <div class="symbol-wrapper"><button class="symbol-btn" onclick="cambiarSimbolo(2, 1)">▲</button><div class="symbol-value" id="symbol-2">---</div><button class="symbol-btn" onclick="cambiarSimbolo(2, -1)">▼</button></div>
+            </div>
+            <div id="estatua-status"></div>
+            <div class="estatua-actions">
+                <button class="estatua-btn" id="btn-resolver-estatua" onclick="intentarResolverEstatua()">CONFIRMAR</button>
+                <button class="estatua-btn" id="btn-cancelar-estatua" onclick="cerrarEstatuaPuzzle()">SALIR</button>
+            </div>
+        </div>
     </div>
 
-    <script src="../js/movimientos.js"></script>
-    <script src="../js/interacciones.js"></script>
-    <script src="../js/inventario.js"></script>
-    <script>
-        const catalogoArchivos = <?php echo json_encode($archivos); ?>;
-        const tension = "<?php echo $enemigo_presente ? 'alta' : 'baja'; ?>";
-        console.log("Sistema de sonido: Nivel " + tension);
-    </script>
+    <!-- NOTIFICACIÓN -->
+    <div id="item-notification"><div class="notif-label">OBJETO OBTENIDO</div><div class="notif-name" id="notif-item-name"></div></div>
+
+</div> <!-- FIN game-container -->
+
+<script src="../js/movimientos.js"></script>
+<script src="../js/interacciones.js"></script>
+<script src="../js/inventario.js"></script>
+<script>
+    const catalogoArchivos = <?php echo json_encode($archivos); ?>;
+    const tension = "<?php echo $hay_combate ? 'alta' : 'baja'; ?>";
+</script>
 </body>
-
 </html>
