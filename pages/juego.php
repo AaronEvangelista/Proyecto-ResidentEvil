@@ -669,6 +669,14 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             <div class="notif-name" id="notif-item-name"></div>
         </div>
 
+        <!-- MENÚ DE PAUSA -->
+        <div id="pause-menu" style="display: none;">
+            <h2>PAUSA</h2>
+            <button id="btn-continuar">CONTINUAR</button>
+            <button id="btn-cargar">CARGAR PARTIDA</button>
+            <button id="btn-salir">SALIR AL MENÚ</button>
+        </div>
+
     </div> <!-- FIN game-container -->
 
     <script src="../js/movimientos.js"></script>

@@ -12,82 +12,81 @@ const teclasPresionadas = {
   a: false,
   s: false,
   d: false,
+  arrowup: false,
+  arrowdown: false,
+  arrowleft: false,
+  arrowright: false
 };
-
-// La función mostrarMensajeEnPantalla ahora es gestionada centralmente en interacciones.js
 
 const gameActions = {
   elegirRuta: function (direccion) {
     let selector = "";
-    if (direccion === "w") selector = ".north";
-    if (direccion === "s") selector = ".south";
-    if (direccion === "d") selector = ".east";
-    if (direccion === "a") selector = ".west";
+    // Mapeo de teclas a selectores
+    const mapeo = {
+        'w': '.north', 'arrowup': '.north',
+        's': '.south', 'arrowdown': '.south',
+        'd': '.east',  'arrowright': '.east',
+        'a': '.west',  'arrowleft': '.west'
+    };
+    
+    selector = mapeo[direccion] || "";
 
     const flecha = document.querySelector(`.nav-btn${selector}`);
     if (flecha) {
-      mostrarMensajeEnPantalla(`Avanzando hacia la siguiente sala...`);
+      if (typeof mostrarMensajeEnPantalla === 'function') {
+        mostrarMensajeEnPantalla(`Avanzando hacia la siguiente sala...`);
+      }
       window.location.href = flecha.href;
     } else {
-      mostrarMensajeEnPantalla(
-        `No hay camino en esa dirección. No puedes avanzar.`,
-      );
+      if (typeof mostrarMensajeEnPantalla === 'function') {
+        mostrarMensajeEnPantalla(`No hay camino en esa dirección. No puedes avanzar.`);
+      }
     }
   },
   abrirMenuInventario: function () {
-    mostrarMensajeEnPantalla(
-      "[Menú de Inventario Abierto]<br> Opciones: [I] Examinar - [ESC] Salir",
-    );
     estadoActual = ESTADOS_JUEGO.INVENTARIO;
+    if (typeof abrirInventario === 'function') abrirInventario();
   },
   salirJuegoOPausa: function () {
-    mostrarMensajeEnPantalla("Juego en Pausa.");
     estadoActual = ESTADOS_JUEGO.PAUSA;
-
     const pauseMenu = document.getElementById('pause-menu');
     if (pauseMenu) pauseMenu.style.display = 'flex';
+    if (typeof mostrarMensajeEnPantalla === 'function') {
+        mostrarMensajeEnPantalla("Juego en Pausa.");
+    }
   },
   reanudarJuego: function () {
-    mostrarMensajeEnPantalla("Juego reanudado.");
     estadoActual = ESTADOS_JUEGO.INTERACTIVO;
-
     const pauseMenu = document.getElementById('pause-menu');
     if (pauseMenu) pauseMenu.style.display = 'none';
+    if (typeof mostrarMensajeEnPantalla === 'function') {
+        mostrarMensajeEnPantalla("Juego reanudado.");
+    }
   },
   cargarPartida: function () {
-    mostrarMensajeEnPantalla("Cargando partida... (Funcionalidad pendiente)");
+    if (typeof mostrarMensajeEnPantalla === 'function') {
+        mostrarMensajeEnPantalla("Cargando partida... (Funcionalidad pendiente)");
+    }
   },
   salirAlMenuPrincipal: function () {
-    mostrarMensajeEnPantalla("Saliendo del juego...");
     window.location.href = '../index.php';
   },
-  combinarItems: function () {
-    mostrarMensajeEnPantalla(
-      "[Inventario] Has seleccionado combinar items... (Falta lógica visual)",
-    );
-  },
-  examinarItem: function () {
-    mostrarMensajeEnPantalla("[Inventario] Examinando item detalladamente...");
-  },
   cerrarMenuInventario: function () {
-    mostrarMensajeEnPantalla(
-      "Has cerrado el inventario. Volviendo a exploración.",
-    );
     estadoActual = ESTADOS_JUEGO.INTERACTIVO;
+    if (typeof cerrarInventario === 'function') cerrarInventario();
   },
   disparar: function () {
-    mostrarMensajeEnPantalla(" Has disparado al enemigo.");
+    if (typeof mostrarMensajeEnPantalla === 'function') {
+        mostrarMensajeEnPantalla(" Has disparado al enemigo.");
+    }
   },
   huir: function () {
-    mostrarMensajeEnPantalla(
-      " Has huido del combate de forma cobarde. Volviendo a la exploración.",
-    );
     estadoActual = ESTADOS_JUEGO.INTERACTIVO;
+    if (typeof mostrarMensajeEnPantalla === 'function') {
+        mostrarMensajeEnPantalla(" Has huido del combate. Volviendo a la exploración.");
+    }
   },
   entrarEnBatalla: function () {
-    mostrarMensajeEnPantalla(
-      "Has entrado en modo combate.<br> Opciones: [G] Disparar - [H] Huir",
-    );
     estadoActual = ESTADOS_JUEGO.BATALLA;
   },
 };
@@ -104,26 +103,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
 window.addEventListener("keydown", (e) => {
   const key = e.key.toLowerCase();
+  
+  // Lista de IDs de elementos que bloquean el movimiento
+  const modalesBloqueantes = [
+    'inventory-screen', 'note-viewer', 'save-menu', 
+    'medallones-puzzle', 'estatua-puzzle', 'portable-safe-puzzle', 'caja-fuerte-puzzle'
+  ];
+  
+  const algunModalAbierto = modalesBloqueantes.some(id => {
+    const el = document.getElementById(id);
+    return el && el.style.display === 'flex';
+  });
 
-  // Bloquear movimientos si el inventario o una nota están visibles
-  const invVisible = document.getElementById('inventory-screen').style.display === 'flex';
-  const noteVisible = document.getElementById('note-viewer').style.display === 'flex';
-  const saveVisible = document.getElementById('save-menu').style.display === 'flex';
+  const hayCombate = typeof tension !== 'undefined' && tension === 'alta';
 
-  if (invVisible || noteVisible || saveVisible) {
-    if (key === 'escape') {
-      // Dejar que los otros scripts manejen el cierre con Escape
-      return;
+  if (algunModalAbierto || hayCombate) {
+    if (key === 'escape' && !hayCombate) return; // Dejar que otros scripts cierren modales
+    if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
+      return; // Bloquear movimiento
     }
-    // Bloquear cualquier otra tecla de movimiento si hay menús abiertos
-    if (["w", "a", "s", "d"].includes(key)) {
-      return;
+  }
+
+  // Si estamos en pausa, solo escuchamos Escape para reanudar
+  if (estadoActual === ESTADOS_JUEGO.PAUSA) {
+    if (key === "escape") {
+      gameActions.reanudarJuego();
+      e.preventDefault();
     }
+    return;
   }
 
   switch (estadoActual) {
     case ESTADOS_JUEGO.INTERACTIVO:
-      if (["w", "a", "s", "d"].includes(key)) {
+      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
         if (!teclasPresionadas[key]) {
           teclasPresionadas[key] = true;
           gameActions.elegirRuta(key);
@@ -131,44 +143,27 @@ window.addEventListener("keydown", (e) => {
       }
       if (key === "escape") {
         gameActions.salirJuegoOPausa();
-      }
-      if (key === "b") {
-        gameActions.entrarEnBatalla();
+        e.preventDefault();
       }
       break;
 
     case ESTADOS_JUEGO.INVENTARIO:
-      if (key === "i") {
-        gameActions.examinarItem();
-      }
       if (key === "escape") {
         gameActions.cerrarMenuInventario();
       }
       break;
 
     case ESTADOS_JUEGO.BATALLA:
-      if (key === "g") {
-        gameActions.disparar();
-      }
-      if (key === "h") {
-        gameActions.huir();
-      }
-      break;
-
-    case ESTADOS_JUEGO.PAUSA:
-      if (key === "escape") {
-        gameActions.reanudarJuego();
-      }
+      if (key === "g") gameActions.disparar();
+      if (key === "h") gameActions.huir();
       break;
   }
 });
 
 window.addEventListener("keyup", (e) => {
   const key = e.key.toLowerCase();
-
-  if (estadoActual === ESTADOS_JUEGO.INTERACTIVO) {
-    if (["w", "a", "s", "d"].includes(key)) {
-      teclasPresionadas[key] = false;
-    }
+  if (teclasPresionadas.hasOwnProperty(key)) {
+    teclasPresionadas[key] = false;
   }
 });
+

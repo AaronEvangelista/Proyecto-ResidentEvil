@@ -60,6 +60,9 @@ function abrirInventario() {
             if (data.success) {
                 renderizarInventario(data.inventario);
                 document.getElementById('inventory-screen').style.display = 'flex';
+                if (typeof estadoActual !== 'undefined' && typeof ESTADOS_JUEGO !== 'undefined') {
+                    estadoActual = ESTADOS_JUEGO.INVENTARIO;
+                }
             } else {
                 console.error("Error en datos del inventario:", data.error);
             }
@@ -69,6 +72,9 @@ function abrirInventario() {
 
 function cerrarInventario() {
     document.getElementById('inventory-screen').style.display = 'none';
+    if (typeof estadoActual !== 'undefined' && typeof ESTADOS_JUEGO !== 'undefined') {
+        estadoActual = ESTADOS_JUEGO.INTERACTIVO;
+    }
     selectedItem = null; // Reset selection
     document.getElementById('btn-examinar').style.display = 'none';
     document.getElementById('btn-eliminar').style.display = 'none';
