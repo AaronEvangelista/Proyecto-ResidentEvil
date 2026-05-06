@@ -43,27 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $resultado_tipo = 'item';
             $es_granada = false;
 
-            if ($nombre1 === 'Pólvora Gris' && $nombre2 === 'Pólvora Gris') {
-                $resultado_nombre = 'Munición de Pistola';
-            } elseif (
-                ($nombre1 === 'Pólvora Gris' && $nombre2 === 'Pólvora Amarilla') ||
-                ($nombre1 === 'Pólvora Amarilla' && $nombre2 === 'Pólvora Gris')
-            ) {
-                $resultado_nombre = 'Munición de Escopeta';
-            } elseif (
-                ($nombre1 === 'Pólvora Gris' && $nombre2 === 'Pólvora Roja') ||
-                ($nombre1 === 'Pólvora Roja' && $nombre2 === 'Pólvora Gris')
-            ) {
-                $resultado_nombre = 'Munición de Fusil';
-            } elseif ($nombre1 === 'Pólvora Amarilla' && $nombre2 === 'Pólvora Amarilla') {
-                $resultado_nombre = 'Granada de Fragmentación';
-                $resultado_tipo = 'arma';
-                $es_granada = true;
-            } elseif ($nombre1 === 'Pólvora Roja' && $nombre2 === 'Pólvora Roja') {
-                $resultado_nombre = 'Granada de Fragmentación';
-                $resultado_tipo = 'arma';
-                $es_granada = true;
-            }
 
             if ($resultado_nombre) {
                 if ($es_granada) {

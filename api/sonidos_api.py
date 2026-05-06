@@ -4,14 +4,12 @@ import requests
 import random
 
 app = Flask(__name__)
-CORS(app)  # Permite que tu PHP/JS haga peticiones a este script
+CORS(app) 
 
-# --- CONFIGURACIÓN ---
 API_KEY = "HHGN5fT1LJTygJOPW4K7VLEdI8iPPGXEwgXW7msa"
 BASE_URL = "https://freesound.org/apiv2"
 
 def buscar_sonido(query, duration_max=60):
-    """Busca un sonido en Freesound y devuelve la URL del MP3"""
     params = {
         "query": query,
         "token": API_KEY,
@@ -24,14 +22,12 @@ def buscar_sonido(query, duration_max=60):
     data = response.json()
     
     if data.get('results'):
-        # Elegimos uno al azar de los primeros 5 para que no sea siempre el mismo
         choice = random.choice(data['results'][:5])
         return choice['previews']['preview-hq-mp3']
     return None
 
 @app.route('/api/sonido', methods=['GET'])
 def obtener_sonido():
-    # Podemos pasar el tipo de tensión por la URL: /api/sonido?tipo=boss
     tipo = request.args.get('tipo', 'ambient')
     
     queries = {
@@ -50,5 +46,4 @@ def obtener_sonido():
     return jsonify({"status": "error", "message": "No se encontró sonido"}), 404
 
 if __name__ == '__main__':
-    # El servidor correrá en http://127.0.0.1:5000
     app.run(debug=True, port=5000)

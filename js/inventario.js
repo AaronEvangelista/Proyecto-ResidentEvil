@@ -1,38 +1,70 @@
 document.addEventListener('DOMContentLoaded', () => {
     const btnInventario = document.getElementById('btn-inventario');
     const btnCerrarInv = document.getElementById('btn-cerrar-inventario');
-    const inventoryScreen = document.getElementById('inventory-screen');
 
     if (btnInventario) {
-        btnInventario.addEventListener('click', abrirInventario);
+        btnInventario.addEventListener('click', () => {
+            console.log("Botón Inventario clickeado");
+            abrirInventario();
+        });
     }
 
     if (btnCerrarInv) {
         btnCerrarInv.addEventListener('click', cerrarInventario);
     }
+});
 
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab' || e.key.toLowerCase() === 'e') {
-            e.preventDefault();
-            if (inventoryScreen.style.display === 'none' || inventoryScreen.style.display === '') {
-                abrirInventario();
-            } else {
-                cerrarInventario();
-            }
-        }
-        if (e.key === 'Escape' && inventoryScreen.style.display === 'flex') {
+// Listener global fuera de DOMContentLoaded para mayor fiabilidad
+window.addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase();
+    const code = e.code;
+    const inventoryScreen = document.getElementById('inventory-screen');
+
+    if (!inventoryScreen) return;
+
+    // Evitar conflictos con el menú de pausa o notas
+    const noteViewer = document.getElementById('note-viewer');
+    const saveMenu = document.getElementById('save-menu');
+    const noteVisible = noteViewer && noteViewer.style.display === 'flex';
+    const saveVisible = saveMenu && saveMenu.style.display === 'flex';
+
+    if (noteVisible || saveVisible) return;
+
+    // Usar code o key para Tab
+    if (code === 'Tab' || key === 'tab') {
+        console.log("Tecla Tab detectada");
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (inventoryScreen.style.display === 'none' || inventoryScreen.style.display === '') {
+            abrirInventario();
+        } else {
             cerrarInventario();
         }
-    });
+    }
+
+    if (key === 'escape' && inventoryScreen.style.display === 'flex') {
+        cerrarInventario();
+    }
 });
 
 function abrirInventario() {
+    console.log("abrirInventario() llamado");
     fetch('../src/api/get_inventario.php')
-        .then(response => response.json())
+        .then(response => {
+            console.log("Respuesta recibida, status:", response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log("Datos del inventario:", data);
             if (data.success) {
                 renderizarInventario(data.inventario);
                 document.getElementById('inventory-screen').style.display = 'flex';
+                if (typeof estadoActual !== 'undefined' && typeof ESTADOS_JUEGO !== 'undefined') {
+                    estadoActual = ESTADOS_JUEGO.INVENTARIO;
+                }
+            } else {
+                console.error("Error en datos del inventario:", data.error);
             }
         })
         .catch(error => console.error("Error al cargar inventario:", error));
@@ -40,6 +72,12 @@ function abrirInventario() {
 
 function cerrarInventario() {
     document.getElementById('inventory-screen').style.display = 'none';
+    if (typeof estadoActual !== 'undefined' && typeof ESTADOS_JUEGO !== 'undefined') {
+        estadoActual = ESTADOS_JUEGO.INTERACTIVO;
+    }
+    selectedItem = null; // Reset selection
+    document.getElementById('btn-examinar').style.display = 'none';
+    document.getElementById('btn-eliminar').style.display = 'none';
 }
 
 let draggedItemInfo = null;
@@ -123,7 +161,7 @@ function renderizarInventario(items) {
                 }
             });
 
-            // Seleccionar para examinar
+            // Seleccionar para examinar/eliminar
             itemElement.addEventListener('click', () => {
                 document.querySelectorAll('.inventory-slot').forEach(s => s.style.borderColor = '#333');
                 slot.style.borderColor = '#ff0000';
@@ -137,6 +175,21 @@ function renderizarInventario(items) {
                     btnExaminar.style.display = 'block';
                     btnExaminar.onclick = () => examinarObjeto(item);
                 }
+
+                const btnEliminar = document.getElementById('btn-eliminar');
+                if (btnEliminar) {
+                    // Solo mostrar eliminar si NO es un arma Y NO es un objeto clave
+                    if (item.tipo !== 'arma' && item.tipo !== 'clave') {
+                        btnEliminar.style.display = 'block';
+                        btnEliminar.onclick = () => {
+                            if (confirm(`¿Estás seguro de que quieres eliminar ${item.nombre}?`)) {
+                                eliminarObjeto(item.id_registro);
+                            }
+                        };
+                    } else {
+                        btnEliminar.style.display = 'none';
+                    }
+                }
             });
 
             slot.appendChild(itemElement);
@@ -144,6 +197,23 @@ function renderizarInventario(items) {
 
         grid.appendChild(slot);
     }
+}
+
+function eliminarObjeto(idRegistro) {
+    fetch('../src/api/eliminar_objeto.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_registro: idRegistro })
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                abrirInventario(); // Recargar
+            } else {
+                alert(data.error);
+            }
+        })
+        .catch(error => console.error("Error al eliminar:", error));
 }
 
 function combinarObjetos(idOrigen, idDestino, targetSlotIndex) {
@@ -200,6 +270,14 @@ function examinarObjeto(item) {
     const noteImg = document.getElementById('note-img');
 
     if (noteViewer && noteTitle && noteBody && noteImg) {
+        if (item.nombre.toUpperCase().includes("CAJA FUERTE PORTATIL")) {
+            cerrarInventario();
+            if (typeof abrirPortableSafe === 'function') {
+                abrirPortableSafe(item.id_registro);
+            }
+            return;
+        }
+
         noteTitle.innerText = item.nombre;
         noteBody.innerText = item.descripcion + "\n\n(Objeto examinado)";
 

@@ -170,18 +170,21 @@ html {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 0 8px rgba(0, 255, 0, 0.5)); 
+    filter: drop-shadow(0 0 8px rgba(0, 255, 0, 0.5));
     animation: pulsarItem 2.5s infinite ease-in-out;
     pointer-events: none;
 }
 
 @keyframes pulsarItem {
-    0%, 100% { 
-        transform: scale(0.85); 
+
+    0%,
+    100% {
+        transform: scale(0.85);
         filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
     }
-    50% { 
-        transform: scale(1); 
+
+    50% {
+        transform: scale(1);
         filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
     }
 }
@@ -196,7 +199,7 @@ html {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 3000;
     animation: fadeIn 0.4s ease;
 }
 
@@ -235,8 +238,7 @@ html {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    color: #ff0101;
-    /* Color blanco para el texto */
+    color: #eee;
     font-family: 'Times New Roman', serif;
     overflow-y: auto;
 }
