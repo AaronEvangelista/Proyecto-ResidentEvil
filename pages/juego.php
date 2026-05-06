@@ -1,411 +1,240 @@
 <?php
-// 1. Conexión y sesión
 session_start();
 require_once '../includes/conexion.php';
 
-// 2. Determinar la sala actual
 $id_sala_actual = $_GET['sala'] ?? 'banos_inicio';
 
-// 3. Consultar los datos de la sala
+//1. CARGAR DATOS DE LA SALA
 $query_sala = $pdo->prepare("SELECT * FROM catalogo_salas WHERE id_sala = ?");
 $query_sala->execute([$id_sala_actual]);
 $sala = $query_sala->fetch(PDO::FETCH_ASSOC);
 
+if (!$sala) {
+    header("Location: juego.php?sala=banos_inicio");
+    exit;
+}
 $_SESSION['sala_actual'] = $id_sala_actual;
 
-// 4. Enemigos (para el script de sonido)
-$query_enemigos = $pdo->prepare("SELECT * FROM estado_enemigos WHERE sala_ubicacion = ? AND estado = 'vivo'");
-$query_enemigos->execute([$id_sala_actual]);
-$enemigo_presente = $query_enemigos->fetch();
-
-// 5. Gestión de Partida y Sesión
+//2. USUARIO / PARTIDA
 $id_usuario = $_SESSION['usuario_id'] ?? null;
-
 if (!$id_usuario) {
     header('Location: ../sessions/login.php');
     exit;
 }
 
-// Buscar o crear partida para el usuario
-$stmt_partida = $pdo->prepare("SELECT id_partida FROM partida WHERE id_usuario = ? ORDER BY fecha_guardado DESC LIMIT 1");
+$stmt_partida = $pdo->prepare("SELECT id_partida FROM partida WHERE id_usuario = ? AND slot_numero = 0 ORDER BY fecha_guardado DESC LIMIT 1");
 $stmt_partida->execute([$id_usuario]);
 $partida = $stmt_partida->fetch();
 
-if (!$partida) {
-    // Crear partida por defecto si no existe
-    $stmt_crear = $pdo->prepare("INSERT INTO partida (id_usuario, ruta, sala_actual) VALUES (?, 'chico', 'banos_inicio')");
+$forzar_nueva = isset($_GET['new']);
+
+if (!$partida || $forzar_nueva) {
+    $stmt_crear = $pdo->prepare("INSERT INTO partida (id_usuario, ruta, sala_actual, slot_numero) VALUES (?, 'chico', 'banos_inicio', 0)");
     $stmt_crear->execute([$id_usuario]);
     $id_partida = $pdo->lastInsertId();
+    $stmt_estado = $pdo->prepare("INSERT INTO estado_personaje (id_partida, vida_actual) VALUES (?, 100)");
+    $stmt_estado->execute([$id_partida]);
+    
+    //Limpiar inventario de sesión si es nueva partida
+    if ($forzar_nueva) {
+        $_SESSION['inventario_sesion'] = [];
+        $_SESSION['eventos_recogidos_sesion'] = [];
+    }
 } else {
     $id_partida = $partida['id_partida'];
+    
+    //Verificar si el jugador está muerto en esta partida. Si es así, resetear vida para que pueda jugar.
+    $st_check_v = $pdo->prepare("SELECT vida_actual FROM estado_personaje WHERE id_partida = ?");
+    $st_check_v->execute([$id_partida]);
+    $v_check = $st_check_v->fetchColumn();
+    if ($v_check !== false && (int)$v_check <= 0) {
+        $pdo->prepare("UPDATE estado_personaje SET vida_actual = 100 WHERE id_partida = ?")->execute([$id_partida]);
+    }
 }
-
 $_SESSION['id_partida'] = $id_partida;
 
-// Inicializar contenedores de sesión si no existen
-if (!isset($_SESSION['eventos_recogidos_sesion'])) {
-    $_SESSION['eventos_recogidos_sesion'] = [];
+//3. PROCESAR RETORNO DE COMBATE (VICTORIA / HUIDA)
+if (isset($_GET['muerto'], $_GET['id_reg'])) {
+    $id_reg = (int)$_GET['id_reg'];
+    $stmt_upd = $pdo->prepare("UPDATE estado_enemigos SET estado = 'muerto' WHERE id_registro = ? AND id_partida = ?");
+    $stmt_upd->execute([$id_reg, $id_partida]);
+    unset($_SESSION['huido_de'][$id_sala_actual]);
+    header("Location: juego.php?sala=" . $id_sala_actual);
+    exit;
 }
-if (!isset($_SESSION['inventario_sesion'])) {
-    $_SESSION['inventario_sesion'] = [];
+
+if (isset($_GET['huir'], $_GET['id_reg'])) {
+    if (!isset($_SESSION['huido_de'])) $_SESSION['huido_de'] = [];
+    $_SESSION['huido_de'][$id_sala_actual] = (int)$_GET['id_reg'];
+    header("Location: juego.php?sala=" . $id_sala_actual);
+    exit;
 }
 
-// 6. Consultar eventos y filtrar
-// Mezclamos lo que ya estaba en la DB (partida guardada) con lo de la sesión actual
-$query_completados = $pdo->prepare("SELECT id_evento FROM eventos_completados WHERE id_partida = ?");
-$query_completados->execute([$id_partida]);
-$completados_db = $query_completados->fetchAll(PDO::FETCH_COLUMN);
+//Inicializar huida
+if (!isset($_SESSION['huido_de'])) $_SESSION['huido_de'] = [];
+$id_reg_huido = $_SESSION['huido_de'][$id_sala_actual] ?? 0;
 
-// Combinar DB + Sesión
-$completados = array_unique(array_merge($completados_db, $_SESSION['eventos_recogidos_sesion']));
+//Limpiar marcas de huida de otras salas
+foreach (array_keys($_SESSION['huido_de']) as $s) {
+    if ($s !== $id_sala_actual) unset($_SESSION['huido_de'][$s]);
+}
 
+//4. GENERADOR DE ENEMIGOS (SPAWN) 
+//Salas con zombies básicos (IDs 1-4) → pueden reaparecer (40% al volver)
+$salas_respawn = [
+    'sala_espera'         => [1, 2, 3, 4],
+    'oficina_este'        => [1, 2, 3, 4],
+    'biblioteca'          => [1, 2, 3, 4],
+];
+//Salas con enemigos especiales → aparecen UNA sola vez, no respawnean
+$salas_unicas = [
+    'oficina_capitan'     => [6],   // Lastre
+    'pasillo'             => [7],   // Espasmo
+    'sala_interrogatorios'=> [7],   // Espasmo
+    'sala_arte'           => [5],   // Licker
+];
+
+$distribucion_enemigos = array_merge($salas_respawn, $salas_unicas);
+$puede_respawnear = isset($salas_respawn[$id_sala_actual]);
+
+if (isset($distribucion_enemigos[$id_sala_actual])) {
+    $q_existe = $pdo->prepare("SELECT id_registro FROM estado_enemigos WHERE id_partida = ? AND sala_ubicacion = ? AND estado = 'vivo' LIMIT 1");
+    $q_existe->execute([$id_partida, $id_sala_actual]);
+    $hay_vivo = $q_existe->fetchColumn();
+
+    if (!$hay_vivo) {
+        $q_veces = $pdo->prepare("SELECT COUNT(*) FROM estado_enemigos WHERE id_partida = ? AND sala_ubicacion = ?");
+        $q_veces->execute([$id_partida, $id_sala_actual]);
+        $veces_spawn = (int)$q_veces->fetchColumn();
+        
+        if ($veces_spawn === 0 || ($puede_respawnear && rand(1, 100) <= 40)) {
+            $pool = $distribucion_enemigos[$id_sala_actual];
+            $id_enemigo_eleg = $pool[array_rand($pool)];
+            
+            $q_vida = $pdo->prepare("SELECT vida_maxima FROM catalogo_enemigos WHERE id_enemigo = ?");
+            $q_vida->execute([$id_enemigo_eleg]);
+            $vida_base = $q_vida->fetchColumn();
+
+            $pdo->prepare("INSERT INTO estado_enemigos (id_partida, id_enemigo, sala_ubicacion, vida_restante, estado) VALUES (?, ?, ?, ?, 'vivo')")
+                ->execute([$id_partida, $id_enemigo_eleg, $id_sala_actual, $vida_base]);
+        }
+    }
+}
+
+//5. DETECTAR ENEMIGO ACTUAL
+$q_ep = $pdo->prepare("SELECT ee.*, ce.nombre, ce.imagen_url FROM estado_enemigos ee JOIN catalogo_enemigos ce ON ee.id_enemigo = ce.id_enemigo WHERE ee.id_partida = ? AND ee.sala_ubicacion = ? AND ee.estado = 'vivo' LIMIT 1");
+$q_ep->execute([$id_partida, $id_sala_actual]);
+$enemigo_presente = $q_ep->fetch(PDO::FETCH_ASSOC);
+
+$hay_combate = ($enemigo_presente && $id_reg_huido != $enemigo_presente['id_registro']);
+
+//6. EVENTOS Y VIDA 
+if (!isset($_SESSION['eventos_recogidos_sesion'])) $_SESSION['eventos_recogidos_sesion'] = [];
 $query_eventos = $pdo->prepare("SELECT * FROM eventos_interactivos WHERE id_sala = ?");
 $query_eventos->execute([$id_sala_actual]);
 $eventos = $query_eventos->fetchAll(PDO::FETCH_ASSOC);
 
-// Pool de Loot (Items consumibles y Claves)
-$loot_pool_names = [
-    'Hierba Verde', 'Cuchillo Defensivo', 'Pólvora Gris', 'Cinta de Guardado',
-    'Munición de Pistola', 'Munición de Escopeta', 'Munición de Fusil',
-    'Medallon de León', 'Medallon de Unicornio', 'Medallon de Doncella',
-    'Caja Fuerte Portatil', 'Llave de Diamante', 'Llave de Pica', 'Cortacadenas'
-];
-$placeholders = implode(',', array_fill(0, count($loot_pool_names), '?'));
-$query_loot = $pdo->prepare("SELECT * FROM catalogo_items WHERE nombre IN ($placeholders)");
-$query_loot->execute($loot_pool_names);
-
-$items_pool = [];
-$key_items_pool = [];
-$ammo_pool = [];
-
-while ($row = $query_loot->fetch(PDO::FETCH_ASSOC)) {
-    if ($row['tipo'] === 'clave') {
-        $key_items_pool[] = $row;
-    } elseif ($row['tipo'] === 'municion') {
-        $ammo_pool[] = $row;
-    } else {
-        $items_pool[] = $row;
-    }
-}
-
-foreach ($eventos as $key => &$ev) {
-    if (in_array($ev['id_evento'], $completados)) {
-        unset($eventos[$key]);
-        continue;
-    }
-
-    if ($ev['contenido_accion'] === 'random') {
-        // Probabilidad de aparición: 60% (antes 15%)
-        if (rand(1, 100) > 60) {
-            unset($eventos[$key]);
-            continue;
-        }
-
-        // Selección con pesos: 50% munición, 30% consumibles, 20% clave (si hay)
-        $rand_val = rand(1, 100);
-        $item_data = null;
-
-        if ($rand_val <= 50 && !empty($ammo_pool)) {
-            $item_data = $ammo_pool[array_rand($ammo_pool)];
-        } elseif ($rand_val <= 80 && !empty($items_pool)) {
-            $item_data = $items_pool[array_rand($items_pool)];
-        } elseif (!empty($key_items_pool)) {
-            $item_data = $key_items_pool[array_rand($key_items_pool)];
-        } else {
-            // Fallback
-            $combined = array_merge($items_pool, $ammo_pool, $key_items_pool);
-            if (!empty($combined)) {
-                $item_data = $combined[array_rand($combined)];
-            }
-        }
-
-        if ($item_data) {
-            $ev['nombre_objeto'] = $item_data['nombre'];
-            $ev['contenido_accion'] = $item_data['id_item'];
-            $ev['imagen_item'] = $item_data['imagen_url'];
-        } else {
-            unset($eventos[$key]);
-        }
-    } elseif ($ev['tipo_accion'] === 'recoger_item' && is_numeric($ev['contenido_accion'])) {
-        // Cargar imagen para items fijos
-        $id_item = $ev['contenido_accion'];
-        $stmt_item = $pdo->prepare("SELECT imagen_url FROM catalogo_items WHERE id_item = ?");
-        $stmt_item->execute([$id_item]);
-        $ev['imagen_item'] = $stmt_item->fetchColumn();
-    } elseif ($ev['tipo_accion'] === 'recoger_arma' && is_numeric($ev['contenido_accion'])) {
-        // Cargar imagen para armas fijas
-        $id_arma = $ev['contenido_accion'];
-        $stmt_arma = $pdo->prepare("SELECT imagen_url FROM catalogo_armas WHERE id_arma = ?");
-        $stmt_arma->execute([$id_arma]);
-        $ev['imagen_item'] = $stmt_arma->fetchColumn();
-    }
-}
-
-// 6. Consultar todos los archivos para el visor
 $query_archivos = $pdo->query("SELECT * FROM catalogo_archivos");
 $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
-?>
 
+$st_vida = $pdo->prepare("SELECT vida_actual FROM estado_personaje WHERE id_partida = ?");
+$st_vida->execute([$id_partida]);
+$vida_p = $st_vida->fetchColumn() ?: 100;
+?>
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resident Evil - <?php echo $sala['nombre_visual']; ?></title>
-
+    <title>Resident Evil - <?php echo htmlspecialchars($sala['nombre_visual']); ?></title>
     <link rel="stylesheet" href="../styles/juego.css">
     <link rel="stylesheet" href="../styles/inventario.css">
     <style>
-        /* Estilos Premium para el Menú de Guardado */
-        #save-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            backdrop-filter: blur(5px);
-        }
+        .vats-life-container { position: fixed; bottom: 20px; left: 20px; width: 250px; background: rgba(0,0,0,0.7); border: 1px solid #333; padding: 10px; z-index: 1000; }
+        .vats-label { color: #00ff66; font-size: 10px; letter-spacing: 1px; margin-bottom: 5px; }
+        .vats-hp-fill { height: 12px; transition: width 0.5s; }
+        .hp-fine { background: #00ff66; box-shadow: 0 0 10px #00ff66; }
+        .hp-caution { background: #ffcc00; box-shadow: 0 0 10px #ffcc00; }
+        .hp-danger { background: #ff4444; box-shadow: 0 0 10px #ff4444; }
 
-        .save-container {
-            width: 600px;
-            background: #111;
-            border: 2px solid #333;
-            padding: 30px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            position: relative;
+        /* Estilos del Enemigo en Pantalla */
+        .enemy-encounter {
+            position: absolute; left: 30%; top: 15%; width: 40%; height: 70%;
+            z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: crosshair; transition: transform 0.3s;
         }
-
-        .save-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-
-        .save-header h2 {
-            margin: 0;
-            color: #ff0000;
-            letter-spacing: 2px;
-            font-size: 1.5rem;
-        }
-
-        .ink-ribbon-count {
-            background: #222;
-            padding: 5px 15px;
-            border: 1px solid #444;
-            color: #aaa;
-            font-size: 0.9rem;
-        }
-
-        .save-hint {
-            color: #888;
-            font-style: italic;
-            margin-bottom: 20px;
-        }
-
-        .save-slots {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .save-slot {
-            display: flex;
-            align-items: center;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .save-slot:hover {
-            background: #252525;
-            border-color: #ff0000;
-            transform: translateX(10px);
-        }
-
-        .slot-number {
-            font-size: 1.5rem;
-            color: #444;
-            margin-right: 20px;
-            font-family: 'Courier New', Courier, monospace;
-        }
-
-        .save-slot:hover .slot-number {
-            color: #ff0000;
-        }
-
-        .slot-info {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
-
-        .slot-status {
-            color: #eee;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-
-        .slot-date {
-            font-size: 0.8rem;
-            color: #666;
-        }
-
-        #btn-cancelar-guardado {
-            width: 100%;
-            background: #333;
-            border: none;
-            color: #fff;
-            padding: 10px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        #btn-cancelar-guardado:hover {
-            background: #444;
-        }
+        .enemy-encounter:hover { transform: scale(1.05); }
+        .enemy-encounter img { height: 90%; filter: drop-shadow(0 0 15px rgba(255,0,0,0.6)); animation: creature-pulse 2s infinite; }
+        .enemy-label { background: rgba(0,0,0,0.85); color: #ff0000; padding: 8px 15px; border: 1px solid #ff0000; font-family: 'Courier New', monospace; font-size: 0.9rem; text-align: center; margin-top: -20px; box-shadow: 0 0 10px red; }
+        
+        @keyframes creature-pulse { 0%, 100% { filter: drop-shadow(0 0 10px red); } 50% { filter: drop-shadow(0 0 25px red); } }
+        
+        .nav-blocked { opacity: 0; pointer-events: none; transition: opacity 0.5s; }
     </style>
 </head>
-
 <body>
-    <!-- MENÚ DE PAUSA -->
-    <div id="game-container" style="background-image: url('<?php echo $sala['imagen_url']; ?>');">
 
-        <!-- MENÚ DE PAUSA -->
-        <div id="pause-menu" style="display: none;">
-            <h2>PAUSA</h2>
-            <button id="btn-continuar">Continuar (ESC)</button>
-            <button id="btn-cargar">Cargar Partida</button>
-            <button id="btn-salir">Salir del Juego</button>
-        </div>
+<div class="vats-life-container">
+    <div class="vats-label">CONDITION: <?php 
+        if ($vida_p >= 75) echo "FINE"; 
+        elseif ($vida_p >= 30) echo "CAUTION"; 
+        else echo "DANGER"; 
+    ?></div>
+    <div style="background: #002200; height: 12px; width: 100%; border: 1px solid #00ff66;">
+        <div class="vats-hp-fill <?php 
+            echo ($vida_p >= 75 ? "hp-fine" : ($vida_p >= 30 ? "hp-caution" : "hp-danger")); 
+        ?>" style="width:<?php echo $vida_p; ?>%;"></div>
+    </div>
+</div>
 
-        <div class="hud-top">
-            <span class="location-name"><?php echo $sala['nombre_visual']; ?></span>
-            <button id="btn-inventario" class="hud-btn">INVENTARIO (TAB)</button>
-        </div>
+<div id="game-container" style="background-image: url('<?php echo $sala['imagen_url']; ?>');">
 
-        <div class="navigation-controls">
-            <?php if ($sala['norte']): ?>
-                <a href="juego.php?sala=<?php echo $sala['norte']; ?>" class="nav-btn north">▲</a>
-            <?php endif; ?>
-            <?php if ($sala['sur']): ?>
-                <a href="juego.php?sala=<?php echo $sala['sur']; ?>" class="nav-btn south">▼</a>
-            <?php endif; ?>
-            <?php if ($sala['este']): ?>
-                <a href="juego.php?sala=<?php echo $sala['este']; ?>" class="nav-btn east">►</a>
-            <?php endif; ?>
-            <?php if ($sala['oeste']): ?>
-                <a href="juego.php?sala=<?php echo $sala['oeste']; ?>" class="nav-btn west">◄</a>
-            <?php endif; ?>
-        </div>
-
-        <div class="message-box">
-            <p><?php echo $sala['descripcion']; ?></p>
-        </div>
-
-        <!-- RENDERIZAR EVENTOS DESDE LA DB -->
-        <?php foreach ($eventos as $ev): ?>
-            <div class="hotspot <?php echo !empty($ev['imagen_item']) ? 'has-item' : ''; ?>" style="left: <?php echo $ev['xmin']; ?>%; 
-                        top: <?php echo $ev['ymin']; ?>%; 
-                        width: <?php echo ($ev['xmax'] - $ev['xmin']); ?>%; 
-                        height: <?php echo ($ev['ymax'] - $ev['ymin']); ?>%;"
-                title="<?php echo $ev['nombre_objeto']; ?>"
-                onclick='ejecutarEvento(<?php echo json_encode($ev); ?>, event)'>
-
-                <?php if (!empty($ev['imagen_item'])): ?>
-                    <img src="<?php echo $ev['imagen_item']; ?>" alt="Objeto" class="item-visual">
-                <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
-
-        <!-- VISOR DE NOTAS (MODAL) -->
-        <div id="note-viewer" style="display: none;">
-            <div class="note-container">
-                <img src="../img/nota.png" alt="Papel de nota" class="note-paper" id="note-img">
-                <div class="note-content">
-                    <h3 id="note-title">Título de la Nota</h3>
-                    <div id="note-body">Cuerpo de la nota...</div>
-                </div>
-                <button id="btn-cerrar-nota">CERRAR (ESC)</button>
-            </div>
-        </div>
-
-        <!-- INVENTARIO (MODAL) -->
-        <div id="inventory-screen" style="display: none;">
-            <div class="inventory-container">
-                <h2>INVENTARIO</h2>
-                <div class="inventory-grid" id="inventory-grid">
-                    <!-- Los slots se generarán dinámicamente -->
-                </div>
-                <div class="item-details" id="item-details">
-                    <div style="flex-grow: 1;">
-                        <h3 id="detail-name">Selecciona un objeto</h3>
-                        <p id="detail-description">Pasa el ratón sobre un objeto para ver sus detalles.</p>
-                    </div>
-                    <button id="btn-examinar" class="hud-btn" style="display: none; height: fit-content; align-self: flex-start;">EXAMINAR</button>
-                </div>
-                <button id="btn-cerrar-inventario">CERRAR (ESC)</button>
-            </div>
-        </div>
-
-        <!-- MENÚ DE GUARDADO (MODAL) -->
-        <div id="save-menu" style="display: none;">
-            <div class="save-container">
-                <div class="save-header">
-                    <h2>MÁQUINA DE ESCRIBIR</h2>
-                    <div class="ink-ribbon-count">CINTAS: <span id="ribbon-count">0</span></div>
-                </div>
-                <p class="save-hint">Selecciona un slot para guardar tu progreso.</p>
-                <div class="save-slots">
-                    <div class="save-slot" data-slot="1">
-                        <span class="slot-number">01</span>
-                        <div class="slot-info">
-                            <span class="slot-status">VACÍO</span>
-                            <span class="slot-date">--/--/-- --:--</span>
-                        </div>
-                    </div>
-                    <div class="save-slot" data-slot="2">
-                        <span class="slot-number">02</span>
-                        <div class="slot-info">
-                            <span class="slot-status">VACÍO</span>
-                            <span class="slot-date">--/--/-- --:--</span>
-                        </div>
-                    </div>
-                    <div class="save-slot" data-slot="3">
-                        <span class="slot-number">03</span>
-                        <div class="slot-info">
-                            <span class="slot-status">VACÍO</span>
-                            <span class="slot-date">--/--/-- --:--</span>
-                        </div>
-                    </div>
-                </div>
-                <button id="btn-cancelar-guardado" class="hud-btn">CANCELAR</button>
-            </div>
-        </div>
-
+    <div class="hud-top">
+        <span class="location-name"><?php echo htmlspecialchars($sala['nombre_visual']); ?></span>
+        <button id="btn-inventario" class="hud-btn">INVENTARIO (TAB)</button>
     </div>
 
-    <script src="../js/movimientos.js"></script>
-    <script src="../js/interacciones.js"></script>
-    <script src="../js/inventario.js"></script>
-    <script src="../js/eventos_este.js"></script>
-    <script src="../js/eventos_oeste.js"></script>
-    <script>
-        const catalogoArchivos = <?php echo json_encode($archivos); ?>;
-        const tension = "<?php echo $enemigo_presente ? 'alta' : 'baja'; ?>";
-        console.log("Sistema de sonido: Nivel " + tension);
-    </script>
-</body>
+    <div class="navigation-controls <?php echo $hay_combate ? 'nav-blocked' : ''; ?>">
+        <?php if ($sala['norte']): ?><a href="juego.php?sala=<?php echo $sala['norte']; ?>" class="nav-btn north">▲</a><?php endif; ?>
+        <?php if ($sala['sur']):   ?><a href="juego.php?sala=<?php echo $sala['sur'];   ?>" class="nav-btn south">▼</a><?php endif; ?>
+        <?php if ($sala['este']):  ?><a href="juego.php?sala=<?php echo $sala['este'];  ?>" class="nav-btn east" >►</a><?php endif; ?>
+        <?php if ($sala['oeste']): ?><a href="juego.php?sala=<?php echo $sala['oeste']; ?>" class="nav-btn west" >◄</a><?php endif; ?>
+    </div>
 
+    <div class="message-box">
+        <p><?php echo $hay_combate ? "¡Un engendro bloquea el camino!" : $sala['descripcion']; ?></p>
+    </div>
+
+    <?php if ($hay_combate): ?>
+    <div class="enemy-encounter" onclick="window.location.href='combate.php?id_registro=<?php echo $enemigo_presente['id_registro']; ?>&vuelta=<?php echo $id_sala_actual; ?>'">
+        <img src="<?php echo $enemigo_presente['imagen_url']; ?>" alt="Enemigo">
+        <div class="enemy-label">
+            <strong>ADVERTENCIA:</strong> ENEMIGO CERCANO<br>
+            <small>PULSA PARA INICIAR COMBATE</small>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!$hay_combate): ?>
+        <?php foreach ($eventos as $ev): ?>
+            <div class="hotspot" 
+                 style="left:<?php echo $ev['xmin']; ?>%; top:<?php echo $ev['ymin']; ?>%; width:<?php echo ($ev['xmax']-$ev['xmin']); ?>%; height:<?php echo ($ev['ymax']-$ev['ymin']); ?>%;"
+                 onclick='ejecutarEvento(<?php echo json_encode($ev); ?>, event)'>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+    <div id="inventory-screen" style="display:none;">...</div>
+    <div id="note-viewer" style="display:none;">...</div>
+
+</div>
+
+<script src="../js/movimientos.js"></script>
+<script src="../js/interacciones.js"></script>
+<script src="../js/inventario.js"></script>
+<script>
+    const catalogoArchivos = <?php echo json_encode($archivos); ?>;
+    const tension = "<?php echo $hay_combate ? 'alta' : 'baja'; ?>";
+</script>
+</body>
 </html>

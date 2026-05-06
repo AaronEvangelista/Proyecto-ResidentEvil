@@ -29,8 +29,13 @@ $nombreUsuario = $_SESSION['usuario_nombre'] ?? '';
         <nav class="menu-area" id="menu-principal">
             <ul>
                 <li>
-                    <a href="#" id="btn-jugar" class="item-seleccionado">
-                        <span class="icono"></span>JUGAR STORY<span class="llave"></span>
+                    <a href="#" id="btn-continuar" class="item-seleccionado">
+                        <span class="icono"></span>CONTINUAR PARTIDA<span class="llave"></span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="btn-nueva-partida">
+                        <span class="icono"></span>NUEVA PARTIDA
                     </a>
                 </li>
                 <li><a href="./pages/enciclopedia.php"><span class="icono"></span> ENCICLOPEDIA DE RACCOON CITY</a></li>
@@ -100,19 +105,23 @@ $nombreUsuario = $_SESSION['usuario_nombre'] ?? '';
     <script>
         const logueado = <?= $logueado ? 'true' : 'false' ?>;
 
-        const btnJugar = document.getElementById('btn-jugar');
+        const btnContinuar = document.getElementById('btn-continuar');
+        const btnNuevaPartida = document.getElementById('btn-nueva-partida');
         const modal = document.getElementById('modal-login');
         const btnCerrar = document.getElementById('modal-cerrar');
         const overlay = modal;
 
-        btnJugar.addEventListener('click', function (e) {
+        function manejarClickJuego(e, isNew = false) {
             e.preventDefault();
             if (logueado) {
-                window.location.href = './pages/juego.php';
+                window.location.href = './pages/juego.php' + (isNew ? '?new=1' : '');
             } else {
                 modal.classList.add('modal-visible');
             }
-        });
+        }
+
+        btnContinuar.addEventListener('click', (e) => manejarClickJuego(e, false));
+        btnNuevaPartida.addEventListener('click', (e) => manejarClickJuego(e, true));
 
         btnCerrar.addEventListener('click', () => modal.classList.remove('modal-visible'));
 
