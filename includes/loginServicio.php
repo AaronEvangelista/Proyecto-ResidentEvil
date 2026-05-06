@@ -7,7 +7,7 @@ function autenticarUsuario(string $username, string $password): array
         global $pdo;
 
         $stmt = $pdo->prepare("
-            SELECT id_usuario, nombre, email, password
+            SELECT id_usuario, nombre, email, password, rol, zombies_visibles
             FROM   usuarios
             WHERE  LOWER(nombre) = LOWER(:nombre)
             LIMIT  1
@@ -57,8 +57,10 @@ function iniciarSesionUsuario(array $usuario): void
 
     session_regenerate_id(true);
 
-    $_SESSION['usuario_id'] = $usuario['id_usuario'];
-    $_SESSION['usuario_nombre'] = $usuario['nombre'];
-    $_SESSION['usuario_email'] = $usuario['email'];
-    $_SESSION['logueado'] = true;
+    $_SESSION['usuario_id']          = $usuario['id_usuario'];
+    $_SESSION['usuario_nombre']       = $usuario['nombre'];
+    $_SESSION['usuario_email']        = $usuario['email'];
+    $_SESSION['usuario_rol']          = $usuario['rol'] ?? 'jugador';
+    $_SESSION['zombies_visibles']     = isset($usuario['zombies_visibles']) ? (int)$usuario['zombies_visibles'] : 1;
+    $_SESSION['logueado']             = true;
 }

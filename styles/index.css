@@ -135,6 +135,23 @@ hud-area {
     border-color: #cc2200;
 }
 
+.hud-btn-admin {
+    color: #ff4444;
+    border-color: #8b0000;
+    background: rgba(139, 0, 0, .18);
+    animation: admin-btn-pulse 2.5s ease-in-out infinite;
+}
+.hud-btn-admin:hover {
+    background: #8b0000;
+    border-color: #ff2200;
+    color: #fff;
+    box-shadow: 0 0 14px rgba(255,34,0,.45);
+}
+@keyframes admin-btn-pulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(139,0,0,.4); }
+    50%       { box-shadow: 0 0 12px rgba(255,34,0,.6); }
+}
+
 .modal-overlay {
     position: fixed;
     inset: 0;

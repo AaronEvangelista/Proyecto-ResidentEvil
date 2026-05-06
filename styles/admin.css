@@ -1,0 +1,501 @@
+/* ═══════════════════════════════════════════════════════════════
+   ADMIN PANEL — UMBRELLA CORP STYLE
+   Consistent with the game's dark horror aesthetic
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oswald:wght@400;600;700&display=swap');
+
+:root {
+    --admin-red:     #c0392b;
+    --admin-red-glow:#e74c3c;
+    --admin-green:   #00ff88;
+    --admin-yellow:  #f39c12;
+    --admin-dark:    #0a0a0a;
+    --admin-surface: #111111;
+    --admin-border:  #2a2a2a;
+    --admin-text:    #cccccc;
+    --admin-muted:   #555555;
+    --admin-white:   #eeeeee;
+}
+
+/* ─── Reset base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body.admin-body {
+    background-color: var(--admin-dark);
+    color: var(--admin-text);
+    font-family: 'Share Tech Mono', 'Courier New', monospace;
+    min-height: 100vh;
+    background-image:
+        radial-gradient(ellipse at top, #1a0000 0%, transparent 60%),
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0,0,0,0.15) 2px,
+            rgba(0,0,0,0.15) 4px
+        );
+}
+
+/* ─── CRT effect ─────────────────────────────────────────────── */
+body.admin-body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.03) 0px,
+        rgba(0,0,0,0.03) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* ─── Layout ─────────────────────────────────────────────────── */
+.admin-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem 4rem;
+}
+
+/* ─── Header ─────────────────────────────────────────────────── */
+.admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.5rem;
+    background: #0d0000;
+    border-bottom: 2px solid var(--admin-red);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 0 30px rgba(192,57,43,0.3);
+}
+
+.admin-logo-block {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.admin-umbrella-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--admin-red);
+    background: radial-gradient(circle, #1a0000 0%, #0d0000 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    box-shadow: 0 0 12px rgba(192,57,43,0.6);
+    animation: pulse-umbrella 3s ease-in-out infinite;
+}
+
+@keyframes pulse-umbrella {
+    0%, 100% { box-shadow: 0 0 12px rgba(192,57,43,0.6); }
+    50%       { box-shadow: 0 0 22px rgba(231,76,60,0.9); }
+}
+
+.admin-titulo {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--admin-white);
+    letter-spacing: 0.12em;
+    line-height: 1.2;
+}
+.admin-subtitulo {
+    font-size: 0.65rem;
+    color: var(--admin-red);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.admin-header-links {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.admin-btn-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--admin-border);
+    background: transparent;
+    color: var(--admin-text);
+    font-family: inherit;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.admin-btn-header:hover {
+    border-color: var(--admin-red);
+    color: var(--admin-red);
+    box-shadow: 0 0 8px rgba(192,57,43,0.4);
+}
+
+.admin-operator-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--admin-red);
+    background: rgba(192,57,43,0.08);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+}
+.admin-operator-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--admin-green);
+    animation: blink-dot 1.5s ease-in-out infinite;
+}
+@keyframes blink-dot {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.2; }
+}
+
+/* ─── Sección genérica ───────────────────────────────────────── */
+.admin-section {
+    margin-top: 2.5rem;
+}
+
+.admin-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-section-icon {
+    font-size: 1.1rem;
+}
+
+.admin-section-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--admin-white);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.admin-section-badge {
+    margin-left: auto;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    border: 1px solid var(--admin-muted);
+    color: var(--admin-muted);
+}
+
+/* ─── Stats grid ─────────────────────────────────────────────── */
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.admin-stat-card {
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    padding: 1.4rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+.admin-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--admin-red);
+}
+.admin-stat-card:hover { border-color: var(--admin-red); }
+
+.admin-stat-value {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--admin-red-glow);
+    line-height: 1;
+    margin-bottom: 0.4rem;
+}
+.admin-stat-label {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--admin-muted);
+    text-transform: uppercase;
+}
+
+/* ─── Control de Zombies ─────────────────────────────────────── */
+.zombie-control-card {
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+    transition: border-color 0.3s;
+}
+.zombie-control-card.zombies-off {
+    border-color: var(--admin-green);
+    box-shadow: 0 0 20px rgba(0,255,136,0.1);
+}
+.zombie-control-card.zombies-on {
+    border-color: var(--admin-red);
+    box-shadow: 0 0 20px rgba(192,57,43,0.15);
+}
+
+.zombie-control-info { flex: 1; min-width: 200px; }
+
+.zombie-control-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--admin-white);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+}
+.zombie-control-desc {
+    font-size: 0.75rem;
+    color: var(--admin-muted);
+    line-height: 1.6;
+}
+
+.zombie-status-text {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    margin-top: 0.6rem;
+}
+.zombie-status-text.activos   { color: var(--admin-red-glow); }
+.zombie-status-text.inactivos { color: var(--admin-green); }
+
+/* Toggle switch */
+.toggle-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.toggle-label-text {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--admin-muted);
+}
+
+.toggle-switch {
+    position: relative;
+    width: 70px;
+    height: 36px;
+    cursor: pointer;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #1a1a1a;
+    border: 2px solid var(--admin-muted);
+    border-radius: 36px;
+    transition: all 0.3s ease;
+}
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--admin-muted);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 6px rgba(0,0,0,0.5);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: rgba(192,57,43,0.15);
+    border-color: var(--admin-red);
+}
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translate(34px, -50%);
+    background: var(--admin-red-glow);
+    box-shadow: 0 0 10px rgba(231,76,60,0.6);
+}
+
+.toggle-on-label  { color: var(--admin-red-glow); }
+.toggle-off-label { color: var(--admin-green); }
+
+.zombie-toggle-feedback {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    min-height: 1.2em;
+    margin-top: 0.3rem;
+    transition: color 0.3s;
+}
+
+/* ─── Tabla de usuarios ──────────────────────────────────────── */
+.admin-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--admin-border);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+
+.admin-table thead {
+    background: #0d0000;
+    border-bottom: 1px solid var(--admin-red);
+}
+.admin-table thead th {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--admin-red);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.admin-table tbody tr {
+    border-bottom: 1px solid var(--admin-border);
+    transition: background 0.15s;
+}
+.admin-table tbody tr:hover { background: rgba(192,57,43,0.05); }
+.admin-table tbody tr.fila-admin { background: rgba(192,57,43,0.04); }
+
+.admin-table td {
+    padding: 0.9rem 1rem;
+    vertical-align: middle;
+    color: var(--admin-text);
+}
+
+.td-id    { color: var(--admin-muted); font-size: 0.7rem; }
+.td-nombre { font-weight: 600; color: var(--admin-white); }
+.td-email  { color: var(--admin-muted); font-size: 0.72rem; }
+
+/* Badge rol */
+.rol-badge {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    border-radius: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+.rol-badge.admin   { background: rgba(192,57,43,0.2); color: var(--admin-red-glow); border: 1px solid var(--admin-red); }
+.rol-badge.jugador { background: rgba(0,0,0,0.4); color: var(--admin-muted); border: 1px solid var(--admin-border); }
+
+/* Botones de acción tabla */
+.btn-rol {
+    padding: 0.3rem 0.7rem;
+    font-family: inherit;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid;
+    background: transparent;
+    transition: all 0.2s;
+}
+.btn-rol.hacer-admin {
+    border-color: var(--admin-red);
+    color: var(--admin-red);
+}
+.btn-rol.hacer-admin:hover {
+    background: var(--admin-red);
+    color: white;
+    box-shadow: 0 0 8px rgba(192,57,43,0.5);
+}
+.btn-rol.hacer-jugador {
+    border-color: var(--admin-muted);
+    color: var(--admin-muted);
+}
+.btn-rol.hacer-jugador:hover {
+    border-color: var(--admin-text);
+    color: var(--admin-text);
+}
+.btn-rol:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Feedback fila */
+.fila-feedback {
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    padding: 0 0.5rem;
+}
+
+/* ─── Toast notificación ─────────────────────────────────────── */
+#admin-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-green);
+    color: var(--admin-green);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 0 20px rgba(0,255,136,0.2);
+}
+#admin-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+#admin-toast.error {
+    border-color: var(--admin-red);
+    color: var(--admin-red-glow);
+    box-shadow: 0 0 20px rgba(192,57,43,0.3);
+}
+
+/* ─── Skeleton loader ────────────────────────────────────────── */
+.skeleton-row td {
+    color: transparent !important;
+    background: linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shine 1.5s infinite;
+    border-radius: 3px;
+    user-select: none;
+}
+@keyframes skeleton-shine {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ─── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .admin-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    .zombie-control-card { flex-direction: column; align-items: flex-start; }
+    .admin-table thead th:nth-child(3),
+    .admin-table td:nth-child(3) { display: none; }
+}

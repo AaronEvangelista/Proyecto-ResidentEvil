@@ -2,6 +2,10 @@
 session_start();
 require_once '../includes/conexion.php';
 
+// Admin: control de visibilidad de zombies
+$zombiesVisibles = (int)($_SESSION['zombies_visibles'] ?? 1);
+$usuarioRol      = $_SESSION['usuario_rol'] ?? 'jugador';
+
 $id_sala_actual = $_GET['sala'] ?? 'banos_inicio';
 
 //1. CARGAR DATOS DE LA SALA
@@ -95,54 +99,61 @@ foreach (array_keys($_SESSION['huido_de']) as $s) {
         unset($_SESSION['huido_de'][$s]);
 }
 
-//4. GENERADOR DE ENEMIGOS (SPAWN) 
-//Salas con zombies básicos (IDs 1-4) → pueden reaparecer (40% al volver)
-$salas_respawn = [
-    'sala_espera' => [1, 2, 3, 4],
-    'oficina_este' => [1, 2, 3, 4],
-    'biblioteca' => [1, 2, 3, 4],
-];
-//Salas con enemigos especiales → aparecen UNA sola vez, no respawnean
-$salas_unicas = [
-    'oficina_capitan' => [6],   // Lastre
-    'pasillo' => [7],   // Espasmo
-    'sala_interrogatorios' => [7],   // Espasmo
-    'sala_arte' => [5],   // Licker
-];
+//4. GENERADOR DE ENEMIGOS (SPAWN)
+$enemigo_presente = null;
+$hay_combate = false;
 
-$distribucion_enemigos = array_merge($salas_respawn, $salas_unicas);
-$puede_respawnear = isset($salas_respawn[$id_sala_actual]);
+if ($zombiesVisibles) {
+    //Salas con zombies básicos (IDs 1-4) → pueden reaparecer (40% al volver)
+    $salas_respawn = [
+        'sala_espera'         => [1, 2, 3, 4],
+        'oficina_este'        => [1, 2, 3, 4],
+        'biblioteca'          => [1, 2, 3, 4],
+    ];
+    //Salas con enemigos especiales → aparecen UNA sola vez, no respawnean
+    $salas_unicas = [
+        'oficina_capitan'     => [6],   // Lastre
+        'pasillo'             => [7],   // Espasmo
+        'sala_interrogatorios'=> [7],   // Espasmo
+        'sala_arte'           => [5],   // Licker
+    ];
 
-if (isset($distribucion_enemigos[$id_sala_actual])) {
-    $q_existe = $pdo->prepare("SELECT id_registro FROM estado_enemigos WHERE id_partida = ? AND sala_ubicacion = ? AND estado = 'vivo' LIMIT 1");
-    $q_existe->execute([$id_partida, $id_sala_actual]);
-    $hay_vivo = $q_existe->fetchColumn();
+    $distribucion_enemigos = array_merge($salas_respawn, $salas_unicas);
+    $puede_respawnear = isset($salas_respawn[$id_sala_actual]);
 
-    if (!$hay_vivo) {
-        $q_veces = $pdo->prepare("SELECT COUNT(*) FROM estado_enemigos WHERE id_partida = ? AND sala_ubicacion = ?");
-        $q_veces->execute([$id_partida, $id_sala_actual]);
-        $veces_spawn = (int) $q_veces->fetchColumn();
+    if (isset($distribucion_enemigos[$id_sala_actual])) {
+        $q_existe = $pdo->prepare("SELECT id_registro FROM estado_enemigos WHERE id_partida = ? AND sala_ubicacion = ? AND estado = 'vivo' LIMIT 1");
+        $q_existe->execute([$id_partida, $id_sala_actual]);
+        $hay_vivo = $q_existe->fetchColumn();
 
-        if ($veces_spawn === 0 || ($puede_respawnear && rand(1, 100) <= 40)) {
-            $pool = $distribucion_enemigos[$id_sala_actual];
-            $id_enemigo_eleg = $pool[array_rand($pool)];
+        if (!$hay_vivo) {
+            $q_veces = $pdo->prepare("SELECT COUNT(*) FROM estado_enemigos WHERE id_partida = ? AND sala_ubicacion = ?");
+            $q_veces->execute([$id_partida, $id_sala_actual]);
+            $veces_spawn = (int) $q_veces->fetchColumn();
 
-            $q_vida = $pdo->prepare("SELECT vida_maxima FROM catalogo_enemigos WHERE id_enemigo = ?");
-            $q_vida->execute([$id_enemigo_eleg]);
-            $vida_base = $q_vida->fetchColumn();
+            if ($veces_spawn === 0 || ($puede_respawnear && rand(1, 100) <= 40)) {
+                $pool = $distribucion_enemigos[$id_sala_actual];
+                $id_enemigo_eleg = $pool[array_rand($pool)];
 
-            $pdo->prepare("INSERT INTO estado_enemigos (id_partida, id_enemigo, sala_ubicacion, vida_restante, estado) VALUES (?, ?, ?, ?, 'vivo')")
-                ->execute([$id_partida, $id_enemigo_eleg, $id_sala_actual, $vida_base]);
+                $q_vida = $pdo->prepare("SELECT vida_maxima FROM catalogo_enemigos WHERE id_enemigo = ?");
+                $q_vida->execute([$id_enemigo_eleg]);
+                $vida_base = $q_vida->fetchColumn();
+
+                $pdo->prepare("INSERT INTO estado_enemigos (id_partida, id_enemigo, sala_ubicacion, vida_restante, estado) VALUES (?, ?, ?, ?, 'vivo')")
+                    ->execute([$id_partida, $id_enemigo_eleg, $id_sala_actual, $vida_base]);
+            }
         }
     }
-}
+} // fin if ($zombiesVisibles) — bloque spawn
 
 //5. DETECTAR ENEMIGO ACTUAL
-$q_ep = $pdo->prepare("SELECT ee.*, ce.nombre, ce.imagen_url FROM estado_enemigos ee JOIN catalogo_enemigos ce ON ee.id_enemigo = ce.id_enemigo WHERE ee.id_partida = ? AND ee.sala_ubicacion = ? AND ee.estado = 'vivo' LIMIT 1");
-$q_ep->execute([$id_partida, $id_sala_actual]);
-$enemigo_presente = $q_ep->fetch(PDO::FETCH_ASSOC);
+if ($zombiesVisibles) {
+    $q_ep = $pdo->prepare("SELECT ee.*, ce.nombre, ce.imagen_url FROM estado_enemigos ee JOIN catalogo_enemigos ce ON ee.id_enemigo = ce.id_enemigo WHERE ee.id_partida = ? AND ee.sala_ubicacion = ? AND ee.estado = 'vivo' LIMIT 1");
+    $q_ep->execute([$id_partida, $id_sala_actual]);
+    $enemigo_presente = $q_ep->fetch(PDO::FETCH_ASSOC);
 
-$hay_combate = ($enemigo_presente && $id_reg_huido != $enemigo_presente['id_registro']);
+    $hay_combate = ($enemigo_presente && $id_reg_huido != $enemigo_presente['id_registro']);
+}
 
 //6. EVENTOS Y VIDA 
 if (!isset($_SESSION['eventos_recogidos_sesion']))
@@ -685,7 +696,25 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
     <script>
         const catalogoArchivos = <?php echo json_encode($archivos); ?>;
         const tension = "<?php echo $hay_combate ? 'alta' : 'baja'; ?>";
+        const esAdmin = <?= $usuarioRol === 'admin' ? 'true' : 'false' ?>;
+        const zombiesVisibles = <?= $zombiesVisibles ? 'true' : 'false' ?>;
     </script>
+    <?php if ($usuarioRol === 'admin'): ?>
+    <div id="admin-game-bar" style="
+        position:fixed;top:0;left:0;right:0;z-index:9000;
+        background:rgba(10,0,0,0.85);border-bottom:1px solid #c0392b;
+        display:flex;align-items:center;justify-content:space-between;
+        padding:0.3rem 1rem;font-family:'Courier New',monospace;font-size:0.7rem;
+        backdrop-filter:blur(4px);
+    ">
+        <span style="color:#c0392b;letter-spacing:.15em;">☣ MODO ADMIN — <?= htmlspecialchars($adminNombre = $_SESSION['usuario_nombre'] ?? 'Admin') ?></span>
+        <span style="color:<?= $zombiesVisibles ? '#e74c3c' : '#00ff88' ?>;">ZOMBIES: <?= $zombiesVisibles ? 'ACTIVOS ⚠' : 'DESACTIVADOS ✔' ?></span>
+        <a href="../pages/admin.php" style="
+            color:#aaa;text-decoration:none;border:1px solid #333;
+            padding:.2rem .6rem;letter-spacing:.1em;
+        " id="link-admin-panel">⚙ PANEL ADMIN</a>
+    </div>
+    <?php endif; ?>
 </body>
 
 </html>

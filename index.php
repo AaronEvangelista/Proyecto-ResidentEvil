@@ -1,7 +1,8 @@
 <?php
 session_start();
-$logueado = $_SESSION['logueado'] ?? false;
+$logueado     = $_SESSION['logueado'] ?? false;
 $nombreUsuario = $_SESSION['usuario_nombre'] ?? '';
+$usuarioRol   = $_SESSION['usuario_rol'] ?? 'jugador';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -56,6 +57,11 @@ $nombreUsuario = $_SESSION['usuario_nombre'] ?? '';
                 </div>
             </div>
             <div class="hud-derecha">
+                <?php if ($usuarioRol === 'admin'): ?>
+                    <a href="pages/admin.php" class="hud-btn hud-btn-admin" id="btn-hud-admin">
+                        ⚙ PANEL ADMIN
+                    </a>
+                <?php endif; ?>
                 <a href="pages/perfil.php" class="hud-btn hud-btn-perfil" id="btn-hud-perfil">
                     MI PERFIL
                 </a>
