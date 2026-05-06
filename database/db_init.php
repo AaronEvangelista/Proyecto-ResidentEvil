@@ -232,7 +232,7 @@ INSERT OR IGNORE INTO eventos_interactivos
 ('oficina_este', 'PUERTA PARA CORTAR', 59.0, 63.0, 44.0, 50.0, 'desbloquear', 'puerta', 'Cortacadenas', 'usarHerramienta'),
 ('oficina_este', 'ITEM RANDOM', 74.0, 78.0, 52.0, 57.0, 'recoger_item', 'random', '', 'añadirInventario'),
 ('oficina_capitan', 'NOTA 7', 57.0, 59.0, 80.0, 81.0, 'leer_archivo', '7', '', 'abrirMenuArchivo'),
-('oficina_capitan', 'CAJA FUERTE CORTACADENAS', 48.0, 54.0, 56.0, 70.0, 'recoger_item', '13', '', 'añadirInventario'),
+('oficina_capitan', 'CAJA FUERTE CORTACADENAS', 48.0, 54.0, 56.0, 70.0, 'puzzle', 'caja_fuerte', '', 'abrirMenuPuzzle'),
 ('oficina_capitan', 'BOTELLA RON', 26.0, 30.0, 84.0, 94.0, 'recoger_item', 'consumible', '', 'añadirInventario'),
 ('oficina_capitan', 'NOTA OCULTA 4', 85.0, 92.0, 87.0, 98.0, 'leer_archivo', '13', '', 'abrirMenuArchivo'),
 ('oficina_capitan', 'PUERTA IZQ', 4.0, 12.0, 36.0, 94.0, 'transicion', 'sala_electrica', '', 'cambiarSala'),
