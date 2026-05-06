@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS catalogo_salas (
 CREATE TABLE IF NOT EXISTS partida (
     id_partida INTEGER PRIMARY KEY AUTOINCREMENT,
     id_usuario INTEGER NOT NULL,
+    slot_numero INTEGER DEFAULT 0,
     ruta TEXT NOT NULL, -- 'chico' o 'chica'
     sala_actual TEXT NOT NULL,
     fecha_guardado DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -180,16 +181,16 @@ INSERT OR IGNORE INTO catalogo_items (nombre, tipo, ruta_exclusiva, descripcion,
 INSERT OR IGNORE INTO catalogo_enemigos (nombre, tipo, vida_maxima, dano_base, esquive_base, precision_cabeza, precision_torso, precision_piernas, prob_aturdir_piernas, 
 multiplicador_cabeza, imagen_url) VALUES
 -- Zombie Común: Equilibrado.
-('Zombie Hombre', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_civil_hombre.png'),
-('Zombie Mujer', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_civil_mujer.png'),
-('Zombie Recluso', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_recluso.png'),
-('Zombie Uniforme', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_uniforme.png'),
+('Zombie Hombre', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_civil_hombre2.0.png'),
+('Zombie Mujer', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_civil_mujer2.0.png'),
+('Zombie Recluso', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_recluso2.0.png'),
+('Zombie Uniforme', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_uniforme2.0.png'),
 -- Licker: Muy difícil de dar en la cabeza por su postura, pero vulnerable al torso.
-('Licker', 'mutante', 75, 50, 25, 15, 60, 45, 30, 2.5, '../img/licker.png'),
+('Licker', 'mutante', 75, 50, 25, 15, 60, 45, 30, 2.5, '../img/licker2.0.png'),
 -- Lastre: Muy fácil de acertar (grande y lento), pero difícil de aturdir por su masa.
-('Lastre', 'zombie_pesado', 120, 15, 60, 20, 85, 40, 20, 1.5, '../img/laste_enemigo.png'),
+('Lastre', 'zombie_pesado', 120, 15, 60, 20, 85, 40, 20, 1.5, '../img/lastre_enemigo2.0.png'),
 -- Espasmo: Muy difícil de apuntar (errático), pero si le das en las piernas se nota.
-('Espasmo', 'zombie_agil', 40, 50, 15, 10, 50, 40, 60, 2.0, '../img/espasmo_enemigo.png'),
+('Espasmo', 'zombie_agil', 40, 50, 15, 10, 50, 40, 60, 2.0, '../img/espasmo_enemigo2.0.png'),
 -- FASE 1: El Recopilador (Científico Translúcido)
 ('El Recopilador - Fase 1', 'boss', 300, 35, 10, 20, 70, 50, 40, 2.0, '../img/boss_fase1.png'),
 -- FASE 2: El Recopilador (Mutación Blindada)
