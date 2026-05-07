@@ -50,9 +50,23 @@ try {
     }
 
     // 3. Entregar la recompensa (siempre a la DB para que persista)
+    $stmt_slot = $pdo->prepare("
+        SELECT s.n 
+        FROM (SELECT 0 n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7) s
+        WHERE s.n NOT IN (SELECT posicion_slot FROM inventario WHERE id_partida = ?)
+        LIMIT 1
+    ");
+    $stmt_slot->execute([$id_partida]);
+    $posicion_slot = $stmt_slot->fetchColumn();
+
+    if ($posicion_slot === false) {
+        echo json_encode(['success' => false, 'error' => 'Inventario lleno. No puedes recibir el premio.']);
+        exit;
+    }
+
     $stmt_ins = $pdo->prepare("INSERT INTO inventario (id_partida, tipo_objeto, id_objeto, cantidad, posicion_slot) 
-                               SELECT ?, 'item', ?, 1, COALESCE(MAX(posicion_slot)+1, 0) FROM inventario WHERE id_partida = ?");
-    $stmt_ins->execute([$id_partida, $id_recompensa, $id_partida]);
+                                VALUES (?, 'item', ?, 1, ?)");
+    $stmt_ins->execute([$id_partida, $id_recompensa, $posicion_slot]);
 
     $pdo->commit();
 

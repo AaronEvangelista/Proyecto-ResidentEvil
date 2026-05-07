@@ -169,7 +169,7 @@ INSERT OR REPLACE INTO catalogo_items (nombre, tipo, ruta_exclusiva, descripcion
 ('Hierba Verde', 'curacion', 'ambos', 'Planta medicinal local. Cura un 25% de salud. Se pueden combinar hasta 3 juntas (100% de salud).', '../img/Verde_hierva.png'),
 ('Cuchillo Defensivo', 'defensa', 'ambos', 'Permite evitar un mordisco y escapar sin recibir daño. Se consume tras su uso.', '../img/Cuchillo_Defensivo.png'),
 ('Munición de Pistola', 'municion', 'ambos', 'Balas de 9mm para armas de mano.', '../img/municion_pistola.png'),
-('Munición de Escopeta', 'municion', 'ambos', 'Cartuchos potentes para combate cercano.', '../img/municion_escopeta.png'),
+('Munición de Escopeta', 'municion', 'ambos', 'Cartuchos potentes para combate cercano.', '../img/cartucho_de_escopeta.png'),
 ('Munición de Fusil', 'municion', 'ambos', 'Balas de alto calibre para fusil.', '../img/municion_fusil.png'),
 ('Cinta de Guardado', 'clave', 'ambos', 'Una cinta magnética para máquina de escribir. Permite registrar tu progreso una sola vez. Úsala con sabiduría.', '../img/cinta_de_tinta.webp'),
 ('Medallon de León', 'clave', 'ambos', 'Un pesado medallon de plata con el emblema de un león', '../img/medallon_de_leon.png'),
@@ -180,23 +180,24 @@ INSERT OR REPLACE INTO catalogo_items (nombre, tipo, ruta_exclusiva, descripcion
 ('Llave de Pica', 'clave', 'ambos', 'Una llave que tiene la forma de la pica', '../img/llave_de_pica.png'),
 ('Cortacadenas', 'clave', 'ambos', 'Herramienta útil para cortar cadenas que impidan el paso', '../img/corta_cadenas.png');
 
-INSERT OR REPLACE INTO catalogo_enemigos (nombre, tipo, vida_maxima, dano_base, esquive_base, precision_cabeza, precision_torso, precision_piernas, prob_aturdir_piernas, 
+INSERT OR REPLACE INTO catalogo_enemigos (nombre, tipo, vida_maxima, dano_base, esquive_base, precision_cabeza, precision_torso, precision_piernas, prob_aturdir_piernas,
 multiplicador_cabeza, imagen_url) VALUES
 -- Zombie Común: Equilibrado.
-('Zombie Hombre', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_civil_hombre2.0.png'),
-('Zombie Mujer', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_civil_mujer2.0.png'),
-('Zombie Recluso', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_recluso2.0.png'),
-('Zombie Uniforme', 'comun', 50, 25, 35, 25, 75, 55, 50, 2.0, '../img/zombie_uniforme2.0.png'),
+('Zombie Hombre', 'comun', 50, 25, 35, 35, 75, 55, 50, 2.0, '../img/zombie_civil_hombre2.0.png'),
+('Zombie Mujer', 'comun', 50, 25, 35, 35, 75, 55, 50, 2.0, '../img/zombie_civil_mujer2.0.png'),
+('Zombie Recluso', 'comun', 50, 25, 35, 35, 75, 55, 50, 2.0, '../img/zombie_recluso2.0.png'),
+('Zombie Uniforme', 'comun', 50, 25, 35, 35, 75, 55, 50, 2.0, '../img/zombie_uniforme2.0.png'),
 -- Licker: Muy difícil de dar en la cabeza por su postura, pero vulnerable al torso.
-('Licker', 'mutante', 75, 50, 25, 15, 60, 45, 30, 2.5, '../img/licker2.0.png'),
+('Licker', 'mutante', 75, 50, 25, 25, 60, 45, 30, 2.5, '../img/licker2.0.png'),
 -- Lastre: Muy fácil de acertar (grande y lento), pero difícil de aturdir por su masa.
-('Lastre', 'zombie_pesado', 120, 15, 60, 20, 85, 40, 20, 1.5, '../img/lastre_enemigo2.0.png'),
+('Lastre', 'zombie_pesado', 120, 15, 60, 40, 85, 40, 20, 1.5, '../img/lastre_enemigo2.0.png'),
 -- Espasmo: Muy difícil de apuntar (errático), pero si le das en las piernas se nota.
-('Espasmo', 'zombie_agil', 40, 50, 15, 10, 50, 40, 60, 2.0, '../img/espasmo_enemigo2.0.png'),
+('Espasmo', 'zombie_agil', 40, 20, 15, 30, 50, 40, 60, 2.0, '../img/espasmo_enemigo2.0.png'),
 -- FASE 1: El Recopilador (Científico Translúcido)
 ('El Recopilador - Fase 1', 'boss', 300, 35, 10, 20, 70, 50, 40, 2.0, '../img/boss_fase1.png'),
 ('El Recopilador - Fase 2', 'boss', 600, 55, 5, 15, 50, 40, 25, 3.0, '../img/boss_fase2.png'),
 ('El Recopilador - Fase 3', 'boss', 1000, 80, 5, 10, 60, 30, 10, 4.0, '../img/boss_fase3.png');
+
 
 -- CATALOGO_SALAS COMPLETO 
 INSERT OR REPLACE INTO catalogo_salas (id_sala, nombre_visual, descripcion, capitulo, norte, sur, este, oeste, imagen_url) VALUES
@@ -265,24 +266,27 @@ INSERT OR IGNORE INTO eventos_interactivos
 
 -- NOTAS DE HISTORIA PRINCIPAL Y NOTAS OCULTAS
 INSERT OR REPLACE INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, imagen_url) VALUES
-('NOTA 1: Informe inicial', 'ambos', 'Fecha: 19 de septiembre. Hemos recibido múltiples llamadas sobre disturbios en la zona este. Al principio parecían ataques aislados, pero todos los testigos describen lo mismo: gente extremadamente agresiva… que no responde al dolor. El capitán ha ordenado aumentar la vigilancia. Personalmente, creo que esto va a peor.', NULL),
-('NOTA 2: Registro médico improvisado', 'ambos', 'Paciente: Civil masculino (sin identificar). Mordedura profunda en el brazo. Fiebre alta (40°C). Comportamiento errático. El paciente murió a las 03:12… y volvió a moverse a las 03:27. NO es una broma.', NULL),
-('NOTA 3: Orden interna', 'ambos', 'A TODO EL PERSONAL: Queda prohibido permitir la entrada a civiles con heridas abiertas o mordeduras. Cualquier individuo que muestre signos de agresividad extrema deberá ser neutralizado. Disparen a la cabeza. — Capitanía', NULL),
-('NOTA 4: Mensaje personal', 'ambos', 'Sarah, si estás leyendo esto, lo siento. Dejé pasar a gente herida… niños, incluso. Pensé que estaba haciendo lo correcto. Ahora están dentro. Si no salgo de aquí, no dejes que nadie se acerque a ti si está herido. — Mike', NULL),
-('NOTA 5: Informe clasificado', 'ambos', '[DOCUMENTO DAÑADO] …el brote no es natural. Se sospecha de una filtración en los laboratorios subterráneos de la ciudad. Nombre en clave: \"T-Virus\". Efectos: Reanimación post-mortem, pérdida de funciones cognitivas, agresión extrema. [FIN DEL DOCUMENTO]', NULL),
-('NOTA 6: Grabación transcrita', 'ambos', '[Inicio de grabación] No queda nadie… Intentamos resistir en el vestíbulo, pero… no paran. Las puertas no aguantaron. Si alguien encuentra esto: no vengas aquí. [Golpes, gritos] Dios… están entrando— [Fin de grabación]', NULL),
-('NOTA 7: Último informe del capitán', 'ambos', 'Hemos perdido la comisaría. Los supervivientes que quedan están dispersos o muertos. Esto no fue un fallo… fue una condena desde el principio. Si alguien logra escapar: La ciudad está perdida. No busques ayuda aquí. — Capitán de policía', NULL),
-('Cuaderno de Leon (Pista)', 'ambos', 'Día 1: Las puertas del lobby están selladas. Parece que el código de la salida está relacionado con tres estatuas... Lobo, Águila y Serpiente.', NULL),
-('Protocolo de Cierre (Pista)', 'ambos', 'Nivel de amenaza crítico. Salida del garaje bloqueada. Requiere inserción de los tres medallones tácticos en el panel inferior.', NULL),
+('NOTA 1: Informe inicial', 'ambos', 'El rey ruge desde lo alto,
+ entre hojas descansa su dominio,
+ y el cielo le rinde homenaje.
+', '../img/fondo_nota.png'),
+('NOTA 2: Registro médico improvisado', 'ambos', 'Paciente: Civil masculino (sin identificar). Mordedura profunda en el brazo. Fiebre alta (40°C). Comportamiento errático. El paciente murió a las 03:12… y volvió a moverse a las 03:27. NO es una broma.', '../img/fondo_nota.png'),
+('NOTA 3: Orden interna', 'ambos', 'A TODO EL PERSONAL: Queda prohibido permitir la entrada a civiles con heridas abiertas o mordeduras. Cualquier individuo que muestre signos de agresividad extrema deberá ser neutralizado. Disparen a la cabeza. — Capitanía', '../img/fondo_nota.png'),
+('NOTA 4: Mensaje personal', 'ambos', 'Sarah, si estás leyendo esto, lo siento. Dejé pasar a gente herida… niños, incluso. Pensé que estaba haciendo lo correcto. Ahora están dentro. Si no salgo de aquí, no dejes que nadie se acerque a ti si está herido. — Mike', '../img/fondo_nota.png'),
+('NOTA 5: Informe clasificado', 'ambos', '[DOCUMENTO DAÑADO] …el brote no es natural. Se sospecha de una filtración en los laboratorios subterráneos de la ciudad. Nombre en clave: \"T-Virus\". Efectos: Reanimación post-mortem, pérdida de funciones cognitivas, agresión extrema. [FIN DEL DOCUMENTO]', '../img/fondo_nota.png'),
+('NOTA 6: Grabación transcrita', 'ambos', '[Inicio de grabación] No queda nadie… Intentamos resistir en el vestíbulo, pero… no paran. Las puertas no aguantaron. Si alguien encuentra esto: no vengas aquí. [Golpes, gritos] Dios… están entrando— [Fin de grabación]', '../img/fondo_nota.png'),
+('NOTA 7: Último informe del capitán', 'ambos', 'Hemos perdido la comisaría. Los supervivientes que quedan están dispersos o muertos. Esto no fue un fallo… fue una condena desde el principio. Si alguien logra escapar: La ciudad está perdida. No busques ayuda aquí. — Capitán de policía', '../img/fondo_nota.png'),
+('Cuaderno de Leon (Pista)', 'ambos', 'Día 1: Las puertas del lobby están selladas. Parece que el código de la salida está relacionado con tres estatuas... Lobo, Águila y Serpiente.', '../img/fondo_nota.png'),
+('Protocolo de Cierre (Pista)', 'ambos', 'Nivel de amenaza crítico. Salida del garaje bloqueada. Requiere inserción de los tres medallones tácticos en el panel inferior.', '../img/fondo_nota.png'),
 
 -- NOTAS OCULTAS
-('NOTA OCULTA 1', 'ambos', 'Fecha: 19 de septiembre. Hemos recibido múltiples llamadas sobre disturbios en la zona este. Al principio parecían ataques aislados, pero todos los testigos describen lo mismo: gente extremadamente agresiva… que no responde al dolor. El capitán ha ordenado aumentar la vigilancia. Personalmente, creo que esto va a peor.', NULL),
-('NOTA OCULTA 2: Correspondencia corporativa', 'ambos', 'No deberíamos haber aceptado ese “apoyo”. Dijeron que era para mejorar la seguridad, pero solo han traído cajas selladas y órdenes extrañas. El Capitán ha recibido pagos de una cuenta fantasma. Nadie sabe qué hay realmente en el subsuelo, y los que preguntan, simplemente desaparecen.', NULL), 
-('NOTA OCULTA 3: Informe Técnico T-102', 'ambos', 'Proyecto: T-Virus. Objetivo: evaluar propagación en entorno real. Resultados: Alta tasa de infección. Recomendación: Aislamiento total. Las fuerzas locales funcionarán como punto de contención para observar la evolución de los sujetos infectados en masa. No deben conocer el alcance real del experimento.', NULL), 
-('NOTA OCULTA 4: Bitácora forense', 'ambos', 'Las heridas se vuelven necróticas en minutos. Traté de amputarle el brazo al oficial Gómez para detener la infección, pero el miembro amputado… seguía teniendo espasmos. El cerebro está muerto, pero el cuerpo sigue buscando alimento. Ya no son humanos, son solo estómagos con piernas.', NULL), 
-('NOTA OCULTA 5: Aviso de supervivencia', 'ambos', '¡NO VAYAN A LAS ALCANTARILLAS! Están subiendo por los túneles. No son los muertos de la calle, son otra cosa… no tienen piel, tienen garras y cazan por el sonido. Si escuchas un chasquido metálico o un roce en el techo, ya estás muerto.', NULL), 
-('NOTA OCULTA 6: Orden de contención final', 'ambos', 'Directiva de Limpieza: El perímetro de la ciudad se cerrará permanentemente a las 00:00. Ningún civil, policía o personal médico está autorizado a salir. Disparen a matar a cualquiera que se acerque a los muros. No debe quedar ningún testigo que pueda hablar sobre el origen del brote.', NULL), 
-('NOTA OCULTA 7: Última confesión', 'ambos', 'Yo firmé los permisos. Ignoré las advertencias por dinero. Escondí la muestra del virus en el cuarto del generador principal, pero esa aberración gigante mató a todo mi equipo antes de llegar. Si lees esto: no confíes en el helicóptero de extracción. Nos han abandonado para borrar el rastro.', NULL); 
+('NOTA OCULTA 1', 'ambos', 'Fecha: 19 de septiembre. Hemos recibido múltiples llamadas sobre disturbios en la zona este. Al principio parecían ataques aislados, pero todos los testigos describen lo mismo: gente extremadamente agresiva… que no responde al dolor. El capitán ha ordenado aumentar la vigilancia. Personalmente, creo que esto va a peor.', null),
+('NOTA OCULTA 2: Correspondencia corporativa', 'ambos', 'No deberíamos haber aceptado ese “apoyo”. Dijeron que era para mejorar la seguridad, pero solo han traído cajas selladas y órdenes extrañas. El Capitán ha recibido pagos de una cuenta fantasma. Nadie sabe qué hay realmente en el subsuelo, y los que preguntan, simplemente desaparecen.', null), 
+('NOTA OCULTA 3: Informe Técnico T-102', 'ambos', 'Proyecto: T-Virus. Objetivo: evaluar propagación en entorno real. Resultados: Alta tasa de infección. Recomendación: Aislamiento total. Las fuerzas locales funcionarán como punto de contención para observar la evolución de los sujetos infectados en masa. No deben conocer el alcance real del experimento.', null), 
+('NOTA OCULTA 4: Bitácora forense', 'ambos', 'Las heridas se vuelven necróticas en minutos. Traté de amputarle el brazo al oficial Gómez para detener la infección, pero el miembro amputado… seguía teniendo espasmos. El cerebro está muerto, pero el cuerpo sigue buscando alimento. Ya no son humanos, son solo estómagos con piernas.', null), 
+('NOTA OCULTA 5: Aviso de supervivencia', 'ambos', '¡NO VAYAN A LAS ALCANTARILLAS! Están subiendo por los túneles. No son los muertos de la calle, son otra cosa… no tienen piel, tienen garras y cazan por el sonido. Si escuchas un chasquido metálico o un roce en el techo, ya estás muerto.', null), 
+('NOTA OCULTA 6: Orden de contención final', 'ambos', 'Directiva de Limpieza: El perímetro de la ciudad se cerrará permanentemente a las 00:00. Ningún civil, policía o personal médico está autorizado a salir. Disparen a matar a cualquiera que se acerque a los muros. No debe quedar ningún testigo que pueda hablar sobre el origen del brote.', null), 
+('NOTA OCULTA 7: Última confesión', 'ambos', 'Yo firmé los permisos. Ignoré las advertencias por dinero. Escondí la muestra del virus en el cuarto del generador principal, pero esa aberración gigante mató a todo mi equipo antes de llegar. Si lees esto: no confíes en el helicóptero de extracción. Nos han abandonado para borrar el rastro.', null); 
 
 
 

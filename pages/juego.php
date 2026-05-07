@@ -3,8 +3,8 @@ session_start();
 require_once '../includes/conexion.php';
 
 // Admin: control de visibilidad de zombies
-$zombiesVisibles = (int)($_SESSION['zombies_visibles'] ?? 1);
-$usuarioRol      = $_SESSION['usuario_rol'] ?? 'jugador';
+$zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
+$usuarioRol = $_SESSION['usuario_rol'] ?? 'jugador';
 
 $id_sala_actual = $_GET['sala'] ?? 'banos_inicio';
 
@@ -106,16 +106,16 @@ $hay_combate = false;
 if ($zombiesVisibles) {
     //Salas con zombies básicos (IDs 1-4) → pueden reaparecer (40% al volver)
     $salas_respawn = [
-        'sala_espera'         => [1, 2, 3, 4],
-        'oficina_este'        => [1, 2, 3, 4],
-        'biblioteca'          => [1, 2, 3, 4],
+        'sala_espera' => [1, 2, 3, 4],
+        'oficina_este' => [1, 2, 3, 4],
+        'biblioteca' => [1, 2, 3, 4],
     ];
     //Salas con enemigos especiales → aparecen UNA sola vez, no respawnean
     $salas_unicas = [
-        'oficina_capitan'     => [6],   // Lastre
-        'pasillo'             => [7],   // Espasmo
-        'sala_interrogatorios'=> [7],   // Espasmo
-        'sala_arte'           => [5],   // Licker
+        'oficina_capitan' => [6],   // Lastre
+        'pasillo' => [7],   // Espasmo
+        'sala_interrogatorios' => [7],   // Espasmo
+        'sala_arte' => [5],   // Licker
     ];
 
     $distribucion_enemigos = array_merge($salas_respawn, $salas_unicas);
@@ -238,6 +238,8 @@ foreach ($eventos as $key => &$ev) {
         $stmt_arma = $pdo->prepare("SELECT imagen_url FROM catalogo_armas WHERE id_arma = ?");
         $stmt_arma->execute([$id_arma]);
         $ev['imagen_item'] = $stmt_arma->fetchColumn();
+    } elseif ($ev['tipo_accion'] === 'leer_archivo') {
+        $ev['imagen_item'] = '../img/fondo_nota.png';
     }
 }
 $query_archivos = $pdo->query("SELECT * FROM catalogo_archivos");
@@ -407,89 +409,300 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
         }
 
         @keyframes pulseGold {
-            0%, 100% { box-shadow: 0 0 14px rgba(180, 130, 0, 0.3); }
-            50% { box-shadow: 0 0 28px rgba(220, 170, 0, 0.6); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 14px rgba(180, 130, 0, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 28px rgba(220, 170, 0, 0.6);
+            }
         }
 
         .medallon-placeholder {
-            width: 80px; height: 80px; object-fit: contain; opacity: 0.18; filter: grayscale(100%);
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            opacity: 0.18;
+            filter: grayscale(100%);
         }
 
         .medallon-placed {
-            position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
         }
 
         .medallon-placed img {
-            width: 90px; height: 90px; filter: drop-shadow(0 0 8px rgba(0, 220, 100, 0.7));
+            width: 90px;
+            height: 90px;
+            filter: drop-shadow(0 0 8px rgba(0, 220, 100, 0.7));
             animation: floatMedallon 2s ease-in-out infinite;
         }
 
         @keyframes floatMedallon {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
         }
 
         .slot-label {
-            position: absolute; bottom: 8px; font-size: 0.65rem; letter-spacing: 2px; color: #666; font-family: 'Courier New', monospace;
+            position: absolute;
+            bottom: 8px;
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            color: #666;
+            font-family: 'Courier New', monospace;
         }
 
-        /* ═══════════════════════════════════════
-           PUZZLE ESTATUAS
-        ═══════════════════════════════════════ */
         #estatua-puzzle {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.95);
-            display: flex; justify-content: center; align-items: center; z-index: 3000; backdrop-filter: blur(10px);
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at center, rgba(20, 10, 0, 0.97) 0%, rgba(0, 0, 0, 0.99) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            backdrop-filter: blur(12px);
         }
 
         .estatua-container {
-            width: 500px; background: linear-gradient(145deg, #1a1a1a, #0a0a0a); border: 2px solid #444; padding: 40px; text-align: center;
+            width: 560px;
+            background: linear-gradient(160deg, #1c1208, #0e0a04);
+            border: 1px solid #5a3e10;
+            box-shadow:
+                0 0 60px rgba(180, 120, 0, 0.15),
+                inset 0 0 80px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(100, 60, 0, 0.3);
+            padding: 44px 48px 36px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
         }
 
-        .symbols-container { display: flex; justify-content: center; gap: 25px; margin-bottom: 40px; }
+        .estatua-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #c8860a, transparent);
+        }
 
-        .symbol-wrapper { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .estatua-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #5a3e10, transparent);
+        }
+
+        #estatua-titulo {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            letter-spacing: 5px;
+            color: #c8860a;
+            text-shadow: 0 0 20px rgba(200, 134, 10, 0.5), 0 0 40px rgba(200, 134, 10, 0.2);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .estatua-subtitle {
+            font-size: 0.7rem;
+            color: #5a4020;
+            letter-spacing: 3px;
+            margin-bottom: 36px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .symbols-container {
+            display: flex;
+            justify-content: center;
+            gap: 28px;
+            margin-bottom: 36px;
+        }
+
+        .symbol-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
 
         .symbol-btn {
-            background: #222; color: #888; border: 1px solid #444; width: 40px; height: 30px; cursor: pointer;
+            background: linear-gradient(180deg, #2a1e08, #1a1204);
+            color: #c8860a;
+            border: 1px solid #5a3e10;
+            width: 44px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            letter-spacing: 0;
+        }
+
+        .symbol-btn:hover {
+            background: linear-gradient(180deg, #3a2a0a, #2a1e08);
+            border-color: #c8860a;
+            box-shadow: 0 0 10px rgba(200, 134, 10, 0.3);
+            color: #ffd060;
         }
 
         .symbol-value {
-            font-size: 0.8rem; color: #e0e0e0; font-family: 'Courier New', monospace; background: #111; width: 100px; height: 100px;
-            display: flex; justify-content: center; align-items: center; border: 2px solid #333;
+            font-size: 0.85rem;
+            color: #e8c060;
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(145deg, #0e0a04, #1a1208);
+            width: 110px;
+            height: 110px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #5a3e10;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 0 12px rgba(180, 120, 0, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            text-shadow: 0 0 8px rgba(200, 180, 80, 0.4);
+        }
+
+        #estatua-status {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #c8860a;
+            min-height: 20px;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .estatua-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
         }
 
         .estatua-btn {
-            flex: 1; padding: 12px; font-family: 'Courier New', monospace; font-size: 1rem; cursor: pointer; border: 2px solid #333;
+            flex: 1;
+            padding: 12px 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border: 1px solid #5a3e10;
+            transition: all 0.25s;
+            text-transform: uppercase;
         }
 
-        #btn-resolver-estatua { background: #2a1a00; color: #ccaa44; border-color: #664422; }
+        #btn-resolver-estatua {
+            background: linear-gradient(160deg, #3a2800, #1e1400);
+            color: #c8860a;
+            border-color: #7a5418;
+        }
+
+        #btn-resolver-estatua:hover:not(:disabled) {
+            background: linear-gradient(160deg, #5a3e00, #2e1e00);
+            box-shadow: 0 0 20px rgba(200, 134, 10, 0.3);
+            border-color: #c8860a;
+            color: #ffd060;
+        }
+
+        #btn-resolver-estatua:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        #btn-cancelar-estatua {
+            background: linear-gradient(160deg, #1a0808, #0e0404);
+            color: #884422;
+            border-color: #441410;
+        }
+
+        #btn-cancelar-estatua:hover {
+            background: linear-gradient(160deg, #2a0c0c, #1a0808);
+            border-color: #cc3333;
+            color: #ff4444;
+            box-shadow: 0 0 15px rgba(180, 0, 0, 0.2);
+        }
 
         /* ═══════════════════════════════════════
            NOTIFICACIÓN CENTRADA
         ═══════════════════════════════════════ */
         #item-notification {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
-            background: rgba(0, 0, 0, 0.9); border: 2px solid #ccaa44; padding: 30px 60px;
-            color: #fff; z-index: 5000; display: none; flex-direction: column; align-items: center;
-            box-shadow: 0 0 100px rgba(0,0,0,0.9); opacity: 0; transition: all 0.3s;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ccaa44;
+            padding: 30px 60px;
+            color: #fff;
+            z-index: 5000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 0 100px rgba(0, 0, 0, 0.9);
+            opacity: 0;
+            transition: all 0.3s;
         }
 
-        #item-notification.show { display: flex; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        #item-notification.show {
+            display: flex;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
 
         /* Estilos de Combate (Integrados de main) */
-        .enemy-encounter:hover { transform: scale(1.05); }
-        .enemy-encounter img { height: 90%; filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.6)); animation: creature-pulse 2s infinite; }
+        .enemy-encounter:hover {
+            transform: scale(1.05);
+        }
+
+        .enemy-encounter img {
+            height: 90%;
+            filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.6));
+            animation: creature-pulse 2s infinite;
+        }
+
         .enemy-label {
-            background: rgba(0, 0, 0, 0.85); color: #ff0000; padding: 8px 15px; border: 1px solid #ff0000;
-            font-family: 'Courier New', monospace; font-size: 0.9rem; text-align: center; margin-top: -20px; box-shadow: 0 0 10px red;
+            background: rgba(0, 0, 0, 0.85);
+            color: #ff0000;
+            padding: 8px 15px;
+            border: 1px solid #ff0000;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: -20px;
+            box-shadow: 0 0 10px red;
         }
 
         @keyframes creature-pulse {
-            0%, 100% { filter: drop-shadow(0 0 10px red); }
-            50% { filter: drop-shadow(0 0 25px red); }
+
+            0%,
+            100% {
+                filter: drop-shadow(0 0 10px red);
+            }
+
+            50% {
+                filter: drop-shadow(0 0 25px red);
+            }
         }
 
-        .nav-blocked { opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+        .nav-blocked {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
     </style>
 </head>
 
@@ -612,7 +825,7 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
         <div id="medallones-puzzle" style="display: none;">
             <div class="medallones-container">
                 <div class="medallones-header">
-                    <h2>✦ ESTATUA DE LOS MEDALLONES ✦</h2>
+                    <h2> ESTATUA DE LOS MEDALLONES </h2>
                     <p>Coloca los tres medallones</p>
                 </div>
                 <div class="medallones-base">
@@ -647,40 +860,42 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             </div>
         </div>
 
-        <!-- PUZZLE ESTATUAS -->
         <div id="estatua-puzzle" style="display: none;">
             <div class="estatua-container">
                 <h2 id="estatua-titulo">Estatua</h2>
+                <p class="estatua-subtitle">— ALINEA LOS SÍMBOLOS CORRECTOS —</p>
                 <div class="symbols-container">
-                    <div class="symbol-wrapper"><button class="symbol-btn" onclick="cambiarSimbolo(0, 1)">▲</button>
-                        <div class="symbol-value" id="symbol-0">---</div><button class="symbol-btn"
-                            onclick="cambiarSimbolo(0, -1)">▼</button>
+                    <div class="symbol-wrapper">
+                        <button class="symbol-btn" onclick="cambiarSimbolo(0, 1)">▲</button>
+                        <div class="symbol-value" id="symbol-0">---</div>
+                        <button class="symbol-btn" onclick="cambiarSimbolo(0, -1)">▼</button>
                     </div>
-                    <div class="symbol-wrapper"><button class="symbol-btn" onclick="cambiarSimbolo(1, 1)">▲</button>
-                        <div class="symbol-value" id="symbol-1">---</div><button class="symbol-btn"
-                            onclick="cambiarSimbolo(1, -1)">▼</button>
+                    <div class="symbol-wrapper">
+                        <button class="symbol-btn" onclick="cambiarSimbolo(1, 1)">▲</button>
+                        <div class="symbol-value" id="symbol-1">---</div>
+                        <button class="symbol-btn" onclick="cambiarSimbolo(1, -1)">▼</button>
                     </div>
-                    <div class="symbol-wrapper"><button class="symbol-btn" onclick="cambiarSimbolo(2, 1)">▲</button>
-                        <div class="symbol-value" id="symbol-2">---</div><button class="symbol-btn"
-                            onclick="cambiarSimbolo(2, -1)">▼</button>
+                    <div class="symbol-wrapper">
+                        <button class="symbol-btn" onclick="cambiarSimbolo(2, 1)">▲</button>
+                        <div class="symbol-value" id="symbol-2">---</div>
+                        <button class="symbol-btn" onclick="cambiarSimbolo(2, -1)">▼</button>
                     </div>
                 </div>
                 <div id="estatua-status"></div>
                 <div class="estatua-actions">
-                    <button class="estatua-btn" id="btn-resolver-estatua"
-                        onclick="intentarResolverEstatua()">CONFIRMAR</button>
-                    <button class="estatua-btn" id="btn-cancelar-estatua" onclick="cerrarEstatuaPuzzle()">SALIR</button>
+                    <button class="estatua-btn" id="btn-resolver-estatua" onclick="intentarResolverEstatua()">⚙
+                        CONFIRMAR</button>
+                    <button class="estatua-btn" id="btn-cancelar-estatua" onclick="cerrarEstatuaPuzzle()">✕
+                        SALIR</button>
                 </div>
             </div>
         </div>
 
-        <!-- NOTIFICACIÓN -->
         <div id="item-notification">
             <div class="notif-label">OBJETO OBTENIDO</div>
             <div class="notif-name" id="notif-item-name"></div>
         </div>
 
-        <!-- MENÚ DE PAUSA -->
         <div id="pause-menu" style="display: none;">
             <h2>PAUSA</h2>
             <button id="btn-continuar">CONTINUAR</button>
@@ -700,20 +915,22 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
         const zombiesVisibles = <?= $zombiesVisibles ? 'true' : 'false' ?>;
     </script>
     <?php if ($usuarioRol === 'admin'): ?>
-    <div id="admin-game-bar" style="
+        <div id="admin-game-bar" style="
         position:fixed;top:0;left:0;right:0;z-index:9000;
         background:rgba(10,0,0,0.85);border-bottom:1px solid #c0392b;
         display:flex;align-items:center;justify-content:space-between;
         padding:0.3rem 1rem;font-family:'Courier New',monospace;font-size:0.7rem;
         backdrop-filter:blur(4px);
     ">
-        <span style="color:#c0392b;letter-spacing:.15em;">☣ MODO ADMIN — <?= htmlspecialchars($adminNombre = $_SESSION['usuario_nombre'] ?? 'Admin') ?></span>
-        <span style="color:<?= $zombiesVisibles ? '#e74c3c' : '#00ff88' ?>;">ZOMBIES: <?= $zombiesVisibles ? 'ACTIVOS ⚠' : 'DESACTIVADOS ✔' ?></span>
-        <a href="../pages/admin.php" style="
+            <span style="color:#c0392b;letter-spacing:.15em;">MODO ADMIN —
+                <?= htmlspecialchars($adminNombre = $_SESSION['usuario_nombre'] ?? 'Admin') ?></span>
+            <span style="color:<?= $zombiesVisibles ? '#e74c3c' : '#00ff88' ?>;">ZOMBIES:
+                <?= $zombiesVisibles ? 'ACTIVOS ⚠' : 'DESACTIVADOS ✔' ?></span>
+            <a href="../pages/admin.php" style="
             color:#aaa;text-decoration:none;border:1px solid #333;
             padding:.2rem .6rem;letter-spacing:.1em;
-        " id="link-admin-panel">⚙ PANEL ADMIN</a>
-    </div>
+        " id="link-admin-panel"> PANEL ADMIN</a>
+        </div>
     <?php endif; ?>
 </body>
 

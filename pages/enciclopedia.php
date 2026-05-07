@@ -120,8 +120,16 @@ if ($logueado && !empty($_SESSION['usuario_id'])) {
                     html += '</div>';
 
                     if (imagen) {
+                        let finalImg = imagen;
+                        if (!finalImg.startsWith('../img/') && !finalImg.startsWith('http')) {
+                            finalImg = '../img/' + finalImg;
+                        }
                         html += '<div style="text-align: center; margin-bottom: 20px;">';
-                        html += '<img src="' + imagen + '" alt="' + nombre + '" style="max-width: 100%; max-height: 200px; border: 1px solid #333; opacity: 0.85;">';
+                        html += '<img src="' + finalImg + '" alt="' + nombre + '" style="max-width: 100%; max-height: 200px; border: 1px solid #333; opacity: 0.85;">';
+                        html += '</div>';
+                    } else {
+                        html += '<div style="text-align: center; margin-bottom: 20px;">';
+                        html += '<img src="../img/nota.png" alt="Papel de nota" style="max-width: 100%; max-height: 200px; border: 1px solid #333; opacity: 0.85;">';
                         html += '</div>';
                     }
 

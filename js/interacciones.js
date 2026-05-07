@@ -12,7 +12,7 @@ function mostrarNotificacionCentrada(nombre) {
 
   nameEl.textContent = nombre;
   notif.style.display = "flex";
-  
+
   // Pequeño delay para la transición de entrada
   setTimeout(() => {
     notif.classList.add("show");
@@ -56,21 +56,22 @@ function ejecutarEvento(evento, event) {
       const bodyEl = document.getElementById("note-body");
       const imgEl = document.getElementById("note-img");
 
+      // El paper del note-viewer SIEMPRE es nota.png (el papel donde se lee)
+      // fondo_nota.png solo se usa como icono en el hotspot del suelo
+      if (imgEl) {
+        imgEl.src = "../img/nota.png";
+        imgEl.style.display = "block";
+      }
+
       if (evento.tipo_accion === "leer_archivo") {
         const idArchivo = evento.contenido_accion;
-        const archivo = typeof catalogoArchivos !== "undefined" 
+        const archivo = typeof catalogoArchivos !== "undefined"
           ? catalogoArchivos.find((a) => a.id_archivo == idArchivo)
           : null;
 
         if (archivo) {
           titleEl.innerText = archivo.nombre;
           bodyEl.innerText = archivo.informacion;
-          if (archivo.imagen_url && imgEl) {
-            imgEl.src = archivo.imagen_url;
-            imgEl.style.display = "block";
-          } else if (imgEl) {
-            imgEl.src = "../img/nota.png"; // Imagen por defecto
-          }
         } else {
           titleEl.innerText = evento.nombre_objeto;
           bodyEl.innerText = "No se pudo cargar el contenido del archivo.";
@@ -130,6 +131,9 @@ function registrarRecogida(idEvento, tipoObjeto, idObjeto) {
     .then((data) => {
       if (data.success) {
         console.log("Objeto recogido en sesión:", idEvento);
+        if (typeof actualizarInventarioSilent === "function") {
+          actualizarInventarioSilent();
+        }
       } else {
         console.error("Error al registrar:", data.error);
       }
@@ -231,7 +235,7 @@ function abrirMenuPuzzle(tipo) {
 // ════════════════════════════════════════════════
 
 const SIMBOLOS_PUZZLE = [
-  "Leon", "Rama", "Ave", "Pez", "Escorpion", "Jarra", 
+  "Leon", "Rama", "Ave", "Pez", "Escorpion", "Jarra",
   "Mujer", "Arco", "Serpiente", "Lobo", "Aguila", "Calavera"
 ];
 
@@ -269,7 +273,7 @@ function cambiarSimbolo(index, delta) {
   let val = estatuaPuzzleState.valores[index] + delta;
   if (val >= SIMBOLOS_PUZZLE.length) val = 0;
   if (val < 0) val = SIMBOLOS_PUZZLE.length - 1;
-  
+
   estatuaPuzzleState.valores[index] = val;
   actualizarVisualEstatua();
 }
@@ -292,9 +296,9 @@ function intentarResolverEstatua() {
   fetch("../src/api/resolver_puzzle_medallon.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ 
+    body: JSON.stringify({
       puzzle: estatuaPuzzleState.tipo,
-      combinacion: comb 
+      combinacion: comb
     }),
   })
     .then((r) => r.json())
@@ -303,15 +307,18 @@ function intentarResolverEstatua() {
         cerrarEstatuaPuzzle();
         mostrarMensajeEnPantalla("[ESTATUA] " + data.message);
         mostrarNotificacionCentrada(data.nombre_objeto);
-        
+        if (typeof actualizarInventarioSilent === "function") {
+          actualizarInventarioSilent();
+        }
+
         // El hotspot se oculta automáticamente al recargar o si manejamos el DOM
         // Pero como estamos en una SPA-like, podemos ocultarlo manualmente
         const hotspots = document.querySelectorAll(".hotspot");
         hotspots.forEach(h => {
-            // Buscamos el hotspot que corresponde a este puzzle
-            if (h.onclick && h.onclick.toString().includes(estatuaPuzzleState.tipo)) {
-                h.style.display = "none";
-            }
+          // Buscamos el hotspot que corresponde a este puzzle
+          if (h.onclick && h.onclick.toString().includes(estatuaPuzzleState.tipo)) {
+            h.style.display = "none";
+          }
         });
       } else {
         status.textContent = "⚠ " + data.error;
@@ -460,6 +467,9 @@ function completarPuzzleMedallones() {
       if (data.success) {
         cerrarMenuMedallones();
         mostrarMensajeEnPantalla("[ESTATUA] " + data.message);
+        if (typeof actualizarInventarioSilent === "function") {
+          actualizarInventarioSilent();
+        }
 
         // Ocultar el hotspot de la estatua
         document.querySelectorAll(".hotspot").forEach((h) => {
@@ -532,6 +542,9 @@ function intentarAbrirCaja() {
         cerrarCajaFuerte();
         mostrarMensajeEnPantalla("[CAJA FUERTE] " + data.message);
         mostrarNotificacionCentrada(data.nombre_objeto);
+        if (typeof actualizarInventarioSilent === "function") {
+          actualizarInventarioSilent();
+        }
         // Ocultar la caja fuerte interactiva
         document.querySelectorAll(".hotspot").forEach((h) => {
           if (h.title.includes("CAJA FUERTE")) h.style.display = "none";
@@ -664,13 +677,13 @@ function abrirPortableSafe(idRegistro = null) {
   portableSafeState.active = true;
   portableSafeState.idRegistro = idRegistro;
   portableSafeState.currentIndex = 0;
-  
+
   // Generar secuencia aleatoria de 0 a 7
   const buttons = [0, 1, 2, 3, 4, 5, 6, 7];
   portableSafeState.sequence = buttons.sort(() => Math.random() - 0.5);
 
   document.getElementById("portable-status").textContent = "";
-  
+
   // Generar luces en círculo
   const ring = document.getElementById("light-ring");
   // Limpiar luces previas pero mantener el logo si existe
@@ -681,16 +694,16 @@ function abrirPortableSafe(idRegistro = null) {
   for (let i = 0; i < 8; i++) {
     const dot = document.createElement("div");
     dot.className = "light-dot";
-    
+
     // Posicionamiento circular
     const angle = (i * 45) - 90; // Empezar arriba
     const radius = 70;
     const x = Math.cos(angle * (Math.PI / 180)) * radius;
     const y = Math.sin(angle * (Math.PI / 180)) * radius;
-    
+
     dot.style.left = `calc(50% + ${x}px - 7.5px)`;
     dot.style.top = `calc(50% + ${y}px - 7.5px)`;
-    
+
     ring.appendChild(dot);
     portableSafeState.lights.push(dot);
   }
@@ -721,10 +734,10 @@ function pressPortableButton(btnIndex) {
     // Fallo: Reset
     portableSafeState.currentIndex = 0;
     portableSafeState.lights.forEach(l => l.classList.remove("active"));
-    
+
     const status = document.getElementById("portable-status");
     status.textContent = "ERROR: SECUENCIA REINICIADA";
-    setTimeout(() => { if(status && status.textContent.includes("ERROR")) status.textContent = ""; }, 1000);
+    setTimeout(() => { if (status && status.textContent.includes("ERROR")) status.textContent = ""; }, 1000);
   }
 }
 

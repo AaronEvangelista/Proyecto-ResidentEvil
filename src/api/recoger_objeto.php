@@ -13,25 +13,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($id_evento) {
         try {
-            if (!isset($_SESSION['eventos_recogidos_sesion'])) {
-                $_SESSION['eventos_recogidos_sesion'] = [];
-            }
-            if (!in_array($id_evento, $_SESSION['eventos_recogidos_sesion'])) {
-                $_SESSION['eventos_recogidos_sesion'][] = $id_evento;
-            }
-
             if ($tipo_objeto && $id_objeto) {
-                if (!isset($_SESSION['inventario_sesion'])) {
-                    $_SESSION['inventario_sesion'] = [];
+                // Buscar el primer slot libre (0-7) en la DB
+                $stmt_slot = $pdo->prepare("
+                    SELECT s.n 
+                    FROM (SELECT 0 n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7) s
+                    WHERE s.n NOT IN (SELECT posicion_slot FROM inventario WHERE id_partida = ?)
+                    LIMIT 1
+                ");
+                $stmt_slot->execute([$id_partida]);
+                $posicion_slot = $stmt_slot->fetchColumn();
+
+                if ($posicion_slot === false) {
+                    echo json_encode(['success' => false, 'error' => 'Inventario lleno. No puedes recoger más objetos.']);
+                    exit;
                 }
 
-                // Las armas empiezan con 6 balas; los ítems con cantidad 1
+                // Insertar en la DB
                 $cantidad_inicial = ($tipo_objeto === 'arma') ? 6 : 1;
-                $_SESSION['inventario_sesion'][] = [
-                    'tipo_objeto' => $tipo_objeto,
-                    'id_objeto'   => $id_objeto,
-                    'cantidad'    => $cantidad_inicial
-                ];
+                $stmt_inv = $pdo->prepare("INSERT INTO inventario (id_partida, tipo_objeto, id_objeto, cantidad, posicion_slot) VALUES (?, ?, ?, ?, ?)");
+                $stmt_inv->execute([$id_partida, $tipo_objeto, $id_objeto, $cantidad_inicial, $posicion_slot]);
+
+                // Registrar en eventos completados para que no vuelva a aparecer
+                $stmt_comp = $pdo->prepare("INSERT OR IGNORE INTO eventos_completados (id_partida, id_evento) VALUES (?, ?)");
+                $stmt_comp->execute([$id_partida, $id_evento]);
             }
 
             echo json_encode(['success' => true, 'message' => 'Objeto recogido en sesión']);

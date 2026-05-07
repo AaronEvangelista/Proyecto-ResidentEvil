@@ -50,24 +50,32 @@ window.addEventListener('keydown', (e) => {
 
 function abrirInventario() {
     console.log("abrirInventario() llamado");
-    fetch('../src/api/get_inventario.php')
-        .then(response => {
-            console.log("Respuesta recibida, status:", response.status);
-            return response.json();
-        })
+    actualizarInventarioSilent().then(success => {
+        if (success) {
+            document.getElementById('inventory-screen').style.display = 'flex';
+            if (typeof estadoActual !== 'undefined' && typeof ESTADOS_JUEGO !== 'undefined') {
+                estadoActual = ESTADOS_JUEGO.INVENTARIO;
+            }
+        }
+    });
+}
+
+function actualizarInventarioSilent() {
+    return fetch('../src/api/get_inventario.php')
+        .then(response => response.json())
         .then(data => {
-            console.log("Datos del inventario:", data);
             if (data.success) {
                 renderizarInventario(data.inventario);
-                document.getElementById('inventory-screen').style.display = 'flex';
-                if (typeof estadoActual !== 'undefined' && typeof ESTADOS_JUEGO !== 'undefined') {
-                    estadoActual = ESTADOS_JUEGO.INVENTARIO;
-                }
+                return true;
             } else {
                 console.error("Error en datos del inventario:", data.error);
+                return false;
             }
         })
-        .catch(error => console.error("Error al cargar inventario:", error));
+        .catch(error => {
+            console.error("Error al cargar inventario:", error);
+            return false;
+        });
 }
 
 function cerrarInventario() {

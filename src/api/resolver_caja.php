@@ -49,13 +49,35 @@ try {
         $_SESSION['eventos_recogidos_sesion'][] = $id_evento;
     }
 
+    // Buscar el primer slot libre (0-7)
+    $stmt_slot = $pdo->prepare("
+        SELECT s.n 
+        FROM (SELECT 0 n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7) s
+        WHERE s.n NOT IN (SELECT posicion_slot FROM inventario WHERE id_partida = ?)
+        LIMIT 1
+    ");
+    $stmt_slot->execute([$id_partida]);
+    $posicion_slot = $stmt_slot->fetchColumn();
+
+    if ($posicion_slot === false) {
+        echo json_encode(['success' => false, 'error' => 'Inventario lleno. Libera espacio para obtener la recompensa.']);
+        exit;
+    }
+
+    // Insertar en la DB
+    $stmt_inv = $pdo->prepare("INSERT INTO inventario (id_partida, tipo_objeto, id_objeto, cantidad, posicion_slot) VALUES (?, 'item', 13, 1, ?)");
+    $stmt_inv->execute([$id_partida, $posicion_slot]);
+
+    // Opcional: También registrar en sesión si se prefiere redundancia, 
+    // pero get_inventario.php ya lee de la DB.
     if (!isset($_SESSION['inventario_sesion'])) {
         $_SESSION['inventario_sesion'] = [];
     }
     $_SESSION['inventario_sesion'][] = [
         'tipo_objeto' => 'item',
         'id_objeto' => 13,
-        'cantidad' => 1
+        'cantidad' => 1,
+        'posicion_slot' => $posicion_slot
     ];
 
     echo json_encode([
