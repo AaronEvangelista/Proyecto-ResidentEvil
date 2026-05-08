@@ -169,8 +169,7 @@ $loot_pool_names = [
     'Pólvora Gris',
     'Cinta de Guardado',
     'Munición de Pistola',
-    'Munición de Escopeta',
-    'Munición de Fusil'
+    'Munición de Escopeta'
 ];
 $placeholders = implode(',', array_fill(0, count($loot_pool_names), '?'));
 $query_loot = $pdo->prepare("SELECT * FROM catalogo_items WHERE nombre IN ($placeholders)");
@@ -190,7 +189,11 @@ while ($row = $query_loot->fetch(PDO::FETCH_ASSOC)) {
     }
 }
 
-$completados = $_SESSION['eventos_recogidos_sesion'] ?? [];
+// Combinar eventos completados en BD + sesión actual
+$q_comp_db = $pdo->prepare("SELECT id_evento FROM eventos_completados WHERE id_partida = ?");
+$q_comp_db->execute([$id_partida]);
+$completados_db = $q_comp_db->fetchAll(PDO::FETCH_COLUMN);
+$completados = array_unique(array_merge($completados_db, $_SESSION['eventos_recogidos_sesion'] ?? []));
 
 foreach ($eventos as $key => &$ev) {
     if (in_array($ev['id_evento'], $completados)) {
@@ -891,6 +894,74 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             </div>
         </div>
 
+        <!-- ═══════════════ CAJA FUERTE ═══════════════ -->
+        <div id="caja-fuerte-puzzle" style="display:none;">
+            <div class="caja-fuerte-container">
+                <div class="caja-fuerte-header">
+                    <h2>🔒 CAJA FUERTE</h2>
+                    <p>Introduce la combinación de tres dígitos</p>
+                </div>
+                <div class="caja-fuerte-dials">
+                    <div class="dial-wrapper">
+                        <button class="dial-btn" onclick="cambiarDial(0, 1)">▲</button>
+                        <div class="dial-value" id="dial-0">0</div>
+                        <button class="dial-btn" onclick="cambiarDial(0, -1)">▼</button>
+                    </div>
+                    <div class="dial-separator">—</div>
+                    <div class="dial-wrapper">
+                        <button class="dial-btn" onclick="cambiarDial(1, 1)">▲</button>
+                        <div class="dial-value" id="dial-1">0</div>
+                        <button class="dial-btn" onclick="cambiarDial(1, -1)">▼</button>
+                    </div>
+                    <div class="dial-separator">—</div>
+                    <div class="dial-wrapper">
+                        <button class="dial-btn" onclick="cambiarDial(2, 1)">▲</button>
+                        <div class="dial-value" id="dial-2">0</div>
+                        <button class="dial-btn" onclick="cambiarDial(2, -1)">▼</button>
+                    </div>
+                </div>
+                <div id="caja-fuerte-status" class="caja-fuerte-status"></div>
+                <div class="caja-fuerte-actions">
+                    <button id="btn-abrir-caja" onclick="intentarAbrirCaja()">🔓 ABRIR</button>
+                    <button onclick="cerrarCajaFuerte()">✕ CANCELAR</button>
+                </div>
+            </div>
+        </div>
+        <style>
+        #caja-fuerte-puzzle {
+            position:fixed; inset:0;
+            background:rgba(0,0,0,0.92);
+            display:flex; justify-content:center; align-items:center;
+            z-index:3000; backdrop-filter:blur(8px);
+        }
+        .caja-fuerte-container {
+            background:linear-gradient(160deg,#0d0a06,#1a1208);
+            border:1px solid #4a2e00;
+            box-shadow:0 0 60px rgba(180,90,0,0.2),inset 0 0 60px rgba(0,0,0,0.6);
+            padding:36px 48px 28px;
+            text-align:center; font-family:'Courier New',monospace;
+            min-width:380px; position:relative;
+        }
+        .caja-fuerte-container::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg,transparent,#a05000,transparent);
+        }
+        .caja-fuerte-header h2 { color:#c87020; font-size:1.2rem; letter-spacing:4px; margin:0 0 6px; text-shadow:0 0 12px rgba(200,100,0,0.5); }
+        .caja-fuerte-header p  { color:#554433; font-size:0.75rem; letter-spacing:1px; margin:0 0 28px; }
+        .caja-fuerte-dials { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:24px; }
+        .dial-wrapper { display:flex; flex-direction:column; align-items:center; gap:8px; }
+        .dial-btn { background:#1a1208; border:1px solid #4a2e00; color:#a06020; width:44px; height:32px; cursor:pointer; font-size:1rem; border-radius:3px; transition:.2s; }
+        .dial-btn:hover { background:#2a1c0a; color:#d08030; border-color:#8a5010; }
+        .dial-value { width:64px; height:72px; background:#0a0704; border:2px solid #5a3a10; border-radius:4px; font-size:2.4rem; font-weight:bold; color:#e09030; display:flex; align-items:center; justify-content:center; text-shadow:0 0 10px rgba(220,140,30,0.8); box-shadow:inset 0 0 20px rgba(0,0,0,0.8); font-family:'Courier New',monospace; }
+        .dial-separator { color:#4a2e00; font-size:1.5rem; margin-top:8px; }
+        .caja-fuerte-status { min-height:22px; color:#cc3333; font-size:0.8rem; letter-spacing:1px; margin-bottom:20px; }
+        .caja-fuerte-actions { display:flex; gap:12px; justify-content:center; }
+        .caja-fuerte-actions button { padding:10px 24px; background:#0d0a06; border:1px solid #4a2e00; color:#886020; cursor:pointer; letter-spacing:2px; font-size:0.8rem; font-family:'Courier New',monospace; transition:.2s; }
+        .caja-fuerte-actions button:hover { background:#1a1208; color:#c08030; border-color:#8a5010; }
+        .caja-fuerte-actions button:first-child { color:#c08030; border-color:#8a5010; }
+        .caja-fuerte-actions button:disabled { opacity:.5; cursor:not-allowed; }
+        </style>
+
         <div id="item-notification">
             <div class="notif-label">OBJETO OBTENIDO</div>
             <div class="notif-name" id="notif-item-name"></div>
@@ -903,6 +974,118 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             <button id="btn-salir">SALIR AL MENÚ</button>
         </div>
 
+        <!-- ═══════════════ PUZZLE ELÉCTRICO ═══════════════ -->
+        <div id="elec-puzzle" style="display:none;">
+            <div class="elec-container">
+                <div class="elec-header">
+                    <div class="elec-title-row">
+                        <span class="elec-icon">⚡</span>
+                        <h2>PANEL DE FUSIBLES</h2>
+                        <span class="elec-icon">⚡</span>
+                    </div>
+                    <p>Rota las piezas del circuito para restaurar el suministro eléctrico</p>
+                </div>
+                <div class="elec-board">
+                    <div class="elec-wire-left"></div>
+                    <div id="elec-grid" class="elec-grid"></div>
+                    <div class="elec-wire-right"></div>
+                </div>
+                <div id="elec-status" class="elec-status">Conecta el circuito de izquierda a derecha</div>
+                <div class="elec-actions">
+                    <button id="btn-cancelar-elec" onclick="cerrarPuzzleElectricidad()">CANCELAR</button>
+                </div>
+            </div>
+        </div>
+
+        <style>
+        #elec-puzzle {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.95);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 3000; backdrop-filter: blur(10px);
+        }
+        .elec-container {
+            width: 560px;
+            background: linear-gradient(160deg,#0a0a0a,#111208);
+            border: 1px solid #2a3a1a;
+            box-shadow: 0 0 60px rgba(80,200,20,0.15), inset 0 0 80px rgba(0,0,0,0.6);
+            padding: 28px 32px 24px;
+            position: relative;
+            font-family: 'Courier New', monospace;
+        }
+        .elec-container::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background: linear-gradient(90deg, transparent, #4a0, transparent);
+        }
+        .elec-header { text-align:center; margin-bottom:20px; }
+        .elec-title-row { display:flex; justify-content:center; align-items:center; gap:14px; }
+        .elec-title-row h2 { margin:0; color:#7f0; font-size:1.1rem; letter-spacing:4px; }
+        .elec-icon { color:#4a0; font-size:1.2rem; animation: elecFlicker 1.8s infinite; }
+        @keyframes elecFlicker {
+            0%,100%{opacity:1} 40%{opacity:.6} 42%{opacity:1} 70%{opacity:.8} 72%{opacity:1}
+        }
+        .elec-header p { color:#556; font-size:0.75rem; letter-spacing:1px; margin:8px 0 0; }
+
+        .elec-board { display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:16px; }
+        .elec-wire-left, .elec-wire-right {
+            width:28px; height:8px; border-radius:4px;
+            background: #4a0;
+            box-shadow: 0 0 8px #4a0, 0 0 16px #4a0;
+            flex-shrink:0;
+        }
+        .elec-wire-left { background: linear-gradient(90deg, #4a0, #7f0); }
+        .elec-wire-right { background: linear-gradient(90deg, #7f0, #4a0); opacity:.3; transition: opacity .5s; }
+        .elec-grid.elec-solved .elec-wire-right { opacity:1; }
+
+        .elec-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 72px);
+            grid-template-rows: repeat(4, 72px);
+            gap: 4px;
+            background: #080c08;
+            border: 1px solid #1a2a1a;
+            padding: 6px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+        }
+        .elec-cell {
+            background: #0b120b;
+            border: 1px solid #1a251a;
+            position: relative;
+            border-radius: 3px;
+            transition: border-color .2s;
+            overflow: visible;
+        }
+        .elec-cell:not(.elec-blank):not(.elec-fixed):hover {
+            border-color: #4a0;
+            box-shadow: 0 0 8px rgba(80,200,20,0.3);
+        }
+        .elec-blank { background: #070c07; border-color:#111811; }
+        .elec-label {
+            position:absolute; bottom:4px; left:50%; transform:translateX(-50%);
+            font-size:0.5rem; color:#446; letter-spacing:1px; white-space:nowrap;
+            pointer-events:none;
+        }
+        .elec-label.energized { color:#7f0; text-shadow:0 0 6px #7f0; }
+
+        .elec-status {
+            text-align:center; font-size:0.75rem; color:#556;
+            letter-spacing:1px; min-height:20px; margin-bottom:16px;
+            transition: color .3s;
+        }
+        .elec-actions { display:flex; gap:10px; justify-content:center; }
+        #btn-cancelar-elec {
+            padding:10px 28px; background:#111; border:1px solid #333;
+            color:#666; cursor:pointer; letter-spacing:2px; font-size:0.8rem;
+            font-family:'Courier New',monospace; transition:.2s;
+        }
+        #btn-cancelar-elec:hover { background:#1a1a1a; color:#aaa; }
+
+        .elec-grid.elec-solved { animation: elecSolvedFlash .4s 3; }
+        @keyframes elecSolvedFlash {
+            0%,100%{box-shadow:inset 0 0 30px rgba(0,0,0,0.8);}
+            50%{box-shadow:inset 0 0 60px rgba(80,200,20,0.4), 0 0 40px rgba(80,200,20,0.5);}
+        }
+        </style>
     </div> <!-- FIN game-container -->
 
     <script src="../js/movimientos.js"></script>

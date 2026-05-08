@@ -14,6 +14,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($id_evento) {
         try {
             if ($tipo_objeto && $id_objeto) {
+                // Verificar que el evento no esté ya completado en la BD
+                $stmt_ya = $pdo->prepare("SELECT COUNT(*) FROM eventos_completados WHERE id_partida = ? AND id_evento = ?");
+                $stmt_ya->execute([$id_partida, $id_evento]);
+                if ($stmt_ya->fetchColumn() > 0) {
+                    echo json_encode(['success' => false, 'error' => 'Este objeto ya fue recogido.']);
+                    exit;
+                }
+
+                // Para armas: comprobar si ya existe una igual en el inventario
+                if ($tipo_objeto === 'arma') {
+                    $stmt_chk = $pdo->prepare("SELECT COUNT(*) FROM inventario WHERE id_partida = ? AND tipo_objeto = 'arma' AND id_objeto = ?");
+                    $stmt_chk->execute([$id_partida, $id_objeto]);
+                    if ($stmt_chk->fetchColumn() > 0) {
+                        // Marcar igualmente como completado y salir
+                        $pdo->prepare("INSERT OR IGNORE INTO eventos_completados (id_partida, id_evento) VALUES (?, ?)")->execute([$id_partida, $id_evento]);
+                        echo json_encode(['success' => false, 'error' => 'Ya tienes esta arma en el inventario.']);
+                        exit;
+                    }
+                }
+
                 // Buscar el primer slot libre (0-7) en la DB
                 $stmt_slot = $pdo->prepare("
                     SELECT s.n 
