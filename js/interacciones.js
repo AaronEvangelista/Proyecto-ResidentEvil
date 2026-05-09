@@ -45,7 +45,7 @@ function ejecutarEvento(evento, event) {
       const target = event.currentTarget;
       if (target) {
         target.style.display = "none";
-        target.onclick = null; // Evitar re-clicks si tarda en desaparecer
+        target.onclick = null;
       }
       break;
 
@@ -56,8 +56,6 @@ function ejecutarEvento(evento, event) {
       const bodyEl = document.getElementById("note-body");
       const imgEl = document.getElementById("note-img");
 
-      // El paper del note-viewer SIEMPRE es nota.png (el papel donde se lee)
-      // fondo_nota.png solo se usa como icono en el hotspot del suelo
       if (imgEl) {
         imgEl.src = "../img/nota.png";
         imgEl.style.display = "block";
@@ -65,9 +63,10 @@ function ejecutarEvento(evento, event) {
 
       if (evento.tipo_accion === "leer_archivo") {
         const idArchivo = evento.contenido_accion;
-        const archivo = typeof catalogoArchivos !== "undefined"
-          ? catalogoArchivos.find((a) => a.id_archivo == idArchivo)
-          : null;
+        const archivo =
+          typeof catalogoArchivos !== "undefined"
+            ? catalogoArchivos.find((a) => a.id_archivo == idArchivo)
+            : null;
 
         if (archivo) {
           titleEl.innerText = archivo.nombre;
@@ -83,9 +82,11 @@ function ejecutarEvento(evento, event) {
 
       if (noteViewer) {
         noteViewer.style.display = "flex";
-        // Actualizar estado si existe el sistema de estados
-        if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
-          estadoActual = ESTADOS_JUEGO.PAUSA; // O un estado específico para lectura
+        if (
+          typeof estadoActual !== "undefined" &&
+          typeof ESTADOS_JUEGO !== "undefined"
+        ) {
+          estadoActual = ESTADOS_JUEGO.PAUSA;
         }
       }
       break;
@@ -144,46 +145,53 @@ function registrarRecogida(idEvento, tipoObjeto, idObjeto) {
 function abrirMenuGuardado() {
   const menu = document.getElementById("save-menu");
   const ribbonSpan = document.getElementById("ribbon-count");
+  if (!menu) {
+    console.error("save-menu not found");
+    return;
+  }
 
   fetch("../src/api/get_save_slots.php")
     .then((r) => r.json())
     .then((data) => {
-      if (data.success) {
-        ribbonSpan.innerText = data.cintas;
+      if (!data.success) return;
 
-        document.querySelectorAll(".save-slot").forEach((slotDiv) => {
-          const num = slotDiv.dataset.slot;
-          const info = data.slots[num];
-          const statusSpan = slotDiv.querySelector(".slot-status");
-          const dateSpan = slotDiv.querySelector(".slot-date");
+      if (ribbonSpan) ribbonSpan.innerText = data.cintas;
 
-          if (info) {
-            statusSpan.innerText = info.ubicacion;
-            dateSpan.innerText = info.fecha;
-            slotDiv.classList.add("occupied");
-          } else {
-            statusSpan.innerText = "VACÍO";
-            dateSpan.innerText = "--/--/-- --:--";
-            slotDiv.classList.remove("occupied");
-          }
+      document.querySelectorAll(".save-slot").forEach((slotDiv) => {
+        const num = slotDiv.dataset.slot;
+        const info = data.slots[num];
+        const statusSpan = slotDiv.querySelector(".slot-status");
+        const dateSpan = slotDiv.querySelector(".slot-date");
 
-          slotDiv.onclick = () => {
-            if (data.cintas > 0) {
-              const confirmMsg = info
-                ? "¿Sobreescribir partida existente?"
-                : "¿Guardar en este slot?";
-              if (confirm(confirmMsg)) {
-                guardarEnSlot(num);
-              }
-            } else {
-              mostrarMensajeEnPantalla("[AVISO] No tienes Cintas de Guardado.");
+        if (info) {
+          if (statusSpan) statusSpan.innerText = info.ubicacion;
+          if (dateSpan) dateSpan.innerText = info.fecha;
+          slotDiv.classList.add("occupied");
+        } else {
+          if (statusSpan) statusSpan.innerText = "VACÍO";
+          if (dateSpan) dateSpan.innerText = "--/--/-- --:--";
+          slotDiv.classList.remove("occupied");
+        }
+
+        slotDiv.onclick = () => {
+          if (data.cintas > 0) {
+            const confirmMsg = info
+              ? "¿Sobreescribir partida existente?"
+              : "¿Guardar en este slot?";
+            if (confirm(confirmMsg)) {
+              guardarEnSlot(num);
             }
-          };
-        });
+          } else {
+            mostrarMensajeEnPantalla(
+              "[AVISO] Necesitas una Cinta de Guardado para guardar.",
+            );
+          }
+        };
+      });
 
-        menu.style.display = "flex";
-      }
-    });
+      menu.style.display = "flex";
+    })
+    .catch((err) => console.error("Error en abrirMenuGuardado:", err));
 }
 
 function cerrarMenuGuardado() {
@@ -236,13 +244,23 @@ function abrirMenuPuzzle(tipo) {
 // ════════════════════════════════════════════════
 
 const SIMBOLOS_PUZZLE = [
-  "Leon", "Rama", "Ave", "Pez", "Escorpion", "Jarra",
-  "Mujer", "Arco", "Serpiente", "Lobo", "Aguila", "Calavera"
+  "Leon",
+  "Rama",
+  "Ave",
+  "Pez",
+  "Escorpion",
+  "Jarra",
+  "Mujer",
+  "Arco",
+  "Serpiente",
+  "Lobo",
+  "Aguila",
+  "Calavera",
 ];
 
 let estatuaPuzzleState = {
   tipo: "",
-  valores: [0, 0, 0] // Índices en SIMBOLOS_PUZZLE
+  valores: [0, 0, 0], // Índices en SIMBOLOS_PUZZLE
 };
 
 function abrirEstatuaPuzzle(tipo) {
@@ -253,12 +271,13 @@ function abrirEstatuaPuzzle(tipo) {
   estatuaPuzzleState.valores = [0, 0, 0];
 
   const titulos = {
-    "puzzle_leon": "ESTATUA DEL LEÓN",
-    "puzzle_unicornio": "ESTATUA DEL UNICORNIO",
-    "puzzle_doncella": "ESTATUA DE LA DONCELLA"
+    puzzle_leon: "ESTATUA DEL LEÓN",
+    puzzle_unicornio: "ESTATUA DEL UNICORNIO",
+    puzzle_doncella: "ESTATUA DE LA DONCELLA",
   };
 
-  document.getElementById("estatua-titulo").textContent = titulos[tipo] || "ESTATUA";
+  document.getElementById("estatua-titulo").textContent =
+    titulos[tipo] || "ESTATUA";
   document.getElementById("estatua-status").textContent = "";
 
   actualizarVisualEstatua();
@@ -282,12 +301,13 @@ function cambiarSimbolo(index, delta) {
 function actualizarVisualEstatua() {
   for (let i = 0; i < 3; i++) {
     const valIdx = estatuaPuzzleState.valores[i];
-    document.getElementById(`symbol-${i}`).textContent = SIMBOLOS_PUZZLE[valIdx];
+    document.getElementById(`symbol-${i}`).textContent =
+      SIMBOLOS_PUZZLE[valIdx];
   }
 }
 
 function intentarResolverEstatua() {
-  const comb = estatuaPuzzleState.valores.map(idx => SIMBOLOS_PUZZLE[idx]);
+  const comb = estatuaPuzzleState.valores.map((idx) => SIMBOLOS_PUZZLE[idx]);
   const btn = document.getElementById("btn-resolver-estatua");
   const status = document.getElementById("estatua-status");
 
@@ -299,7 +319,7 @@ function intentarResolverEstatua() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       puzzle: estatuaPuzzleState.tipo,
-      combinacion: comb
+      combinacion: comb,
     }),
   })
     .then((r) => r.json())
@@ -315,9 +335,12 @@ function intentarResolverEstatua() {
         // El hotspot se oculta automáticamente al recargar o si manejamos el DOM
         // Pero como estamos en una SPA-like, podemos ocultarlo manualmente
         const hotspots = document.querySelectorAll(".hotspot");
-        hotspots.forEach(h => {
+        hotspots.forEach((h) => {
           // Buscamos el hotspot que corresponde a este puzzle
-          if (h.onclick && h.onclick.toString().includes(estatuaPuzzleState.tipo)) {
+          if (
+            h.onclick &&
+            h.onclick.toString().includes(estatuaPuzzleState.tipo)
+          ) {
             h.style.display = "none";
           }
         });
@@ -506,35 +529,42 @@ function abrirCajaFuerte() {
   fetch("../src/api/resolver_caja.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ combinacion: "__check__" })
+    body: JSON.stringify({ combinacion: "__check__" }),
   })
-  .then(r => r.json())
-  .then(data => {
-    // Si el error es "ya abierta", ocultamos el hotspot y mostramos mensaje
-    if (!data.success && data.error && data.error.includes("ya fue abierta")) {
-      mostrarMensajeEnPantalla("[CAJA FUERTE] Ya fue abierta. No hay nada más dentro.");
-      document.querySelectorAll(".hotspot").forEach(h => {
-        if (h.title && h.title.includes("CAJA FUERTE")) h.style.display = "none";
-      });
-      return;
-    }
-    // Si no está completada (o el check no aplica), abrir normalmente
-    dialValues = [0, 0, 0];
-    for (let i = 0; i < 3; i++) {
-      document.getElementById(`dial-${i}`).textContent = "0";
-    }
-    document.getElementById("caja-fuerte-status").textContent = "";
-    modal.style.display = "flex";
-  })
-  .catch(() => {
-    // Si falla la red, abrir igualmente
-    dialValues = [0, 0, 0];
-    for (let i = 0; i < 3; i++) {
-      document.getElementById(`dial-${i}`).textContent = "0";
-    }
-    document.getElementById("caja-fuerte-status").textContent = "";
-    modal.style.display = "flex";
-  });
+    .then((r) => r.json())
+    .then((data) => {
+      // Si el error es "ya abierta", ocultamos el hotspot y mostramos mensaje
+      if (
+        !data.success &&
+        data.error &&
+        data.error.includes("ya fue abierta")
+      ) {
+        mostrarMensajeEnPantalla(
+          "[CAJA FUERTE] Ya fue abierta. No hay nada más dentro.",
+        );
+        document.querySelectorAll(".hotspot").forEach((h) => {
+          if (h.title && h.title.includes("CAJA FUERTE"))
+            h.style.display = "none";
+        });
+        return;
+      }
+      // Si no está completada (o el check no aplica), abrir normalmente
+      dialValues = [0, 0, 0];
+      for (let i = 0; i < 3; i++) {
+        document.getElementById(`dial-${i}`).textContent = "0";
+      }
+      document.getElementById("caja-fuerte-status").textContent = "";
+      modal.style.display = "flex";
+    })
+    .catch(() => {
+      // Si falla la red, abrir igualmente
+      dialValues = [0, 0, 0];
+      for (let i = 0; i < 3; i++) {
+        document.getElementById(`dial-${i}`).textContent = "0";
+      }
+      document.getElementById("caja-fuerte-status").textContent = "";
+      modal.style.display = "flex";
+    });
 }
 
 function cerrarCajaFuerte() {
@@ -617,7 +647,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnCerrarNota) {
     btnCerrarNota.addEventListener("click", () => {
       document.getElementById("note-viewer").style.display = "none";
-      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+      if (
+        typeof estadoActual !== "undefined" &&
+        typeof ESTADOS_JUEGO !== "undefined"
+      ) {
         estadoActual = ESTADOS_JUEGO.INTERACTIVO;
       }
     });
@@ -635,7 +668,10 @@ window.addEventListener("keydown", (e) => {
     const viewer = document.getElementById("note-viewer");
     if (viewer && viewer.style.display === "flex") {
       viewer.style.display = "none";
-      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+      if (
+        typeof estadoActual !== "undefined" &&
+        typeof ESTADOS_JUEGO !== "undefined"
+      ) {
         estadoActual = ESTADOS_JUEGO.INTERACTIVO;
       }
     }
@@ -643,7 +679,10 @@ window.addEventListener("keydown", (e) => {
     const saveMenu = document.getElementById("save-menu");
     if (saveMenu && saveMenu.style.display === "flex") {
       cerrarMenuGuardado();
-      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+      if (
+        typeof estadoActual !== "undefined" &&
+        typeof ESTADOS_JUEGO !== "undefined"
+      ) {
         estadoActual = ESTADOS_JUEGO.INTERACTIVO;
       }
     }
@@ -652,7 +691,10 @@ window.addEventListener("keydown", (e) => {
     const medallonesPuzzle = document.getElementById("medallones-puzzle");
     if (medallonesPuzzle && medallonesPuzzle.style.display === "flex") {
       cerrarMenuMedallones();
-      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+      if (
+        typeof estadoActual !== "undefined" &&
+        typeof ESTADOS_JUEGO !== "undefined"
+      ) {
         estadoActual = ESTADOS_JUEGO.INTERACTIVO;
       }
     }
@@ -661,7 +703,10 @@ window.addEventListener("keydown", (e) => {
     const estatuaPuzzle = document.getElementById("estatua-puzzle");
     if (estatuaPuzzle && estatuaPuzzle.style.display === "flex") {
       cerrarEstatuaPuzzle();
-      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+      if (
+        typeof estadoActual !== "undefined" &&
+        typeof ESTADOS_JUEGO !== "undefined"
+      ) {
         estadoActual = ESTADOS_JUEGO.INTERACTIVO;
       }
     }
@@ -670,7 +715,10 @@ window.addEventListener("keydown", (e) => {
     const portableSafe = document.getElementById("portable-safe-puzzle");
     if (portableSafe && portableSafe.style.display === "flex") {
       cerrarPortableSafe();
-      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+      if (
+        typeof estadoActual !== "undefined" &&
+        typeof ESTADOS_JUEGO !== "undefined"
+      ) {
         estadoActual = ESTADOS_JUEGO.INTERACTIVO;
       }
     }
@@ -679,7 +727,10 @@ window.addEventListener("keydown", (e) => {
     const cajaPuzzle = document.getElementById("caja-fuerte-puzzle");
     if (cajaPuzzle && cajaPuzzle.style.display === "flex") {
       cerrarCajaFuerte();
-      if (typeof estadoActual !== "undefined" && typeof ESTADOS_JUEGO !== "undefined") {
+      if (
+        typeof estadoActual !== "undefined" &&
+        typeof ESTADOS_JUEGO !== "undefined"
+      ) {
         estadoActual = ESTADOS_JUEGO.INTERACTIVO;
       }
     }
@@ -694,12 +745,12 @@ window.addEventListener("keydown", (e) => {
 // ════════════════════════════════════════════════
 
 let psafeState = {
-  grid: [],          // 9 booleans (true = lit)
-  idRegistro: null
+  grid: [], // 9 booleans (true = lit)
+  idRegistro: null,
 };
 
 function abrirPortableSafe(idRegistro = null) {
-  const modal = document.getElementById('portable-safe-puzzle');
+  const modal = document.getElementById("portable-safe-puzzle");
   if (!modal) return;
 
   psafeState.idRegistro = idRegistro;
@@ -712,36 +763,37 @@ function abrirPortableSafe(idRegistro = null) {
     psafeToggleCell(Math.floor(Math.random() * 9), false);
   }
   // Si por casualidad quedó todo encendido, forzar una pulsación
-  if (psafeState.grid.every(v => v)) psafeToggleCell(4, false);
+  if (psafeState.grid.every((v) => v)) psafeToggleCell(4, false);
 
-  document.getElementById('portable-status').textContent = '';
-  document.getElementById('portable-status').style.color = '#0af';
+  document.getElementById("portable-status").textContent = "";
+  document.getElementById("portable-status").style.color = "#0af";
 
   psafeRender();
   psafeRenderRing();
-  modal.style.display = 'flex';
+  modal.style.display = "flex";
 }
 
 function cerrarPortableSafe() {
-  const modal = document.getElementById('portable-safe-puzzle');
-  if (modal) modal.style.display = 'none';
+  const modal = document.getElementById("portable-safe-puzzle");
+  if (modal) modal.style.display = "none";
 }
 
 // Togglea celda y vecinos (Lights Out)
 function psafeToggleCell(idx, rerender = true) {
   const neighbors = psafeGetNeighbors(idx);
-  [idx, ...neighbors].forEach(i => {
+  [idx, ...neighbors].forEach((i) => {
     psafeState.grid[i] = !psafeState.grid[i];
   });
   if (rerender) {
     psafeRender();
     psafeRenderRing();
-    if (psafeState.grid.every(v => v)) setTimeout(psafeSolved, 250);
+    if (psafeState.grid.every((v) => v)) setTimeout(psafeSolved, 250);
   }
 }
 
 function psafeGetNeighbors(idx) {
-  const row = Math.floor(idx / 3), col = idx % 3;
+  const row = Math.floor(idx / 3),
+    col = idx % 3;
   const nbrs = [];
   if (row > 0) nbrs.push(idx - 3); // arriba
   if (row < 2) nbrs.push(idx + 3); // abajo
@@ -751,167 +803,221 @@ function psafeGetNeighbors(idx) {
 }
 
 function psafeRender() {
-  const grid = document.getElementById('psafe-grid');
+  const grid = document.getElementById("psafe-grid");
   if (!grid) return;
-  grid.innerHTML = '';
+  grid.innerHTML = "";
   psafeState.grid.forEach((lit, idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'psafe-btn' + (lit ? ' lit' : '');
+    const btn = document.createElement("button");
+    btn.className = "psafe-btn" + (lit ? " lit" : "");
     btn.innerHTML = '<div class="btn-light"></div>';
-    btn.addEventListener('click', () => psafeToggleCell(idx));
+    btn.addEventListener("click", () => psafeToggleCell(idx));
     grid.appendChild(btn);
   });
 }
 
 function psafeRenderRing() {
-  const ring = document.getElementById('light-ring');
+  const ring = document.getElementById("light-ring");
   if (!ring) return;
 
   // Mantener el escudo, limpiar los dots
-  ring.querySelectorAll('.light-dot').forEach(d => d.remove());
+  ring.querySelectorAll(".light-dot").forEach((d) => d.remove());
 
-  const litCount = psafeState.grid.filter(v => v).length; // 0-9
+  const litCount = psafeState.grid.filter((v) => v).length; // 0-9
   // 8 leds en el anillo, iluminar proporcionalmente
   for (let i = 0; i < 8; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'light-dot' + (i < Math.round(litCount * 8 / 9) ? ' active' : '');
-    const angle = (i * 45) - 90;
+    const dot = document.createElement("div");
+    dot.className =
+      "light-dot" + (i < Math.round((litCount * 8) / 9) ? " active" : "");
+    const angle = i * 45 - 90;
     const radius = 54;
-    const x = Math.cos(angle * Math.PI / 180) * radius;
-    const y = Math.sin(angle * Math.PI / 180) * radius;
+    const x = Math.cos((angle * Math.PI) / 180) * radius;
+    const y = Math.sin((angle * Math.PI) / 180) * radius;
     dot.style.left = `calc(50% + ${x}px - 6.5px)`;
-    dot.style.top  = `calc(50% + ${y}px - 6.5px)`;
+    dot.style.top = `calc(50% + ${y}px - 6.5px)`;
     ring.appendChild(dot);
   }
 }
 
 function psafeSolved() {
-  const status = document.getElementById('portable-status');
-  status.style.color = '#0f0';
-  status.textContent = '✓ ACCESO CONCEDIDO';
+  const status = document.getElementById("portable-status");
+  status.style.color = "#0f0";
+  status.textContent = "✓ ACCESO CONCEDIDO";
 
   setTimeout(() => {
-    fetch('../src/api/resolver_portable.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_registro: psafeState.idRegistro })
+    fetch("../src/api/resolver_portable.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_registro: psafeState.idRegistro }),
     })
-    .then(r => r.json())
-    .then(data => {
-      if (data.success) {
-        cerrarPortableSafe();
-        mostrarNotificacionCentrada(data.nombre_objeto);
-        mostrarMensajeEnPantalla(`[PORTÁTIL] ${data.message}`);
-        if (typeof actualizarInventarioSilent === 'function') actualizarInventarioSilent();
-      } else {
-        status.style.color = '#f33';
-        status.textContent = data.error || 'Error al resolver.';
-      }
-    })
-    .catch(err => console.error('Error portable safe:', err));
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          cerrarPortableSafe();
+          mostrarNotificacionCentrada(data.nombre_objeto);
+          mostrarMensajeEnPantalla(`[PORTÁTIL] ${data.message}`);
+          if (typeof actualizarInventarioSilent === "function")
+            actualizarInventarioSilent();
+        } else {
+          status.style.color = "#f33";
+          status.textContent = data.error || "Error al resolver.";
+        }
+      })
+      .catch((err) => console.error("Error portable safe:", err));
   }, 1200);
 }
-
 
 // ════════════════════════════════════════════════════════
 //  PUZZLE ELÉCTRICO — CIRCUITO DE FUSIBLES
 // ════════════════════════════════════════════════════════
 const ELEC_CONNS = {
-  'I':   [['E','W'], ['N','S'], ['E','W'], ['N','S']],
-  'L':   [['E','S'], ['S','W'], ['N','W'], ['N','E']],
-  'SRC': [['E'],['E'],['E'],['E']],
-  'TGT': [['W'],['W'],['W'],['W']],
-  'B':   [[],[],[],[]]
+  I: [
+    ["E", "W"],
+    ["N", "S"],
+    ["E", "W"],
+    ["N", "S"],
+  ],
+  L: [
+    ["E", "S"],
+    ["S", "W"],
+    ["N", "W"],
+    ["N", "E"],
+  ],
+  SRC: [["E"], ["E"], ["E"], ["E"]],
+  TGT: [["W"], ["W"], ["W"], ["W"]],
+  B: [[], [], [], []],
 };
 
 function elecGetSVGPath(type, rot) {
-  if (type === 'B')   return '';
-  if (type === 'SRC') return 'M4,40 L76,40';
-  if (type === 'TGT') return 'M4,40 L76,40';
-  const r = rot % (type === 'I' ? 2 : 4);
-  if (type === 'I') return r === 0 ? 'M0,40 L80,40' : 'M40,0 L40,80';
-  return ['M80,40 Q40,40 40,80','M40,80 Q40,40 0,40','M0,40 Q40,40 40,0','M40,0 Q40,40 80,40'][r];
+  if (type === "B") return "";
+  if (type === "SRC") return "M4,40 L76,40";
+  if (type === "TGT") return "M4,40 L76,40";
+  const r = rot % (type === "I" ? 2 : 4);
+  if (type === "I") return r === 0 ? "M0,40 L80,40" : "M40,0 L40,80";
+  return [
+    "M80,40 Q40,40 40,80",
+    "M40,80 Q40,40 0,40",
+    "M0,40 Q40,40 40,0",
+    "M40,0 Q40,40 80,40",
+  ][r];
 }
 
 // Grid 5×4. Solution: SRC(1,0)→L1(1,1)→L3(2,1)→I0(2,2)→L2(2,3)→L0(1,3)→TGT(1,4)
 let elecGrid = null;
 function elecInitGrid() {
   return [
-    [{t:'B'},{t:'L',r:3,sr:0},{t:'I',r:0,sr:1},{t:'L',r:2,sr:1},{t:'B'}],
-    [{t:'SRC',r:0,fixed:true},{t:'L',r:0,sr:1},{t:'B'},{t:'L',r:1,sr:0},{t:'TGT',r:0,fixed:true}],
-    [{t:'B'},{t:'L',r:1,sr:3},{t:'I',r:1,sr:0},{t:'L',r:0,sr:2},{t:'B'}],
-    [{t:'B'},{t:'L',r:0,sr:3},{t:'I',r:0,sr:1},{t:'L',r:1,sr:0},{t:'B'}]
+    [
+      { t: "B" },
+      { t: "L", r: 3, sr: 0 },
+      { t: "I", r: 0, sr: 1 },
+      { t: "L", r: 2, sr: 1 },
+      { t: "B" },
+    ],
+    [
+      { t: "SRC", r: 0, fixed: true },
+      { t: "L", r: 0, sr: 1 },
+      { t: "B" },
+      { t: "L", r: 1, sr: 0 },
+      { t: "TGT", r: 0, fixed: true },
+    ],
+    [
+      { t: "B" },
+      { t: "L", r: 1, sr: 3 },
+      { t: "I", r: 1, sr: 0 },
+      { t: "L", r: 0, sr: 2 },
+      { t: "B" },
+    ],
+    [
+      { t: "B" },
+      { t: "L", r: 0, sr: 3 },
+      { t: "I", r: 0, sr: 1 },
+      { t: "L", r: 1, sr: 0 },
+      { t: "B" },
+    ],
   ];
 }
 
 function abrirPuzzleElectricidad() {
-  const modal = document.getElementById('elec-puzzle');
+  const modal = document.getElementById("elec-puzzle");
   if (!modal) return;
   elecGrid = elecInitGrid();
   elecRenderGrid();
-  modal.style.display = 'flex';
+  modal.style.display = "flex";
 }
 
 function cerrarPuzzleElectricidad() {
-  const modal = document.getElementById('elec-puzzle');
-  if (modal) modal.style.display = 'none';
+  const modal = document.getElementById("elec-puzzle");
+  if (modal) modal.style.display = "none";
 }
 
 function elecRenderGrid() {
-  const gridEl = document.getElementById('elec-grid');
+  const gridEl = document.getElementById("elec-grid");
   if (!gridEl || !elecGrid) return;
-  gridEl.innerHTML = '';
+  gridEl.innerHTML = "";
   const energized = elecGetEnergized();
 
   elecGrid.forEach((row, ri) => {
     row.forEach((cell, ci) => {
-      const div = document.createElement('div');
-      div.className = 'elec-cell' + (cell.t === 'B' ? ' elec-blank' : '');
+      const div = document.createElement("div");
+      div.className = "elec-cell" + (cell.t === "B" ? " elec-blank" : "");
 
-      if (cell.t !== 'B') {
+      if (cell.t !== "B") {
         const isOn = energized.has(`${ri},${ci}`);
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('viewBox', '0 0 80 80');
-        svg.setAttribute('width', '100%');
-        svg.setAttribute('height', '100%');
+        const svg = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "svg",
+        );
+        svg.setAttribute("viewBox", "0 0 80 80");
+        svg.setAttribute("width", "100%");
+        svg.setAttribute("height", "100%");
 
         const pathStr = elecGetSVGPath(cell.t, cell.r || 0);
         if (pathStr) {
-          const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          p.setAttribute('d', pathStr);
-          p.setAttribute('stroke', isOn ? '#7f0' : '#2a3a2a');
-          p.setAttribute('stroke-width', '9');
-          p.setAttribute('fill', 'none');
-          p.setAttribute('stroke-linecap', 'round');
-          if (isOn) p.style.filter = 'drop-shadow(0 0 5px #7f0) drop-shadow(0 0 10px #4a0)';
+          const p = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path",
+          );
+          p.setAttribute("d", pathStr);
+          p.setAttribute("stroke", isOn ? "#7f0" : "#2a3a2a");
+          p.setAttribute("stroke-width", "9");
+          p.setAttribute("fill", "none");
+          p.setAttribute("stroke-linecap", "round");
+          if (isOn)
+            p.style.filter =
+              "drop-shadow(0 0 5px #7f0) drop-shadow(0 0 10px #4a0)";
           svg.appendChild(p);
         }
 
-        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        dot.setAttribute('cx','40'); dot.setAttribute('cy','40'); dot.setAttribute('r','6');
-        dot.setAttribute('fill', isOn ? '#9f2' : '#1a281a');
-        dot.setAttribute('stroke', isOn ? '#7f0' : '#2a3a2a');
-        dot.setAttribute('stroke-width','2');
-        if (isOn) dot.style.filter = 'drop-shadow(0 0 6px #9f2)';
+        const dot = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "circle",
+        );
+        dot.setAttribute("cx", "40");
+        dot.setAttribute("cy", "40");
+        dot.setAttribute("r", "6");
+        dot.setAttribute("fill", isOn ? "#9f2" : "#1a281a");
+        dot.setAttribute("stroke", isOn ? "#7f0" : "#2a3a2a");
+        dot.setAttribute("stroke-width", "2");
+        if (isOn) dot.style.filter = "drop-shadow(0 0 6px #9f2)";
         svg.appendChild(dot);
         div.appendChild(svg);
 
-        if (cell.t === 'SRC') {
-          const lbl = document.createElement('span');
-          lbl.className = 'elec-label energized'; lbl.textContent = 'PWR';
+        if (cell.t === "SRC") {
+          const lbl = document.createElement("span");
+          lbl.className = "elec-label energized";
+          lbl.textContent = "PWR";
           div.appendChild(lbl);
         }
-        if (cell.t === 'TGT') {
-          const lbl = document.createElement('span');
-          lbl.className = 'elec-label' + (isOn ? ' energized' : '');
-          lbl.textContent = isOn ? '✓ ON' : 'OFF';
+        if (cell.t === "TGT") {
+          const lbl = document.createElement("span");
+          lbl.className = "elec-label" + (isOn ? " energized" : "");
+          lbl.textContent = isOn ? "✓ ON" : "OFF";
           div.appendChild(lbl);
         }
 
         if (!cell.fixed) {
-          div.style.cursor = 'pointer';
-          div.addEventListener('click', () => {
-            cell.r = ((cell.r || 0) + 1) % (cell.t === 'I' ? 2 : 4);
+          div.style.cursor = "pointer";
+          div.addEventListener("click", () => {
+            cell.r = ((cell.r || 0) + 1) % (cell.t === "I" ? 2 : 4);
             elecRenderGrid();
             if (elecCheckSolved()) setTimeout(elecOnSolved, 300);
           });
@@ -924,63 +1030,73 @@ function elecRenderGrid() {
 
 function elecGetEnergized() {
   const energized = new Set();
-  const queue = [{r:1, c:0, from:'W'}];
-  const OPP = {N:'S',S:'N',E:'W',W:'E'};
-  const DELTA = {N:[-1,0],S:[1,0],E:[0,1],W:[0,-1]};
+  const queue = [{ r: 1, c: 0, from: "W" }];
+  const OPP = { N: "S", S: "N", E: "W", W: "E" };
+  const DELTA = { N: [-1, 0], S: [1, 0], E: [0, 1], W: [0, -1] };
 
   while (queue.length) {
-    const {r, c, from} = queue.shift();
+    const { r, c, from } = queue.shift();
     const key = `${r},${c}`;
     if (energized.has(key)) continue;
     const cell = elecGrid[r]?.[c];
     if (!cell) continue;
     const rot = cell.r || 0;
-    const conns = (ELEC_CONNS[cell.t] || [[]])[rot % (cell.t === 'I' ? 2 : 4)] || [];
-    if (cell.t !== 'SRC' && !conns.includes(from)) continue;
+    const conns =
+      (ELEC_CONNS[cell.t] || [[]])[rot % (cell.t === "I" ? 2 : 4)] || [];
+    if (cell.t !== "SRC" && !conns.includes(from)) continue;
     energized.add(key);
     for (const dir of conns) {
       if (dir === from) continue;
       const [dr, dc] = DELTA[dir];
-      const nr = r+dr, nc = c+dc;
-      if (nr<0||nr>=4||nc<0||nc>=5) continue;
-      queue.push({r:nr, c:nc, from:OPP[dir]});
+      const nr = r + dr,
+        nc = c + dc;
+      if (nr < 0 || nr >= 4 || nc < 0 || nc >= 5) continue;
+      queue.push({ r: nr, c: nc, from: OPP[dir] });
     }
   }
   return energized;
 }
 
-function elecCheckSolved() { return elecGetEnergized().has('1,4'); }
+function elecCheckSolved() {
+  return elecGetEnergized().has("1,4");
+}
 
 function elecOnSolved() {
-  const gridEl   = document.getElementById('elec-grid');
-  const statusEl = document.getElementById('elec-status');
-  const wireR    = document.querySelector('.elec-wire-right');
-  if (gridEl)   gridEl.classList.add('elec-solved');
-  if (wireR)    wireR.style.opacity = '1';
+  const gridEl = document.getElementById("elec-grid");
+  const statusEl = document.getElementById("elec-status");
+  const wireR = document.querySelector(".elec-wire-right");
+  if (gridEl) gridEl.classList.add("elec-solved");
+  if (wireR) wireR.style.opacity = "1";
   if (statusEl) {
-    statusEl.textContent = '⚡ CIRCUITO COMPLETADO — SISTEMA RESTAURADO';
-    statusEl.style.color = '#7f0';
-    statusEl.style.textShadow = '0 0 8px #4a0';
+    statusEl.textContent = "⚡ CIRCUITO COMPLETADO — SISTEMA RESTAURADO";
+    statusEl.style.color = "#7f0";
+    statusEl.style.textShadow = "0 0 8px #4a0";
   }
   setTimeout(() => {
-    fetch('../src/api/resolver_electricidad.php', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({accion:'completar'})
-    }).then(r=>r.json()).then(data => {
-      cerrarPuzzleElectricidad();
-      mostrarMensajeEnPantalla('[ELÉCTRICO] ' + (data.message || 'Sistema restaurado.'));
-      document.querySelectorAll('.hotspot').forEach(h => {
-        if (h.title === 'PUZZLE FUSIBLES') h.style.display = 'none';
-      });
-      if (typeof actualizarInventarioSilent === 'function') actualizarInventarioSilent();
-    }).catch(err => console.error('Error electricidad:', err));
+    fetch("../src/api/resolver_electricidad.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accion: "completar" }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        cerrarPuzzleElectricidad();
+        mostrarMensajeEnPantalla(
+          "[ELÉCTRICO] " + (data.message || "Sistema restaurado."),
+        );
+        document.querySelectorAll(".hotspot").forEach((h) => {
+          if (h.title === "PUZZLE FUSIBLES") h.style.display = "none";
+        });
+        if (typeof actualizarInventarioSilent === "function")
+          actualizarInventarioSilent();
+      })
+      .catch((err) => console.error("Error electricidad:", err));
   }, 1800);
 }
 
-window.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    const m = document.getElementById('elec-puzzle');
-    if (m && m.style.display === 'flex') cerrarPuzzleElectricidad();
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const m = document.getElementById("elec-puzzle");
+    if (m && m.style.display === "flex") cerrarPuzzleElectricidad();
   }
 });

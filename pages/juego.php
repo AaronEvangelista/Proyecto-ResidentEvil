@@ -26,15 +26,31 @@ if (!$id_usuario) {
     exit;
 }
 
+// Cargar partida guardada desde el perfil (?partida=X)
+if (isset($_GET['partida'])) {
+    $id_partida_cargada = (int) $_GET['partida'];
+    $stmt_load = $pdo->prepare("SELECT id_partida, sala_actual FROM partida WHERE id_partida = ? AND id_usuario = ? AND slot_numero IS NOT NULL");
+    $stmt_load->execute([$id_partida_cargada, $id_usuario]);
+    $partida_guardada = $stmt_load->fetch(PDO::FETCH_ASSOC);
+
+    if ($partida_guardada) {
+        $_SESSION['id_partida'] = $partida_guardada['id_partida'];
+        $_SESSION['sala_actual'] = $partida_guardada['sala_actual'];
+        $_SESSION['inventario_sesion'] = [];
+        $_SESSION['eventos_recogidos_sesion'] = [];
+        // Redirigir a la sala donde se guardó
+        header("Location: juego.php?sala=" . urlencode($partida_guardada['sala_actual']));
+        exit;
+    }
+}
+
 try {
     $stmt_partida = $pdo->prepare("SELECT id_partida FROM partida WHERE id_usuario = ? AND slot_numero = 0 ORDER BY fecha_guardado DESC LIMIT 1");
     $stmt_partida->execute([$id_usuario]);
     $partida = $stmt_partida->fetch();
 } catch (PDOException $e) {
-    // Si el error es por la columna faltante, la creamos dinámicamente
     if (strpos($e->getMessage(), 'no such column: slot_numero') !== false) {
         $pdo->exec("ALTER TABLE partida ADD COLUMN slot_numero INTEGER DEFAULT 0");
-        // Reintentamos la consulta
         $stmt_partida = $pdo->prepare("SELECT id_partida FROM partida WHERE id_usuario = ? AND slot_numero = 0 ORDER BY fecha_guardado DESC LIMIT 1");
         $stmt_partida->execute([$id_usuario]);
         $partida = $stmt_partida->fetch();
@@ -52,7 +68,6 @@ if (!$partida || $forzar_nueva) {
     $stmt_estado = $pdo->prepare("INSERT INTO estado_personaje (id_partida, vida_actual) VALUES (?, 100)");
     $stmt_estado->execute([$id_partida]);
 
-    //Limpiar inventario de sesión si es nueva partida
     if ($forzar_nueva) {
         $_SESSION['inventario_sesion'] = [];
         $_SESSION['eventos_recogidos_sesion'] = [];
@@ -60,7 +75,6 @@ if (!$partida || $forzar_nueva) {
 } else {
     $id_partida = $partida['id_partida'];
 
-    //Verificar si el jugador está muerto en esta partida. Si es así, resetear vida para que pueda jugar.
     $st_check_v = $pdo->prepare("SELECT vida_actual FROM estado_personaje WHERE id_partida = ?");
     $st_check_v->execute([$id_partida]);
     $v_check = $st_check_v->fetchColumn();
@@ -196,7 +210,8 @@ $completados_db = $q_comp_db->fetchAll(PDO::FETCH_COLUMN);
 $completados = array_unique(array_merge($completados_db, $_SESSION['eventos_recogidos_sesion'] ?? []));
 
 foreach ($eventos as $key => &$ev) {
-    if (in_array($ev['id_evento'], $completados)) {
+    // Los eventos de guardar NUNCA se ocultan, siempre deben estar disponibles
+    if ($ev['tipo_accion'] !== 'guardar' && in_array($ev['id_evento'], $completados)) {
         unset($eventos[$key]);
         continue;
     }
@@ -805,26 +820,76 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             </div>
         </div>
 
-        <div id="save-menu" style="display: none;">
+        <div id="save-menu" style="display:none;">
             <div class="save-container">
                 <div class="save-header">
-                    <h2>MÁQUINA DE ESCRIBIR</h2>
-                    <div class="ink-ribbon-count">CINTAS: <span id="ribbon-count">0</span></div>
+                    <h2>✒ MÁQUINA DE ESCRIBIR</h2>
+                    <div class="ink-ribbon-count">CINTAS DE TINTA: <span id="ribbon-count">0</span></div>
                 </div>
                 <div class="save-slots">
                     <div class="save-slot" data-slot="1"><span class="slot-number">01</span>
-                        <div class="slot-info"><span class="slot-status">VACÍO</span></div>
+                        <div class="slot-info"><span class="slot-status">VACÍO</span><span class="slot-date">--/--/-- --:--</span></div>
                     </div>
                     <div class="save-slot" data-slot="2"><span class="slot-number">02</span>
-                        <div class="slot-info"><span class="slot-status">VACÍO</span></div>
+                        <div class="slot-info"><span class="slot-status">VACÍO</span><span class="slot-date">--/--/-- --:--</span></div>
                     </div>
                     <div class="save-slot" data-slot="3"><span class="slot-number">03</span>
-                        <div class="slot-info"><span class="slot-status">VACÍO</span></div>
+                        <div class="slot-info"><span class="slot-status">VACÍO</span><span class="slot-date">--/--/-- --:--</span></div>
                     </div>
                 </div>
                 <button id="btn-cancelar-guardado" class="hud-btn">CANCELAR</button>
             </div>
         </div>
+        <style>
+        #save-menu {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.88);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 3000; backdrop-filter: blur(6px);
+        }
+        .save-container {
+            background: linear-gradient(160deg, #0a0800, #140f02);
+            border: 1px solid #3a2a00;
+            box-shadow: 0 0 60px rgba(140,90,0,0.2), inset 0 0 40px rgba(0,0,0,0.6);
+            padding: 32px 44px 28px;
+            font-family: 'Courier New', monospace;
+            min-width: 400px; position: relative; text-align: center;
+        }
+        .save-container::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background: linear-gradient(90deg, transparent, #8a6000, transparent);
+        }
+        .save-header h2 {
+            color: #c8a030; font-size: 1.1rem; letter-spacing: 4px;
+            margin: 0 0 8px; text-shadow: 0 0 12px rgba(200,150,0,0.5);
+        }
+        .ink-ribbon-count {
+            color: #554422; font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 24px;
+        }
+        .ink-ribbon-count span { color: #c8a030; }
+        .save-slots { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .save-slot {
+            display: flex; align-items: center; gap: 16px;
+            padding: 12px 16px; background: #0a0800;
+            border: 1px solid #2a1e00; cursor: pointer;
+            transition: background .2s, border-color .2s;
+        }
+        .save-slot:hover { background: #14100a; border-color: #6a4a00; }
+        .save-slot.occupied { border-color: #4a3000; }
+        .slot-number { color: #6a4a00; font-size: 1.1rem; font-weight: bold; min-width: 28px; }
+        .slot-info { flex: 1; text-align: left; }
+        .slot-status { display: block; color: #8a7050; font-size: 0.8rem; letter-spacing: 1px; }
+        .save-slot.occupied .slot-status { color: #c8a030; }
+        .slot-date { color: #3a2a10; font-size: 0.68rem; }
+        #btn-cancelar-guardado {
+            margin-top: 4px; background: #0a0800; border: 1px solid #2a1e00;
+            color: #554422; padding: 10px 28px; cursor: pointer;
+            font-family: 'Courier New', monospace; letter-spacing: 2px;
+            font-size: 0.78rem; transition: .2s;
+        }
+        #btn-cancelar-guardado:hover { background: #14100a; color: #8a6030; border-color: #4a3000; }
+        </style>
+
 
         <!-- PUZZLE MEDALLONES -->
         <div id="medallones-puzzle" style="display: none;">
