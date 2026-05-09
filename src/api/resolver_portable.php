@@ -21,19 +21,34 @@ if (!$id_partida) {
 try {
     $pdo->beginTransaction();
 
-    // 1. Determinar qué recompensa dar
-    // Miramos si el jugador ya tiene la Llave de Diamante (ID 11)
-    $stmt_key = $pdo->prepare("SELECT COUNT(*) FROM inventario WHERE id_partida = ? AND id_objeto = 11");
+    // 1. Determinar qué recompensa dar basándose en cuántas cajas aún tiene el jugador
+    //    Si el jugador AÚN tiene >1 caja en inventario → esta es la primera que abre → munición
+    //    Si solo le queda 1 (la que acaba de usar) → es la segunda → llave de diamante
+    $stmt_count = $pdo->prepare("SELECT COUNT(*) FROM inventario WHERE id_partida = ? AND tipo_objeto = 'item' AND id_objeto = 10");
+    $stmt_count->execute([$id_partida]);
+    $cajas_restantes = (int)$stmt_count->fetchColumn();
+
+    // ¿Ya tiene la llave de diamante?
+    $stmt_key = $pdo->prepare("SELECT COUNT(*) FROM inventario WHERE id_partida = ? AND id_objeto = 11 AND tipo_objeto='item'");
     $stmt_key->execute([$id_partida]);
     $tiene_llave = $stmt_key->fetchColumn() > 0;
 
-    $id_recompensa = $tiene_llave ? 4 : 11; // 4 = Escopeta, 11 = Llave Diamante
-    
-    // Obtener info del premio
-    $stmt_item = $pdo->prepare("SELECT nombre, tipo FROM catalogo_items WHERE id_item = ?");
+    if ($cajas_restantes > 1 || $tiene_llave) {
+        // Primera caja abierta, o ya tiene llave → munición de pistola (id=3)
+        $id_recompensa   = 3;
+        $tipo_recompensa = 'item';
+        $cantidad_recompensa = 30;
+    } else {
+        // Segunda caja (última) → llave de diamante (id=11)
+        $id_recompensa   = 11;
+        $tipo_recompensa = 'item';
+        $cantidad_recompensa = 1;
+    }
+
+    // Obtener nombre del premio
+    $stmt_item = $pdo->prepare("SELECT nombre FROM catalogo_items WHERE id_item = ?");
     $stmt_item->execute([$id_recompensa]);
-    $item_info = $stmt_item->fetch(PDO::FETCH_ASSOC);
-    $nombre_premio = $item_info['nombre'];
+    $nombre_premio = $stmt_item->fetchColumn() ?: 'Objeto';
 
     // 2. Eliminar la caja fuerte del inventario
     if ($id_registro && strpos((string)$id_registro, 'session_') === false) {
@@ -65,8 +80,8 @@ try {
     }
 
     $stmt_ins = $pdo->prepare("INSERT INTO inventario (id_partida, tipo_objeto, id_objeto, cantidad, posicion_slot) 
-                                VALUES (?, 'item', ?, 1, ?)");
-    $stmt_ins->execute([$id_partida, $id_recompensa, $posicion_slot]);
+                                VALUES (?, 'item', ?, ?, ?)");
+    $stmt_ins->execute([$id_partida, $id_recompensa, $cantidad_recompensa, $posicion_slot]);
 
     $pdo->commit();
 

@@ -184,9 +184,23 @@ function renderizarInventario(items) {
                     btnExaminar.onclick = () => examinarObjeto(item);
                 }
 
+                // Botón PUZZLE: solo para Caja Fuerte Portatil
+                const btnPuzzle = document.getElementById('btn-puzzle-portable');
+                if (btnPuzzle) {
+                    const esCajaPortatil = item.nombre && item.nombre.toUpperCase().includes('CAJA FUERTE PORTATIL');
+                    if (esCajaPortatil) {
+                        btnPuzzle.style.display = 'block';
+                        btnPuzzle.onclick = () => {
+                            cerrarInventario();
+                            if (typeof abrirPortableSafe === 'function') abrirPortableSafe(item.id_registro);
+                        };
+                    } else {
+                        btnPuzzle.style.display = 'none';
+                    }
+                }
+
                 const btnEliminar = document.getElementById('btn-eliminar');
                 if (btnEliminar) {
-                    // Solo mostrar eliminar si NO es un arma Y NO es un objeto clave
                     if (item.tipo !== 'arma' && item.tipo !== 'clave') {
                         btnEliminar.style.display = 'block';
                         btnEliminar.onclick = () => {
@@ -278,14 +292,6 @@ function examinarObjeto(item) {
     const noteImg = document.getElementById('note-img');
 
     if (noteViewer && noteTitle && noteBody && noteImg) {
-        if (item.nombre.toUpperCase().includes("CAJA FUERTE PORTATIL")) {
-            cerrarInventario();
-            if (typeof abrirPortableSafe === 'function') {
-                abrirPortableSafe(item.id_registro);
-            }
-            return;
-        }
-
         noteTitle.innerText = item.nombre;
         noteBody.innerText = item.descripcion + "\n\n(Objeto examinado)";
 

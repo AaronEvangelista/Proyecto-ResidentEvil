@@ -784,6 +784,8 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <button id="btn-examinar" class="hud-btn" style="display: none;">EXAMINAR</button>
+                        <button id="btn-puzzle-portable" class="hud-btn"
+                            style="display: none; background-color: #004060; color: #0cf; border-color: #0af;">PUZZLE</button>
                         <button id="btn-eliminar" class="hud-btn"
                             style="display: none; background-color: #600;">ELIMINAR</button>
                     </div>
@@ -1086,6 +1088,130 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             50%{box-shadow:inset 0 0 60px rgba(80,200,20,0.4), 0 0 40px rgba(80,200,20,0.5);}
         }
         </style>
+
+        <!-- ═══════════════ CAJA FUERTE PORTÁTIL — LIGHTS OUT ═══════════════ -->
+        <div id="portable-safe-puzzle" style="display:none;">
+            <div class="psafe-container">
+                <div class="psafe-header">
+                    <span class="psafe-badge">R.P.D.</span>
+                    <h2>CAJA FUERTE PORTÁTIL</h2>
+                    <p>Activa todas las luces para abrir la caja</p>
+                </div>
+
+                <!-- Anillo de luces indicadoras -->
+                <div class="psafe-ring-wrap">
+                    <div id="light-ring" class="psafe-ring">
+                        <div class="psafe-shield">★</div>
+                    </div>
+                </div>
+
+                <!-- Grid Lights Out 3×3 -->
+                <div class="psafe-grid" id="psafe-grid">
+                    <!-- Generado por JS -->
+                </div>
+
+                <div id="portable-status" class="psafe-status"></div>
+
+                <div class="psafe-actions">
+                    <button onclick="cerrarPortableSafe()">✕ CANCELAR</button>
+                </div>
+            </div>
+        </div>
+
+        <style>
+        #portable-safe-puzzle {
+            position:fixed; inset:0;
+            background:rgba(0,0,0,0.93);
+            display:flex; justify-content:center; align-items:center;
+            z-index:3000; backdrop-filter:blur(10px);
+        }
+        .psafe-container {
+            background: linear-gradient(160deg,#080c10,#101820);
+            border: 1px solid #1a3a5a;
+            box-shadow: 0 0 60px rgba(0,120,200,0.15), inset 0 0 60px rgba(0,0,0,0.7);
+            padding: 28px 36px 24px;
+            text-align:center; font-family:'Courier New',monospace;
+            min-width:340px; position:relative;
+        }
+        .psafe-container::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg,transparent,#0af,transparent);
+        }
+        .psafe-header { margin-bottom:18px; }
+        .psafe-badge {
+            display:inline-block; background:#0a1828; border:1px solid #0af;
+            color:#0af; font-size:0.6rem; letter-spacing:3px; padding:3px 10px;
+            margin-bottom:10px; text-shadow:0 0 8px #0af;
+        }
+        .psafe-header h2 { color:#8cf; font-size:1rem; letter-spacing:3px; margin:0 0 6px; }
+        .psafe-header p  { color:#336; font-size:0.72rem; letter-spacing:1px; margin:0; }
+
+        /* Anillo de luces */
+        .psafe-ring-wrap { display:flex; justify-content:center; margin-bottom:18px; }
+        .psafe-ring {
+            width:140px; height:140px; border-radius:50%;
+            background:radial-gradient(circle,#0a1828 60%,#051018);
+            border:2px solid #1a3a5a;
+            position:relative;
+            box-shadow:0 0 20px rgba(0,120,200,0.2);
+        }
+        .psafe-shield {
+            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+            font-size:2rem; color:#1a3a5a;
+        }
+        .light-dot {
+            position:absolute; width:13px; height:13px;
+            border-radius:50%; background:#0a1828;
+            border:1.5px solid #1a4a6a;
+            transition: background .2s, box-shadow .2s;
+        }
+        .light-dot.active {
+            background:#0cf;
+            border-color:#0af;
+            box-shadow:0 0 6px #0cf, 0 0 12px #0af;
+        }
+
+        /* Grid 3x3 */
+        .psafe-grid {
+            display:grid; grid-template-columns:repeat(3,64px);
+            grid-template-rows:repeat(3,64px);
+            gap:6px; justify-content:center; margin-bottom:16px;
+        }
+        .psafe-btn {
+            background:#0a1828; border:1.5px solid #1a3a5a;
+            border-radius:5px; cursor:pointer; position:relative;
+            transition:background .15s, border-color .15s;
+        }
+        .psafe-btn:hover { background:#0f2035; border-color:#0af; }
+        .psafe-btn.lit {
+            background:#0a2840;
+            border-color:#0af;
+            box-shadow:inset 0 0 15px rgba(0,180,255,0.3), 0 0 8px rgba(0,140,200,0.4);
+        }
+        .psafe-btn .btn-light {
+            width:20px; height:20px; border-radius:50%;
+            background:#0d1c28; border:1.5px solid #1a3a5a;
+            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+            transition:background .15s, box-shadow .15s;
+        }
+        .psafe-btn.lit .btn-light {
+            background:#0cf;
+            border-color:#0af;
+            box-shadow:0 0 8px #0cf, 0 0 16px #0af;
+        }
+
+        .psafe-status {
+            min-height:22px; font-size:0.78rem; letter-spacing:1px;
+            color:#0af; margin-bottom:16px; transition:color .3s;
+        }
+        .psafe-actions button {
+            padding:9px 24px; background:#080c10; border:1px solid #1a3a5a;
+            color:#446; cursor:pointer; letter-spacing:2px; font-size:0.78rem;
+            font-family:'Courier New',monospace; transition:.2s;
+        }
+        .psafe-actions button:hover { background:#0a1828; color:#8cf; border-color:#0af; }
+        </style>
+
     </div> <!-- FIN game-container -->
 
     <script src="../js/movimientos.js"></script>

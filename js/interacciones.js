@@ -689,113 +689,129 @@ window.addEventListener("keydown", (e) => {
 //  PUZZLE CAJA FUERTE PORTÁTIL
 // ════════════════════════════════════════════════
 
-let portableSafeState = {
-  active: false,
-  idRegistro: null,
-  sequence: [], // Orden correcto de botones
-  currentIndex: 0, // Cuántos ha acertado seguidos
-  lights: [] // Referencias a los elementos DOM de las luces
+// ════════════════════════════════════════════════
+//  CAJA FUERTE PORTÁTIL — LIGHTS OUT (3×3)
+// ════════════════════════════════════════════════
+
+let psafeState = {
+  grid: [],          // 9 booleans (true = lit)
+  idRegistro: null
 };
 
 function abrirPortableSafe(idRegistro = null) {
-  const modal = document.getElementById("portable-safe-puzzle");
+  const modal = document.getElementById('portable-safe-puzzle');
   if (!modal) return;
 
-  portableSafeState.active = true;
-  portableSafeState.idRegistro = idRegistro;
-  portableSafeState.currentIndex = 0;
+  psafeState.idRegistro = idRegistro;
 
-  // Generar secuencia aleatoria de 0 a 7
-  const buttons = [0, 1, 2, 3, 4, 5, 6, 7];
-  portableSafeState.sequence = buttons.sort(() => Math.random() - 0.5);
-
-  document.getElementById("portable-status").textContent = "";
-
-  // Generar luces en círculo
-  const ring = document.getElementById("light-ring");
-  // Limpiar luces previas pero mantener el logo si existe
-  const dots = ring.querySelectorAll('.light-dot');
-  dots.forEach(d => d.remove());
-
-  portableSafeState.lights = [];
-  for (let i = 0; i < 8; i++) {
-    const dot = document.createElement("div");
-    dot.className = "light-dot";
-
-    // Posicionamiento circular
-    const angle = (i * 45) - 90; // Empezar arriba
-    const radius = 70;
-    const x = Math.cos(angle * (Math.PI / 180)) * radius;
-    const y = Math.sin(angle * (Math.PI / 180)) * radius;
-
-    dot.style.left = `calc(50% + ${x}px - 7.5px)`;
-    dot.style.top = `calc(50% + ${y}px - 7.5px)`;
-
-    ring.appendChild(dot);
-    portableSafeState.lights.push(dot);
+  // Generar estado inicial aleatorio SOLVABLE
+  // Generamos aplicando N pulsaciones aleatorias al estado todo-encendido
+  psafeState.grid = Array(9).fill(true);
+  const moves = 10 + Math.floor(Math.random() * 8);
+  for (let m = 0; m < moves; m++) {
+    psafeToggleCell(Math.floor(Math.random() * 9), false);
   }
+  // Si por casualidad quedó todo encendido, forzar una pulsación
+  if (psafeState.grid.every(v => v)) psafeToggleCell(4, false);
 
-  modal.style.display = "flex";
+  document.getElementById('portable-status').textContent = '';
+  document.getElementById('portable-status').style.color = '#0af';
+
+  psafeRender();
+  psafeRenderRing();
+  modal.style.display = 'flex';
 }
 
 function cerrarPortableSafe() {
-  const modal = document.getElementById("portable-safe-puzzle");
-  if (modal) modal.style.display = "none";
-  portableSafeState.active = false;
+  const modal = document.getElementById('portable-safe-puzzle');
+  if (modal) modal.style.display = 'none';
 }
 
-function pressPortableButton(btnIndex) {
-  if (!portableSafeState.active) return;
-
-  const expectedBtn = portableSafeState.sequence[portableSafeState.currentIndex];
-
-  if (btnIndex === expectedBtn) {
-    // Acierto
-    portableSafeState.lights[portableSafeState.currentIndex].classList.add("active");
-    portableSafeState.currentIndex++;
-
-    if (portableSafeState.currentIndex === 8) {
-      resolverPortableSafe();
-    }
-  } else {
-    // Fallo: Reset
-    portableSafeState.currentIndex = 0;
-    portableSafeState.lights.forEach(l => l.classList.remove("active"));
-
-    const status = document.getElementById("portable-status");
-    status.textContent = "ERROR: SECUENCIA REINICIADA";
-    setTimeout(() => { if (status && status.textContent.includes("ERROR")) status.textContent = ""; }, 1000);
+// Togglea celda y vecinos (Lights Out)
+function psafeToggleCell(idx, rerender = true) {
+  const neighbors = psafeGetNeighbors(idx);
+  [idx, ...neighbors].forEach(i => {
+    psafeState.grid[i] = !psafeState.grid[i];
+  });
+  if (rerender) {
+    psafeRender();
+    psafeRenderRing();
+    if (psafeState.grid.every(v => v)) setTimeout(psafeSolved, 250);
   }
 }
 
-function resolverPortableSafe() {
-  const status = document.getElementById("portable-status");
-  status.style.color = "#00ff00";
-  status.textContent = "ACCESO CONCEDIDO";
+function psafeGetNeighbors(idx) {
+  const row = Math.floor(idx / 3), col = idx % 3;
+  const nbrs = [];
+  if (row > 0) nbrs.push(idx - 3); // arriba
+  if (row < 2) nbrs.push(idx + 3); // abajo
+  if (col > 0) nbrs.push(idx - 1); // izquierda
+  if (col < 2) nbrs.push(idx + 1); // derecha
+  return nbrs;
+}
 
-  fetch("../src/api/resolver_portable.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id_registro: portableSafeState.idRegistro }),
-  })
-    .then((r) => r.json())
-    .then((data) => {
+function psafeRender() {
+  const grid = document.getElementById('psafe-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  psafeState.grid.forEach((lit, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'psafe-btn' + (lit ? ' lit' : '');
+    btn.innerHTML = '<div class="btn-light"></div>';
+    btn.addEventListener('click', () => psafeToggleCell(idx));
+    grid.appendChild(btn);
+  });
+}
+
+function psafeRenderRing() {
+  const ring = document.getElementById('light-ring');
+  if (!ring) return;
+
+  // Mantener el escudo, limpiar los dots
+  ring.querySelectorAll('.light-dot').forEach(d => d.remove());
+
+  const litCount = psafeState.grid.filter(v => v).length; // 0-9
+  // 8 leds en el anillo, iluminar proporcionalmente
+  for (let i = 0; i < 8; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'light-dot' + (i < Math.round(litCount * 8 / 9) ? ' active' : '');
+    const angle = (i * 45) - 90;
+    const radius = 54;
+    const x = Math.cos(angle * Math.PI / 180) * radius;
+    const y = Math.sin(angle * Math.PI / 180) * radius;
+    dot.style.left = `calc(50% + ${x}px - 6.5px)`;
+    dot.style.top  = `calc(50% + ${y}px - 6.5px)`;
+    ring.appendChild(dot);
+  }
+}
+
+function psafeSolved() {
+  const status = document.getElementById('portable-status');
+  status.style.color = '#0f0';
+  status.textContent = '✓ ACCESO CONCEDIDO';
+
+  setTimeout(() => {
+    fetch('../src/api/resolver_portable.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_registro: psafeState.idRegistro })
+    })
+    .then(r => r.json())
+    .then(data => {
       if (data.success) {
-        setTimeout(() => {
-          cerrarPortableSafe();
-          mostrarNotificacionCentrada(data.nombre_objeto);
-          mostrarMensajeEnPantalla(`[PORTÁTIL] ${data.message}`);
-          if (typeof abrirInventario === "function") abrirInventario();
-        }, 1500);
+        cerrarPortableSafe();
+        mostrarNotificacionCentrada(data.nombre_objeto);
+        mostrarMensajeEnPantalla(`[PORTÁTIL] ${data.message}`);
+        if (typeof actualizarInventarioSilent === 'function') actualizarInventarioSilent();
       } else {
-        status.style.color = "#ff3333";
-        status.textContent = data.error;
+        status.style.color = '#f33';
+        status.textContent = data.error || 'Error al resolver.';
       }
     })
-    .catch((err) => {
-      console.error("Error al resolver portable:", err);
-    });
+    .catch(err => console.error('Error portable safe:', err));
+  }, 1200);
 }
+
 
 // ════════════════════════════════════════════════════════
 //  PUZZLE ELÉCTRICO — CIRCUITO DE FUSIBLES
