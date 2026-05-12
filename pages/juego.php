@@ -241,6 +241,17 @@ if ($zombiesVisibles) {
     $hay_combate = ($enemigo_presente && $id_reg_huido != $enemigo_presente['id_registro']);
 }
 
+// sala_final: el boss nunca bloquea la sala al entrar.
+// El encuentro solo ocurre cuando el jugador hace clic en la puerta.
+// Limpiamos cualquier boss residual para que la sala sea explorable libremente.
+if ($id_sala_actual === 'sala_final') {
+    $hay_combate = false;
+    $enemigo_presente = null;
+    // Borrar entradas de boss que puedan haber quedado de pruebas o combates previos
+    $pdo->prepare("DELETE FROM estado_enemigos WHERE id_partida = ? AND sala_ubicacion = 'sala_final'")
+        ->execute([$id_partida]);
+}
+
 //6. EVENTOS Y VIDA 
 if (!isset($_SESSION['eventos_recogidos_sesion']))
     $_SESSION['eventos_recogidos_sesion'] = [];
@@ -289,28 +300,44 @@ if ($id_sala_actual === 'lobby_principal') {
 
     if ($id_evento_medallones && in_array($id_evento_medallones, $completados)) {
         // El puzzle ha sido completado — abrir el pasaje bajo la estatua
-        $sala['imagen_url'] = '../img/lobby_abierto.png';
+        $sala['imagen_url'] = '../img/lobby_abierto.png?v=2';
         $sala['descripcion'] = 'Hub central de la comisaría. El pasaje secreto bajo la estatua ahora está abierto.';
-        // Redirigir la flecha SUR (centro-inferior) al sótano en vez de a los baños
+        // Flecha SUR → sótano
         $sala['sur'] = 'sala_final';
+
+        // Hotspot visible sobre la apertura de la escalera central
+        $eventos[] = [
+            'id_evento'        => 9997,
+            'id_sala'          => 'lobby_principal',
+            'nombre_objeto'    => '↓ BAJAR AL SÓTANO',
+            'xmin'             => 40.0,
+            'xmax'             => 60.0,
+            'ymin'             => 58.0,
+            'ymax'             => 82.0,
+            'tipo_accion'      => 'transicion',
+            'contenido_accion' => 'sala_final',
+            'requiere_item'    => '',
+            'script'           => '',
+            'imagen_item'      => ''
+        ];
     }
 }
 
 // Lógica especial para la Sala Final (Sótano)
 if ($id_sala_actual === 'sala_final') {
     $eventos[] = [
-        'id_evento' => 9998,
-        'id_sala' => 'sala_final',
-        'nombre_objeto' => 'PUERTA DEL LABORATORIO',
-        'xmin' => 32.0,   // zona amplia centrada sobre la puerta
-        'xmax' => 68.0,
-        'ymin' => 15.0,
-        'ymax' => 88.0,
-        'tipo_accion' => 'jefe_final',
+        'id_evento'        => 9998,
+        'id_sala'          => 'sala_final',
+        'nombre_objeto'    => 'PUERTA DEL LABORATORIO',
+        'xmin'             => 42.0,   // Solo la puerta del fondo
+        'xmax'             => 58.0,
+        'ymin'             => 18.0,
+        'ymax'             => 60.0,
+        'tipo_accion'      => 'jefe_final',
         'contenido_accion' => '9',    // El Recopilador Fase 2
-        'requiere_item' => '',
-        'script' => '',
-        'imagen_item' => ''
+        'requiere_item'    => '',
+        'script'           => '',
+        'imagen_item'      => ''
     ];
 }
 
@@ -953,12 +980,19 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
 
         <?php if (!$hay_combate): ?>
             <?php foreach ($eventos as $ev): ?>
-                <?php $extraClass = ($ev['tipo_accion'] === 'jefe_final') ? 'boss-door' : ''; ?>
-                <?php $extraClass .= !empty($ev['imagen_item']) ? ' has-item' : ''; ?>
+                <?php
+                    $extraClass = '';
+                    if ($ev['tipo_accion'] === 'jefe_final')   $extraClass = 'boss-door';
+                    if ($ev['tipo_accion'] === 'transicion')   $extraClass = 'passage-entry';
+                    if (!empty($ev['imagen_item']))             $extraClass .= ' has-item';
+                ?>
                 <div class="hotspot <?php echo trim($extraClass); ?>"
                     title="<?php echo htmlspecialchars($ev['nombre_objeto']); ?>"
                     style="left:<?php echo $ev['xmin']; ?>%; top:<?php echo $ev['ymin']; ?>%; width:<?php echo ($ev['xmax'] - $ev['xmin']); ?>%; height:<?php echo ($ev['ymax'] - $ev['ymin']); ?>%;"
                     onclick='ejecutarEvento(<?php echo htmlspecialchars(json_encode($ev), ENT_QUOTES); ?>, event)'>
+                    <?php if ($ev['tipo_accion'] === 'transicion'): ?>
+                        <span class="passage-label"><?php echo htmlspecialchars($ev['nombre_objeto']); ?></span>
+                    <?php endif; ?>
                     <?php if (!empty($ev['imagen_item'])): ?>
                         <img src="<?php echo $ev['imagen_item']; ?>" alt="Objeto" class="item-visual">
                     <?php endif; ?>
