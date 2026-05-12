@@ -78,7 +78,6 @@ $armas_disponibles[] = [
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA V.A.T.S. ACTIVO</title>
     <style>
         :root { --vats-green: #00ff66; --vats-bg: rgba(0, 20, 0, 0.9); }
         body { background: #000; color: var(--vats-green); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; text-transform: uppercase; }
@@ -114,7 +113,6 @@ $armas_disponibles[] = [
 
 <div id="vats-container">
     <div style="padding: 10px; border-bottom: 1px solid var(--vats-green); font-size: 0.8rem; display: flex; justify-content: space-between;">
-        <span>VAULT-TEC PROTOCOL v4.0.2</span>
         <span>OBJETIVO: <?php echo $enemigo['nombre']; ?></span>
     </div>
 
