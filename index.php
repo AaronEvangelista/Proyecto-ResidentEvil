@@ -248,6 +248,27 @@ if ($logueado) {
                 if (modalSeleccion) modalSeleccion.style.display = 'none';
             }
         });
+
+        // 1. Definimos el objeto de audio (esto no consume recursos apenas)
+    const audioAmbiente = new Audio('sounds/ambiente_principal.mp3');
+    audioAmbiente.loop = true;
+    audioAmbiente.volume = 0.5; // Opcional: volumen al 50%
+
+    // 2. Función para iniciar el ambiente
+    function iniciarMusica() {
+        audioAmbiente.play()
+            .then(() => {
+                console.log("Música iniciada correctamente");
+            })
+            .catch(error => {
+                console.log("El navegador bloqueó el autoplay. Esperando interacción.");
+            });
+    }
+
+    // 3. Lo activamos cuando el usuario haga su primer clic en cualquier parte de la página
+    window.addEventListener('click', () => {
+        iniciarMusica();
+    }, { once: true }); // '{ once: true }' hace que este evento solo se dispare una vez
     </script>
 
 </body>
