@@ -50,7 +50,6 @@ try {
     $stmt_item->execute([$id_objeto]);
     $nombre_objeto = $stmt_item->fetchColumn();
 
-    // Buscar el primer slot libre (0-7)
     $stmt_slot = $pdo->prepare("
         SELECT s.n 
         FROM (SELECT 0 n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7) s

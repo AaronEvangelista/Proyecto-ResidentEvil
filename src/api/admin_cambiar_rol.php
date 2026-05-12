@@ -17,16 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $body = json_decode(file_get_contents('php://input'), true);
-$idObjetivo = isset($body['id_usuario']) ? (int)$body['id_usuario'] : 0;
-$nuevoRol   = trim($body['nuevo_rol'] ?? '');
+$idObjetivo = isset($body['id_usuario']) ? (int) $body['id_usuario'] : 0;
+$nuevoRol = trim($body['nuevo_rol'] ?? '');
 
 if (!$idObjetivo || !in_array($nuevoRol, ['jugador', 'admin'], true)) {
     echo json_encode(['success' => false, 'error' => 'Datos inválidos.']);
     exit;
 }
 
-// No puede quitarse el rol de admin a sí mismo
-if ($idObjetivo === (int)$_SESSION['usuario_id'] && $nuevoRol !== 'admin') {
+if ($idObjetivo === (int) $_SESSION['usuario_id'] && $nuevoRol !== 'admin') {
     echo json_encode(['success' => false, 'error' => 'No puedes quitarte el rol de admin a ti mismo.']);
     exit;
 }
@@ -40,8 +39,8 @@ try {
     $stmt->execute([':rol' => $nuevoRol, ':id' => $idObjetivo]);
 
     echo json_encode([
-        'success'  => true,
-        'mensaje'  => "Rol actualizado a '$nuevoRol'.",
+        'success' => true,
+        'mensaje' => "Rol actualizado a '$nuevoRol'.",
         'nuevo_rol' => $nuevoRol,
     ]);
 } catch (PDOException $e) {
