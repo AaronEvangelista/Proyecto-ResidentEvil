@@ -77,7 +77,6 @@ $armas_disponibles[] = [
 
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA V.A.T.S. ACTIVO</title>
     <style>
         :root {
             --vats-green: #00ff66;

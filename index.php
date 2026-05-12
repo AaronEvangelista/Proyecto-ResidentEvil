@@ -248,7 +248,16 @@ if ($logueado) {
                 if (modalSeleccion) modalSeleccion.style.display = 'none';
             }
         });
-    </script>
+
+      // En tu index.php
+const musicaMenu = new Audio('sounds/ambiente_index.mp3');
+musicaMenu.loop = true;
+
+document.addEventListener('click', () => {
+    musicaMenu.play();
+}, { once: true });
+
+ </script>
 
 </body>
 

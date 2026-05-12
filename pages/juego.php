@@ -1824,6 +1824,33 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
         const tension = "<?php echo $hay_combate ? 'alta' : 'baja'; ?>";
         const esAdmin = <?= $usuarioRol === 'admin' ? 'true' : 'false' ?>;
         const zombiesVisibles = <?= $zombiesVisibles ? 'true' : 'false' ?>;
+
+                // 1. Definimos la ruta saliendo de 'pages' para entrar en 'sounds'
+        const rutaMusica = '../sounds/musica_terror.mp3';
+        const musicaMenu = new Audio(rutaMusica);
+
+        // 2. Configuración del audio
+        musicaMenu.loop = true;
+        musicaMenu.volume = 0.5; // Ajusta el volumen al 50% para que no sature
+
+        // 3. Función para intentar reproducir
+        const iniciarAudio = () => {
+            musicaMenu.play()
+                .then(() => {
+                    console.log("🔊 Música de terror iniciada correctamente.");
+                    // Una vez que suena, quitamos el evento para que no se repita el inicio
+                    document.removeEventListener('click', iniciarAudio);
+                    document.removeEventListener('keydown', iniciarAudio);
+                })
+                .catch(error => {
+                    console.error("⚠️ Error al reproducir el audio:", error);
+                });
+        };
+
+        // 4. Escuchamos el primer clic o la primera tecla para activar el sonido
+        document.addEventListener('click', iniciarAudio);
+        document.addEventListener('keydown', iniciarAudio);
+    
     </script>
     <?php if ($usuarioRol === 'admin'): ?>
         <div id="admin-game-bar" style="
