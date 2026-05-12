@@ -990,9 +990,6 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
                     title="<?php echo htmlspecialchars($ev['nombre_objeto']); ?>"
                     style="left:<?php echo $ev['xmin']; ?>%; top:<?php echo $ev['ymin']; ?>%; width:<?php echo ($ev['xmax'] - $ev['xmin']); ?>%; height:<?php echo ($ev['ymax'] - $ev['ymin']); ?>%;"
                     onclick='ejecutarEvento(<?php echo htmlspecialchars(json_encode($ev), ENT_QUOTES); ?>, event)'>
-                    <?php if ($ev['tipo_accion'] === 'transicion'): ?>
-                        <span class="passage-label"><?php echo htmlspecialchars($ev['nombre_objeto']); ?></span>
-                    <?php endif; ?>
                     <?php if (!empty($ev['imagen_item'])): ?>
                         <img src="<?php echo $ev['imagen_item']; ?>" alt="Objeto" class="item-visual">
                     <?php endif; ?>
