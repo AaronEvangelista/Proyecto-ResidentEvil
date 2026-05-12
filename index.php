@@ -1,8 +1,27 @@
 <?php
 session_start();
-$logueado     = $_SESSION['logueado'] ?? false;
+$logueado = $_SESSION['logueado'] ?? false;
 $nombreUsuario = $_SESSION['usuario_nombre'] ?? '';
-$usuarioRol   = $_SESSION['usuario_rol'] ?? 'jugador';
+$usuarioRol = $_SESSION['usuario_rol'] ?? 'jugador';
+
+// Cargar partidas guardadas si está logueado
+$partidas_guardadas = [];
+if ($logueado) {
+    require_once __DIR__ . '/includes/conexion.php';
+    $uid = (int)($_SESSION['usuario_id'] ?? 0);
+    if ($uid) {
+        $stmt = $pdo->prepare("
+            SELECT p.id_partida, p.slot_numero, p.sala_actual, p.fecha_guardado,
+                   s.nombre_visual AS nombre_sala
+            FROM partida p
+            LEFT JOIN catalogo_salas s ON s.id_sala = p.sala_actual
+            WHERE p.id_usuario = ? AND p.slot_numero IS NOT NULL
+            ORDER BY p.fecha_guardado DESC
+        ");
+        $stmt->execute([$uid]);
+        $partidas_guardadas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -40,13 +59,83 @@ $usuarioRol   = $_SESSION['usuario_rol'] ?? 'jugador';
                     </a>
                 </li>
                 <li><a href="./pages/enciclopedia.php"><span class="icono"></span> ENCICLOPEDIA DE RACCOON CITY</a></li>
-                <li><a href="#"><span class="icono"></span> ARCHIVOS DE DATOS</a></li>
                 <li><a href="./pages/logros.php"><span class="icono"></span> Logros</a></li>
-                <li><a href="#"><span class="icono"></span> OPCIONES</a></li>
             </ul>
         </nav>
 
     </div>
+
+    <!-- ══ MODAL: SELECCIÓN DE PARTIDA ══ -->
+    <div id="modal-seleccion-partida" style="display:none;">
+        <div class="msp-container">
+            <div class="msp-header">
+                <h2>SELECCIONAR PARTIDA</h2>
+                <p>Elige la partida que deseas continuar</p>
+            </div>
+            <div class="msp-slots" id="msp-slots">
+                <?php foreach ($partidas_guardadas as $p): ?>
+                <div class="msp-slot" onclick="window.location.href='pages/juego.php?partida=<?= (int)$p['id_partida'] ?>'">
+                    <div class="msp-slot-num">SLOT <?= (int)$p['slot_numero'] ?></div>
+                    <div class="msp-slot-info">
+                        <span class="msp-sala"><?= htmlspecialchars($p['nombre_sala'] ?? $p['sala_actual']) ?></span>
+                        <span class="msp-fecha"><?= htmlspecialchars(substr($p['fecha_guardado'], 0, 16)) ?></span>
+                    </div>
+                    <div class="msp-arrow">→</div>
+                </div>
+                <?php endforeach; ?>
+                <?php if (empty($partidas_guardadas)): ?>
+                <div class="msp-vacio">No hay partidas guardadas.<br><small>Empieza una nueva partida y guarda en una máquina de escribir.</small></div>
+                <?php endif; ?>
+            </div>
+            <button class="msp-cancelar" onclick="document.getElementById('modal-seleccion-partida').style.display='none'">✕ CANCELAR</button>
+        </div>
+    </div>
+
+    <style>
+    #modal-seleccion-partida {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.92);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 9000; backdrop-filter: blur(8px);
+    }
+    .msp-container {
+        background: linear-gradient(160deg, #080500, #0f0a02);
+        border: 1px solid #3a2a00;
+        box-shadow: 0 0 80px rgba(160,100,0,0.15);
+        padding: 32px 44px 28px;
+        font-family: 'Courier New', monospace;
+        min-width: 420px; max-width: 540px; width: 90%;
+        position: relative; text-align: center;
+    }
+    .msp-container::before {
+        content:''; position:absolute; top:0; left:0; right:0; height:2px;
+        background: linear-gradient(90deg, transparent, #c8a030, transparent);
+    }
+    .msp-header h2 { color:#c8a030; font-size:1rem; letter-spacing:4px; margin:0 0 6px; }
+    .msp-header p  { color:#443322; font-size:0.72rem; letter-spacing:1px; margin:0 0 22px; }
+    .msp-slots { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+    .msp-slot {
+        display:flex; align-items:center; gap:14px;
+        padding:14px 18px; background:#0a0700;
+        border:1px solid #2a1e00; cursor:pointer;
+        transition:background .2s, border-color .2s;
+    }
+    .msp-slot:hover { background:#14100a; border-color:#8a6000; }
+    .msp-slot-num { color:#6a4a00; font-size:0.75rem; letter-spacing:2px; min-width:52px; }
+    .msp-slot-info { flex:1; text-align:left; }
+    .msp-sala { display:block; color:#c8a030; font-size:0.88rem; letter-spacing:1px; }
+    .msp-fecha { display:block; color:#3a2a10; font-size:0.68rem; margin-top:3px; }
+    .msp-arrow { color:#6a4a00; font-size:1.1rem; }
+    .msp-slot:hover .msp-arrow { color:#c8a030; }
+    .msp-vacio { color:#443322; font-size:0.8rem; padding:20px 0; }
+    .msp-cancelar {
+        padding:10px 28px; background:#080500; border:1px solid #2a1e00;
+        color:#443322; cursor:pointer; letter-spacing:2px; font-size:0.78rem;
+        font-family:'Courier New',monospace; transition:.2s;
+    }
+    .msp-cancelar:hover { background:#0f0a02; color:#8a6030; border-color:#4a3000; }
+    </style>
+
     <div class="hud-area" id="hud-usuario">
         <?php if ($logueado): ?>
             <div class="hud-izquierda">
@@ -110,33 +199,54 @@ $usuarioRol   = $_SESSION['usuario_rol'] ?? 'jugador';
 
     <script>
         const logueado = <?= $logueado ? 'true' : 'false' ?>;
+        const partidasGuardadas = <?= count($partidas_guardadas) ?>;
 
-        const btnContinuar = document.getElementById('btn-continuar');
+        const btnContinuar    = document.getElementById('btn-continuar');
         const btnNuevaPartida = document.getElementById('btn-nueva-partida');
-        const modal = document.getElementById('modal-login');
-        const btnCerrar = document.getElementById('modal-cerrar');
-        const overlay = modal;
+        const modalLogin      = document.getElementById('modal-login');
+        const modalSeleccion  = document.getElementById('modal-seleccion-partida');
+        const btnCerrar       = document.getElementById('modal-cerrar');
 
-        function manejarClickJuego(e, isNew = false) {
+        btnContinuar.addEventListener('click', (e) => {
             e.preventDefault();
-            if (logueado) {
-                window.location.href = './pages/juego.php' + (isNew ? '?new=1' : '');
-            } else {
-                modal.classList.add('modal-visible');
+            if (!logueado) {
+                modalLogin.classList.add('modal-visible');
+                return;
             }
-        }
-
-        btnContinuar.addEventListener('click', (e) => manejarClickJuego(e, false));
-        btnNuevaPartida.addEventListener('click', (e) => manejarClickJuego(e, true));
-
-        btnCerrar.addEventListener('click', () => modal.classList.remove('modal-visible'));
-
-        overlay.addEventListener('click', function (e) {
-            if (e.target === overlay) modal.classList.remove('modal-visible');
+            if (partidasGuardadas === 0) {
+                // Sin partidas guardadas → entrar al juego (creará partida temporal)
+                window.location.href = './pages/juego.php';
+            } else if (partidasGuardadas === 1) {
+                // Una sola partida → cargar directo sin selector
+                const primerSlot = document.querySelector('.msp-slot');
+                if (primerSlot) primerSlot.click();
+                else window.location.href = './pages/juego.php';
+            } else {
+                // Varias partidas → mostrar modal selector
+                modalSeleccion.style.display = 'flex';
+            }
         });
 
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') modal.classList.remove('modal-visible');
+        btnNuevaPartida.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (logueado) {
+                window.location.href = './pages/juego.php?new=1';
+            } else {
+                modalLogin.classList.add('modal-visible');
+            }
+        });
+
+        btnCerrar.addEventListener('click', () => modalLogin.classList.remove('modal-visible'));
+
+        modalLogin.addEventListener('click', function(e) {
+            if (e.target === modalLogin) modalLogin.classList.remove('modal-visible');
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                modalLogin.classList.remove('modal-visible');
+                if (modalSeleccion) modalSeleccion.style.display = 'none';
+            }
         });
     </script>
 

@@ -4,6 +4,9 @@ require_once '../../includes/conexion.php';
 
 header('Content-Type: application/json');
 
+// Limpiar datos de sesión obsoletos que causaban duplicados en inventario
+unset($_SESSION['inventario_sesion']);
+
 $id_partida = $_SESSION['id_partida'] ?? 1;
 
 try {
@@ -27,39 +30,13 @@ try {
     $query_armas->execute([$id_partida]);
     $armas = $query_armas->fetchAll(PDO::FETCH_ASSOC);
 
-    $inventario_db = array_merge($items, $armas);
+    $inventario = array_merge($items, $armas);
 
-    $inventario_sesion_raw = $_SESSION['inventario_sesion'] ?? [];
-    $slots_ocupados = array_column($inventario_db, 'posicion_slot');
-
-    foreach ($inventario_sesion_raw as $index => $s_item) {
-        if ($s_item['tipo_objeto'] === 'arma') {
-            $st = $pdo->prepare("SELECT nombre, descripcion, imagen_url FROM catalogo_armas WHERE id_arma = ?");
-        } else {
-            $st = $pdo->prepare("SELECT nombre, descripcion, imagen_url, tipo FROM catalogo_items WHERE id_item = ?");
-        }
-        $st->execute([$s_item['id_objeto']]);
-        $cat = $st->fetch(PDO::FETCH_ASSOC);
-
-        if ($cat) {
-            $nuevo = array_merge($s_item, $cat);
-            for ($i = 0; $i < 8; $i++) {
-                if (!in_array($i, $slots_ocupados)) {
-                    $nuevo['posicion_slot'] = $i;
-                    $slots_ocupados[] = $i;
-                    break;
-                }
-            }
-            $nuevo['id_registro'] = 'session_' . $index;
-            $inventario_db[] = $nuevo;
-        }
-    }
-
-    usort($inventario_db, function ($a, $b) {
+    usort($inventario, function ($a, $b) {
         return ($a['posicion_slot'] ?? 99) <=> ($b['posicion_slot'] ?? 99);
     });
 
-    echo json_encode(['success' => true, 'inventario' => $inventario_db]);
+    echo json_encode(['success' => true, 'inventario' => $inventario]);
 } catch (PDOException $e) {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }

@@ -161,7 +161,6 @@ $inserts = "
 INSERT OR REPLACE INTO catalogo_armas (nombre, dano_porcentaje, ruta_exclusiva, descripcion, imagen_url) VALUES
 ('Pistola M19', 25, 'ambos', 'Arma reglamentaria. Daño bajo. Utiliza munición de pistola.', '../img/PistolaM19.png'),
 ('Escopeta W-870', 75, 'chico', 'Ideal para distancias cortas. Daño letal. Utiliza cartuchos de escopeta.', '../img/EscopetaW-870.png'),
-('Fusil de Cerrojo', 75, 'chica', 'Alta precisión y gran poder de detención. Utiliza munición de fusil.',  '../img/FusildeCerrojo.png'),
 ('Granada de Fragmentación', 100, 'ambos', 'Eliminación instantánea de enemigos comunes.', '../img/GranadaDeFragmentación.png');
 
 -- Insertar Ítems
@@ -170,7 +169,6 @@ INSERT OR REPLACE INTO catalogo_items (nombre, tipo, ruta_exclusiva, descripcion
 ('Cuchillo Defensivo', 'defensa', 'ambos', 'Permite evitar un mordisco y escapar sin recibir daño. Se consume tras su uso.', '../img/Cuchillo_Defensivo.png'),
 ('Munición de Pistola', 'municion', 'ambos', 'Balas de 9mm para armas de mano.', '../img/municion_pistola.png'),
 ('Munición de Escopeta', 'municion', 'ambos', 'Cartuchos potentes para combate cercano.', '../img/cartucho_de_escopeta.png'),
-('Munición de Fusil', 'municion', 'ambos', 'Balas de alto calibre para fusil.', '../img/municion_fusil.png'),
 ('Cinta de Guardado', 'clave', 'ambos', 'Una cinta magnética para máquina de escribir. Permite registrar tu progreso una sola vez. Úsala con sabiduría.', '../img/cinta_de_tinta.webp'),
 ('Medallon de León', 'clave', 'ambos', 'Un pesado medallon de plata con el emblema de un león', '../img/medallon_de_leon.png'),
 ('Medallon de Unicornio', 'clave', 'ambos', 'Un pesado medallon de bronce con el emblema de un unicornio', '../img/medallon_de_unicornio.png'),
@@ -300,8 +298,7 @@ INSERT OR REPLACE INTO catalogo_logros (nombre, descripcion) VALUES
 ('Científico Caído', 'Derrota la primera fase de \"El Recopilador\" en los laboratorios.'),
 ('Descenso a la Oscuridad', 'Has completado el segundo capítulo. La verdad está cada vez más cerca.'),
 ('Superviviente Definitivo', 'Has completado el tercer capítulo y superado los horrores de la ciudad.'),
-('Fuerza Bruta', 'Consigue la Escopeta W-870 en la ruta de Chico.'),
-('Muerte a Distancia', 'Consigue el Fusil de Cerrojo en la ruta de Chica.');
+('Fuerza Bruta', 'Consigue la Escopeta W-870 en la ruta de Chico.');
 ";
 
 $db->exec($inserts);

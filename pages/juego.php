@@ -26,15 +26,31 @@ if (!$id_usuario) {
     exit;
 }
 
+// Cargar partida guardada desde el perfil (?partida=X)
+if (isset($_GET['partida'])) {
+    $id_partida_cargada = (int) $_GET['partida'];
+    $stmt_load = $pdo->prepare("SELECT id_partida, sala_actual FROM partida WHERE id_partida = ? AND id_usuario = ? AND slot_numero IS NOT NULL");
+    $stmt_load->execute([$id_partida_cargada, $id_usuario]);
+    $partida_guardada = $stmt_load->fetch(PDO::FETCH_ASSOC);
+
+    if ($partida_guardada) {
+        $_SESSION['id_partida'] = $partida_guardada['id_partida'];
+        $_SESSION['sala_actual'] = $partida_guardada['sala_actual'];
+        $_SESSION['inventario_sesion'] = [];
+        $_SESSION['eventos_recogidos_sesion'] = [];
+        // Redirigir a la sala donde se guardó
+        header("Location: juego.php?sala=" . urlencode($partida_guardada['sala_actual']));
+        exit;
+    }
+}
+
 try {
     $stmt_partida = $pdo->prepare("SELECT id_partida FROM partida WHERE id_usuario = ? AND slot_numero = 0 ORDER BY fecha_guardado DESC LIMIT 1");
     $stmt_partida->execute([$id_usuario]);
     $partida = $stmt_partida->fetch();
 } catch (PDOException $e) {
-    // Si el error es por la columna faltante, la creamos dinámicamente
     if (strpos($e->getMessage(), 'no such column: slot_numero') !== false) {
         $pdo->exec("ALTER TABLE partida ADD COLUMN slot_numero INTEGER DEFAULT 0");
-        // Reintentamos la consulta
         $stmt_partida = $pdo->prepare("SELECT id_partida FROM partida WHERE id_usuario = ? AND slot_numero = 0 ORDER BY fecha_guardado DESC LIMIT 1");
         $stmt_partida->execute([$id_usuario]);
         $partida = $stmt_partida->fetch();
@@ -52,7 +68,6 @@ if (!$partida || $forzar_nueva) {
     $stmt_estado = $pdo->prepare("INSERT INTO estado_personaje (id_partida, vida_actual) VALUES (?, 100)");
     $stmt_estado->execute([$id_partida]);
 
-    //Limpiar inventario de sesión si es nueva partida
     if ($forzar_nueva) {
         $_SESSION['inventario_sesion'] = [];
         $_SESSION['eventos_recogidos_sesion'] = [];
@@ -60,7 +75,6 @@ if (!$partida || $forzar_nueva) {
 } else {
     $id_partida = $partida['id_partida'];
 
-    //Verificar si el jugador está muerto en esta partida. Si es así, resetear vida para que pueda jugar.
     $st_check_v = $pdo->prepare("SELECT vida_actual FROM estado_personaje WHERE id_partida = ?");
     $st_check_v->execute([$id_partida]);
     $v_check = $st_check_v->fetchColumn();
@@ -169,8 +183,7 @@ $loot_pool_names = [
     'Pólvora Gris',
     'Cinta de Guardado',
     'Munición de Pistola',
-    'Munición de Escopeta',
-    'Munición de Fusil'
+    'Munición de Escopeta'
 ];
 $placeholders = implode(',', array_fill(0, count($loot_pool_names), '?'));
 $query_loot = $pdo->prepare("SELECT * FROM catalogo_items WHERE nombre IN ($placeholders)");
@@ -190,10 +203,15 @@ while ($row = $query_loot->fetch(PDO::FETCH_ASSOC)) {
     }
 }
 
-$completados = $_SESSION['eventos_recogidos_sesion'] ?? [];
+// Combinar eventos completados en BD + sesión actual
+$q_comp_db = $pdo->prepare("SELECT id_evento FROM eventos_completados WHERE id_partida = ?");
+$q_comp_db->execute([$id_partida]);
+$completados_db = $q_comp_db->fetchAll(PDO::FETCH_COLUMN);
+$completados = array_unique(array_merge($completados_db, $_SESSION['eventos_recogidos_sesion'] ?? []));
 
 foreach ($eventos as $key => &$ev) {
-    if (in_array($ev['id_evento'], $completados)) {
+    // Los eventos de guardar NUNCA se ocultan, siempre deben estar disponibles
+    if ($ev['tipo_accion'] !== 'guardar' && in_array($ev['id_evento'], $completados)) {
         unset($eventos[$key]);
         continue;
     }
@@ -781,6 +799,8 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <button id="btn-examinar" class="hud-btn" style="display: none;">EXAMINAR</button>
+                        <button id="btn-puzzle-portable" class="hud-btn"
+                            style="display: none; background-color: #004060; color: #0cf; border-color: #0af;">PUZZLE</button>
                         <button id="btn-eliminar" class="hud-btn"
                             style="display: none; background-color: #600;">ELIMINAR</button>
                     </div>
@@ -800,26 +820,76 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             </div>
         </div>
 
-        <div id="save-menu" style="display: none;">
+        <div id="save-menu" style="display:none;">
             <div class="save-container">
                 <div class="save-header">
-                    <h2>MÁQUINA DE ESCRIBIR</h2>
-                    <div class="ink-ribbon-count">CINTAS: <span id="ribbon-count">0</span></div>
+                    <h2>✒ MÁQUINA DE ESCRIBIR</h2>
+                    <div class="ink-ribbon-count">CINTAS DE TINTA: <span id="ribbon-count">0</span></div>
                 </div>
                 <div class="save-slots">
                     <div class="save-slot" data-slot="1"><span class="slot-number">01</span>
-                        <div class="slot-info"><span class="slot-status">VACÍO</span></div>
+                        <div class="slot-info"><span class="slot-status">VACÍO</span><span class="slot-date">--/--/-- --:--</span></div>
                     </div>
                     <div class="save-slot" data-slot="2"><span class="slot-number">02</span>
-                        <div class="slot-info"><span class="slot-status">VACÍO</span></div>
+                        <div class="slot-info"><span class="slot-status">VACÍO</span><span class="slot-date">--/--/-- --:--</span></div>
                     </div>
                     <div class="save-slot" data-slot="3"><span class="slot-number">03</span>
-                        <div class="slot-info"><span class="slot-status">VACÍO</span></div>
+                        <div class="slot-info"><span class="slot-status">VACÍO</span><span class="slot-date">--/--/-- --:--</span></div>
                     </div>
                 </div>
                 <button id="btn-cancelar-guardado" class="hud-btn">CANCELAR</button>
             </div>
         </div>
+        <style>
+        #save-menu {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.88);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 3000; backdrop-filter: blur(6px);
+        }
+        .save-container {
+            background: linear-gradient(160deg, #0a0800, #140f02);
+            border: 1px solid #3a2a00;
+            box-shadow: 0 0 60px rgba(140,90,0,0.2), inset 0 0 40px rgba(0,0,0,0.6);
+            padding: 32px 44px 28px;
+            font-family: 'Courier New', monospace;
+            min-width: 400px; position: relative; text-align: center;
+        }
+        .save-container::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background: linear-gradient(90deg, transparent, #8a6000, transparent);
+        }
+        .save-header h2 {
+            color: #c8a030; font-size: 1.1rem; letter-spacing: 4px;
+            margin: 0 0 8px; text-shadow: 0 0 12px rgba(200,150,0,0.5);
+        }
+        .ink-ribbon-count {
+            color: #554422; font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 24px;
+        }
+        .ink-ribbon-count span { color: #c8a030; }
+        .save-slots { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .save-slot {
+            display: flex; align-items: center; gap: 16px;
+            padding: 12px 16px; background: #0a0800;
+            border: 1px solid #2a1e00; cursor: pointer;
+            transition: background .2s, border-color .2s;
+        }
+        .save-slot:hover { background: #14100a; border-color: #6a4a00; }
+        .save-slot.occupied { border-color: #4a3000; }
+        .slot-number { color: #6a4a00; font-size: 1.1rem; font-weight: bold; min-width: 28px; }
+        .slot-info { flex: 1; text-align: left; }
+        .slot-status { display: block; color: #8a7050; font-size: 0.8rem; letter-spacing: 1px; }
+        .save-slot.occupied .slot-status { color: #c8a030; }
+        .slot-date { color: #3a2a10; font-size: 0.68rem; }
+        #btn-cancelar-guardado {
+            margin-top: 4px; background: #0a0800; border: 1px solid #2a1e00;
+            color: #554422; padding: 10px 28px; cursor: pointer;
+            font-family: 'Courier New', monospace; letter-spacing: 2px;
+            font-size: 0.78rem; transition: .2s;
+        }
+        #btn-cancelar-guardado:hover { background: #14100a; color: #8a6030; border-color: #4a3000; }
+        </style>
+
 
         <!-- PUZZLE MEDALLONES -->
         <div id="medallones-puzzle" style="display: none;">
@@ -891,6 +961,74 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             </div>
         </div>
 
+        <!-- ═══════════════ CAJA FUERTE ═══════════════ -->
+        <div id="caja-fuerte-puzzle" style="display:none;">
+            <div class="caja-fuerte-container">
+                <div class="caja-fuerte-header">
+                    <h2>🔒 CAJA FUERTE</h2>
+                    <p>Introduce la combinación de tres dígitos</p>
+                </div>
+                <div class="caja-fuerte-dials">
+                    <div class="dial-wrapper">
+                        <button class="dial-btn" onclick="cambiarDial(0, 1)">▲</button>
+                        <div class="dial-value" id="dial-0">0</div>
+                        <button class="dial-btn" onclick="cambiarDial(0, -1)">▼</button>
+                    </div>
+                    <div class="dial-separator">—</div>
+                    <div class="dial-wrapper">
+                        <button class="dial-btn" onclick="cambiarDial(1, 1)">▲</button>
+                        <div class="dial-value" id="dial-1">0</div>
+                        <button class="dial-btn" onclick="cambiarDial(1, -1)">▼</button>
+                    </div>
+                    <div class="dial-separator">—</div>
+                    <div class="dial-wrapper">
+                        <button class="dial-btn" onclick="cambiarDial(2, 1)">▲</button>
+                        <div class="dial-value" id="dial-2">0</div>
+                        <button class="dial-btn" onclick="cambiarDial(2, -1)">▼</button>
+                    </div>
+                </div>
+                <div id="caja-fuerte-status" class="caja-fuerte-status"></div>
+                <div class="caja-fuerte-actions">
+                    <button id="btn-abrir-caja" onclick="intentarAbrirCaja()">🔓 ABRIR</button>
+                    <button onclick="cerrarCajaFuerte()">✕ CANCELAR</button>
+                </div>
+            </div>
+        </div>
+        <style>
+        #caja-fuerte-puzzle {
+            position:fixed; inset:0;
+            background:rgba(0,0,0,0.92);
+            display:flex; justify-content:center; align-items:center;
+            z-index:3000; backdrop-filter:blur(8px);
+        }
+        .caja-fuerte-container {
+            background:linear-gradient(160deg,#0d0a06,#1a1208);
+            border:1px solid #4a2e00;
+            box-shadow:0 0 60px rgba(180,90,0,0.2),inset 0 0 60px rgba(0,0,0,0.6);
+            padding:36px 48px 28px;
+            text-align:center; font-family:'Courier New',monospace;
+            min-width:380px; position:relative;
+        }
+        .caja-fuerte-container::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg,transparent,#a05000,transparent);
+        }
+        .caja-fuerte-header h2 { color:#c87020; font-size:1.2rem; letter-spacing:4px; margin:0 0 6px; text-shadow:0 0 12px rgba(200,100,0,0.5); }
+        .caja-fuerte-header p  { color:#554433; font-size:0.75rem; letter-spacing:1px; margin:0 0 28px; }
+        .caja-fuerte-dials { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:24px; }
+        .dial-wrapper { display:flex; flex-direction:column; align-items:center; gap:8px; }
+        .dial-btn { background:#1a1208; border:1px solid #4a2e00; color:#a06020; width:44px; height:32px; cursor:pointer; font-size:1rem; border-radius:3px; transition:.2s; }
+        .dial-btn:hover { background:#2a1c0a; color:#d08030; border-color:#8a5010; }
+        .dial-value { width:64px; height:72px; background:#0a0704; border:2px solid #5a3a10; border-radius:4px; font-size:2.4rem; font-weight:bold; color:#e09030; display:flex; align-items:center; justify-content:center; text-shadow:0 0 10px rgba(220,140,30,0.8); box-shadow:inset 0 0 20px rgba(0,0,0,0.8); font-family:'Courier New',monospace; }
+        .dial-separator { color:#4a2e00; font-size:1.5rem; margin-top:8px; }
+        .caja-fuerte-status { min-height:22px; color:#cc3333; font-size:0.8rem; letter-spacing:1px; margin-bottom:20px; }
+        .caja-fuerte-actions { display:flex; gap:12px; justify-content:center; }
+        .caja-fuerte-actions button { padding:10px 24px; background:#0d0a06; border:1px solid #4a2e00; color:#886020; cursor:pointer; letter-spacing:2px; font-size:0.8rem; font-family:'Courier New',monospace; transition:.2s; }
+        .caja-fuerte-actions button:hover { background:#1a1208; color:#c08030; border-color:#8a5010; }
+        .caja-fuerte-actions button:first-child { color:#c08030; border-color:#8a5010; }
+        .caja-fuerte-actions button:disabled { opacity:.5; cursor:not-allowed; }
+        </style>
+
         <div id="item-notification">
             <div class="notif-label">OBJETO OBTENIDO</div>
             <div class="notif-name" id="notif-item-name"></div>
@@ -902,6 +1040,242 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             <button id="btn-cargar">CARGAR PARTIDA</button>
             <button id="btn-salir">SALIR AL MENÚ</button>
         </div>
+
+        <!-- ═══════════════ PUZZLE ELÉCTRICO ═══════════════ -->
+        <div id="elec-puzzle" style="display:none;">
+            <div class="elec-container">
+                <div class="elec-header">
+                    <div class="elec-title-row">
+                        <span class="elec-icon">⚡</span>
+                        <h2>PANEL DE FUSIBLES</h2>
+                        <span class="elec-icon">⚡</span>
+                    </div>
+                    <p>Rota las piezas del circuito para restaurar el suministro eléctrico</p>
+                </div>
+                <div class="elec-board">
+                    <div class="elec-wire-left"></div>
+                    <div id="elec-grid" class="elec-grid"></div>
+                    <div class="elec-wire-right"></div>
+                </div>
+                <div id="elec-status" class="elec-status">Conecta el circuito de izquierda a derecha</div>
+                <div class="elec-actions">
+                    <button id="btn-cancelar-elec" onclick="cerrarPuzzleElectricidad()">CANCELAR</button>
+                </div>
+            </div>
+        </div>
+
+        <style>
+        #elec-puzzle {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.95);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 3000; backdrop-filter: blur(10px);
+        }
+        .elec-container {
+            width: 560px;
+            background: linear-gradient(160deg,#0a0a0a,#111208);
+            border: 1px solid #2a3a1a;
+            box-shadow: 0 0 60px rgba(80,200,20,0.15), inset 0 0 80px rgba(0,0,0,0.6);
+            padding: 28px 32px 24px;
+            position: relative;
+            font-family: 'Courier New', monospace;
+        }
+        .elec-container::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background: linear-gradient(90deg, transparent, #4a0, transparent);
+        }
+        .elec-header { text-align:center; margin-bottom:20px; }
+        .elec-title-row { display:flex; justify-content:center; align-items:center; gap:14px; }
+        .elec-title-row h2 { margin:0; color:#7f0; font-size:1.1rem; letter-spacing:4px; }
+        .elec-icon { color:#4a0; font-size:1.2rem; animation: elecFlicker 1.8s infinite; }
+        @keyframes elecFlicker {
+            0%,100%{opacity:1} 40%{opacity:.6} 42%{opacity:1} 70%{opacity:.8} 72%{opacity:1}
+        }
+        .elec-header p { color:#556; font-size:0.75rem; letter-spacing:1px; margin:8px 0 0; }
+
+        .elec-board { display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:16px; }
+        .elec-wire-left, .elec-wire-right {
+            width:28px; height:8px; border-radius:4px;
+            background: #4a0;
+            box-shadow: 0 0 8px #4a0, 0 0 16px #4a0;
+            flex-shrink:0;
+        }
+        .elec-wire-left { background: linear-gradient(90deg, #4a0, #7f0); }
+        .elec-wire-right { background: linear-gradient(90deg, #7f0, #4a0); opacity:.3; transition: opacity .5s; }
+        .elec-grid.elec-solved .elec-wire-right { opacity:1; }
+
+        .elec-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 72px);
+            grid-template-rows: repeat(4, 72px);
+            gap: 4px;
+            background: #080c08;
+            border: 1px solid #1a2a1a;
+            padding: 6px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+        }
+        .elec-cell {
+            background: #0b120b;
+            border: 1px solid #1a251a;
+            position: relative;
+            border-radius: 3px;
+            transition: border-color .2s;
+            overflow: visible;
+        }
+        .elec-cell:not(.elec-blank):not(.elec-fixed):hover {
+            border-color: #4a0;
+            box-shadow: 0 0 8px rgba(80,200,20,0.3);
+        }
+        .elec-blank { background: #070c07; border-color:#111811; }
+        .elec-label {
+            position:absolute; bottom:4px; left:50%; transform:translateX(-50%);
+            font-size:0.5rem; color:#446; letter-spacing:1px; white-space:nowrap;
+            pointer-events:none;
+        }
+        .elec-label.energized { color:#7f0; text-shadow:0 0 6px #7f0; }
+
+        .elec-status {
+            text-align:center; font-size:0.75rem; color:#556;
+            letter-spacing:1px; min-height:20px; margin-bottom:16px;
+            transition: color .3s;
+        }
+        .elec-actions { display:flex; gap:10px; justify-content:center; }
+        #btn-cancelar-elec {
+            padding:10px 28px; background:#111; border:1px solid #333;
+            color:#666; cursor:pointer; letter-spacing:2px; font-size:0.8rem;
+            font-family:'Courier New',monospace; transition:.2s;
+        }
+        #btn-cancelar-elec:hover { background:#1a1a1a; color:#aaa; }
+
+        .elec-grid.elec-solved { animation: elecSolvedFlash .4s 3; }
+        @keyframes elecSolvedFlash {
+            0%,100%{box-shadow:inset 0 0 30px rgba(0,0,0,0.8);}
+            50%{box-shadow:inset 0 0 60px rgba(80,200,20,0.4), 0 0 40px rgba(80,200,20,0.5);}
+        }
+        </style>
+
+        <!-- ═══════════════ CAJA FUERTE PORTÁTIL — LIGHTS OUT ═══════════════ -->
+        <div id="portable-safe-puzzle" style="display:none;">
+            <div class="psafe-container">
+                <div class="psafe-header">
+                    <span class="psafe-badge">R.P.D.</span>
+                    <h2>CAJA FUERTE PORTÁTIL</h2>
+                    <p>Activa todas las luces para abrir la caja</p>
+                </div>
+
+                <!-- Anillo de luces indicadoras -->
+                <div class="psafe-ring-wrap">
+                    <div id="light-ring" class="psafe-ring">
+                        <div class="psafe-shield">★</div>
+                    </div>
+                </div>
+
+                <!-- Grid Lights Out 3×3 -->
+                <div class="psafe-grid" id="psafe-grid">
+                    <!-- Generado por JS -->
+                </div>
+
+                <div id="portable-status" class="psafe-status"></div>
+
+                <div class="psafe-actions">
+                    <button onclick="cerrarPortableSafe()">✕ CANCELAR</button>
+                </div>
+            </div>
+        </div>
+
+        <style>
+        #portable-safe-puzzle {
+            position:fixed; inset:0;
+            background:rgba(0,0,0,0.93);
+            display:flex; justify-content:center; align-items:center;
+            z-index:3000; backdrop-filter:blur(10px);
+        }
+        .psafe-container {
+            background: linear-gradient(160deg,#080c10,#101820);
+            border: 1px solid #1a3a5a;
+            box-shadow: 0 0 60px rgba(0,120,200,0.15), inset 0 0 60px rgba(0,0,0,0.7);
+            padding: 28px 36px 24px;
+            text-align:center; font-family:'Courier New',monospace;
+            min-width:340px; position:relative;
+        }
+        .psafe-container::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg,transparent,#0af,transparent);
+        }
+        .psafe-header { margin-bottom:18px; }
+        .psafe-badge {
+            display:inline-block; background:#0a1828; border:1px solid #0af;
+            color:#0af; font-size:0.6rem; letter-spacing:3px; padding:3px 10px;
+            margin-bottom:10px; text-shadow:0 0 8px #0af;
+        }
+        .psafe-header h2 { color:#8cf; font-size:1rem; letter-spacing:3px; margin:0 0 6px; }
+        .psafe-header p  { color:#336; font-size:0.72rem; letter-spacing:1px; margin:0; }
+
+        /* Anillo de luces */
+        .psafe-ring-wrap { display:flex; justify-content:center; margin-bottom:18px; }
+        .psafe-ring {
+            width:140px; height:140px; border-radius:50%;
+            background:radial-gradient(circle,#0a1828 60%,#051018);
+            border:2px solid #1a3a5a;
+            position:relative;
+            box-shadow:0 0 20px rgba(0,120,200,0.2);
+        }
+        .psafe-shield {
+            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+            font-size:2rem; color:#1a3a5a;
+        }
+        .light-dot {
+            position:absolute; width:13px; height:13px;
+            border-radius:50%; background:#0a1828;
+            border:1.5px solid #1a4a6a;
+            transition: background .2s, box-shadow .2s;
+        }
+        .light-dot.active {
+            background:#0cf;
+            border-color:#0af;
+            box-shadow:0 0 6px #0cf, 0 0 12px #0af;
+        }
+
+        /* Grid 3x3 */
+        .psafe-grid {
+            display:grid; grid-template-columns:repeat(3,64px);
+            grid-template-rows:repeat(3,64px);
+            gap:6px; justify-content:center; margin-bottom:16px;
+        }
+        .psafe-btn {
+            background:#0a1828; border:1.5px solid #1a3a5a;
+            border-radius:5px; cursor:pointer; position:relative;
+            transition:background .15s, border-color .15s;
+        }
+        .psafe-btn:hover { background:#0f2035; border-color:#0af; }
+        .psafe-btn.lit {
+            background:#0a2840;
+            border-color:#0af;
+            box-shadow:inset 0 0 15px rgba(0,180,255,0.3), 0 0 8px rgba(0,140,200,0.4);
+        }
+        .psafe-btn .btn-light {
+            width:20px; height:20px; border-radius:50%;
+            background:#0d1c28; border:1.5px solid #1a3a5a;
+            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+            transition:background .15s, box-shadow .15s;
+        }
+        .psafe-btn.lit .btn-light {
+            background:#0cf;
+            border-color:#0af;
+            box-shadow:0 0 8px #0cf, 0 0 16px #0af;
+        }
+
+        .psafe-status {
+            min-height:22px; font-size:0.78rem; letter-spacing:1px;
+            color:#0af; margin-bottom:16px; transition:color .3s;
+        }
+        .psafe-actions button {
+            padding:9px 24px; background:#080c10; border:1px solid #1a3a5a;
+            color:#446; cursor:pointer; letter-spacing:2px; font-size:0.78rem;
+            font-family:'Courier New',monospace; transition:.2s;
+        }
+        .psafe-actions button:hover { background:#0a1828; color:#8cf; border-color:#0af; }
+        </style>
 
     </div> <!-- FIN game-container -->
 

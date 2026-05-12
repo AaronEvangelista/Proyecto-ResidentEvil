@@ -29,11 +29,12 @@ try {
 $partidas = [];
 try {
     $stmt = $pdo->prepare("
-        SELECT p.id_partida, p.ruta, p.sala_actual, p.fecha_guardado,
+        SELECT p.id_partida, p.ruta, p.sala_actual, p.fecha_guardado, p.slot_numero,
                s.nombre_visual AS nombre_sala
         FROM   partida p
         LEFT JOIN catalogo_salas s ON s.id_sala = p.sala_actual
         WHERE  p.id_usuario = :id
+          AND  p.slot_numero IS NOT NULL
         ORDER BY p.fecha_guardado DESC
     ");
     $stmt->execute([':id' => $usuarioId]);
@@ -189,7 +190,7 @@ $emailMasked = enmascararEmail($usuario['email'] ?? $usuarioEmail);
                                     Guardado: <?= htmlspecialchars(substr($partida['fecha_guardado'], 0, 16)) ?>
                                 </div>
                             </div>
-                            <a href="../juego.php?partida=<?= (int) $partida['id_partida'] ?>" class="partida-btn-continuar"
+                            <a href="juego.php?partida=<?= (int) $partida['id_partida'] ?>" class="partida-btn-continuar"
                                 id="btn-continuar-<?= (int) $partida['id_partida'] ?>">
                                 CONTINUAR →
                             </a>

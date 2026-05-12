@@ -18,12 +18,8 @@ if (!$id_partida) {
 $data = json_decode(file_get_contents('php://input'), true);
 $combinacion = $data['combinacion'] ?? '';
 
-if ($combinacion !== '911') {
-    echo json_encode(['success' => false, 'error' => 'Combinación incorrecta']);
-    exit;
-}
-
 try {
+    // Buscar el evento de la caja fuerte
     $stmt_evento = $pdo->prepare("
         SELECT id_evento FROM eventos_interactivos 
         WHERE id_sala = 'oficina_capitan' AND tipo_accion = 'puzzle' AND contenido_accion = 'caja_fuerte'
@@ -39,14 +35,37 @@ try {
 
     $id_evento = $evento['id_evento'];
 
-    $stmt_comp = $pdo->prepare("INSERT OR IGNORE INTO eventos_completados (id_partida, id_evento) VALUES (?, ?)");
-    $stmt_comp->execute([$id_partida, $id_evento]);
+    // ── VERIFICAR si ya fue resuelta (check previo o intento de repetir) ──
+    $stmt_ya = $pdo->prepare("SELECT COUNT(*) FROM eventos_completados WHERE id_partida = ? AND id_evento = ?");
+    $stmt_ya->execute([$id_partida, $id_evento]);
+    if ($stmt_ya->fetchColumn() > 0) {
+        echo json_encode(['success' => false, 'error' => 'La caja fuerte ya fue abierta anteriormente.']);
+        exit;
+    }
+
+    // ── Ahora sí validar la combinación ────────────────────────────────────
+    if ($combinacion !== '911') {
+        echo json_encode(['success' => false, 'error' => 'Combinación incorrecta']);
+        exit;
+    }
+
+    // Marcar como completado en DB y sesión
+    $pdo->prepare("INSERT OR IGNORE INTO eventos_completados (id_partida, id_evento) VALUES (?, ?)")
+        ->execute([$id_partida, $id_evento]);
 
     if (!isset($_SESSION['eventos_recogidos_sesion'])) {
         $_SESSION['eventos_recogidos_sesion'] = [];
     }
     if (!in_array($id_evento, $_SESSION['eventos_recogidos_sesion'])) {
         $_SESSION['eventos_recogidos_sesion'][] = $id_evento;
+    }
+
+    // ── VERIFICAR si ya tiene Cortacadenas (id_item=13) ─────────────
+    $stmt_chk = $pdo->prepare("SELECT COUNT(*) FROM inventario WHERE id_partida = ? AND tipo_objeto = 'item' AND id_objeto = 13");
+    $stmt_chk->execute([$id_partida]);
+    if ($stmt_chk->fetchColumn() > 0) {
+        echo json_encode(['success' => true, 'message' => 'Caja fuerte abierta. Ya tienes un Cortacadenas.', 'nombre_objeto' => 'Cortacadenas']);
+        exit;
     }
 
     // Buscar el primer slot libre (0-7)
@@ -64,29 +83,17 @@ try {
         exit;
     }
 
-    // Insertar en la DB
-    $stmt_inv = $pdo->prepare("INSERT INTO inventario (id_partida, tipo_objeto, id_objeto, cantidad, posicion_slot) VALUES (?, 'item', 13, 1, ?)");
-    $stmt_inv->execute([$id_partida, $posicion_slot]);
-
-    // Opcional: También registrar en sesión si se prefiere redundancia, 
-    // pero get_inventario.php ya lee de la DB.
-    if (!isset($_SESSION['inventario_sesion'])) {
-        $_SESSION['inventario_sesion'] = [];
-    }
-    $_SESSION['inventario_sesion'][] = [
-        'tipo_objeto' => 'item',
-        'id_objeto' => 13,
-        'cantidad' => 1,
-        'posicion_slot' => $posicion_slot
-    ];
+    // Insertar en la DB (solo 1 vez)
+    $pdo->prepare("INSERT INTO inventario (id_partida, tipo_objeto, id_objeto, cantidad, posicion_slot) VALUES (?, 'item', 13, 1, ?)")
+        ->execute([$id_partida, $posicion_slot]);
 
     echo json_encode([
-        'success' => true,
-        'message' => 'Caja fuerte abierta. Has obtenido: Cortacadenas.',
+        'success'       => true,
+        'message'       => 'Caja fuerte abierta. Has obtenido: Cortacadenas.',
         'nombre_objeto' => 'Cortacadenas'
     ]);
 
 } catch (PDOException $e) {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
-?>
+?>
