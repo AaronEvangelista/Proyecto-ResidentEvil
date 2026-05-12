@@ -113,7 +113,7 @@ function ejecutarEvento(evento, event) {
     case "jefe_final":
       mostrarMensajeEnPantalla("[CRÍTICO] ¡ALGO SE MUEVE TRAS LA PUERTA!");
       const bossId = evento.contenido_accion;
-      
+
       const formData = new FormData();
       formData.append("id_boss", bossId);
       formData.append("sala", salaActual);
@@ -141,7 +141,26 @@ function ejecutarEvento(evento, event) {
   }
 }
 
-// ALIAS para compatibilidad con la Base de Datos
+function abrirMenuPuzzle(eventoOrTipo, event) {
+  if (typeof eventoOrTipo === "object" && eventoOrTipo !== null) {
+    ejecutarEvento(eventoOrTipo, event);
+  } else {
+    const tipo = eventoOrTipo;
+    if (tipo === "medallones") {
+      if (typeof abrirPuzzleMedallones === "function") abrirPuzzleMedallones();
+    } else if (tipo === "caja_fuerte") {
+      if (typeof abrirCajaFuerte === "function") abrirCajaFuerte();
+    } else if (tipo === "electricidad") {
+      if (typeof abrirPuzzleElectricidad === "function")
+        abrirPuzzleElectricidad();
+    } else if (tipo.startsWith("puzzle_")) {
+      if (typeof abrirEstatuaPuzzle === "function") abrirEstatuaPuzzle(tipo);
+    } else {
+      console.warn("Tipo de puzzle no reconocido:", tipo);
+    }
+  }
+}
+
 function añadirInventario(evento, event) {
   ejecutarEvento(evento, event);
 }
@@ -150,15 +169,7 @@ function recogerObjeto(evento, event) {
   ejecutarEvento(evento, event);
 }
 
-function añadirInventario(evento, event) {
-  ejecutarEvento(evento, event);
-}
-
 function abrirMenuArchivo(evento, event) {
-  ejecutarEvento(evento, event);
-}
-
-function abrirMenuPuzzle(evento, event) {
   ejecutarEvento(evento, event);
 }
 
@@ -549,7 +560,7 @@ function completarPuzzleMedallones() {
         document.querySelectorAll(".hotspot").forEach((h) => {
           if (h.title === "ESTATUA") h.style.display = "none";
         });
-        
+
         // Recargar para aplicar cambios de sala (imagen lobby_abierto y pasaje secreto)
         setTimeout(() => {
           window.location.reload();
