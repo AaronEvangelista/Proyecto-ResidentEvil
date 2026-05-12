@@ -12,6 +12,23 @@ require_once __DIR__ . '/../includes/conexion.php';
 $usuarioId = (int) $_SESSION['usuario_id'];
 $usuarioNombre = htmlspecialchars($_SESSION['usuario_nombre'] ?? '');
 $usuarioEmail = htmlspecialchars($_SESSION['usuario_email'] ?? '');
+if (isset($_GET['borrar_partida'])) {
+    $id_borrar = (int) $_GET['borrar_partida'];
+    try {
+        $stmt_del = $pdo->prepare("DELETE FROM partida WHERE id_partida = ? AND id_usuario = ?");
+        $stmt_del->execute([$id_borrar, $usuarioId]);
+
+        $pdo->prepare("DELETE FROM estado_personaje WHERE id_partida = ?")->execute([$id_borrar]);
+        $pdo->prepare("DELETE FROM inventario WHERE id_partida = ?")->execute([$id_borrar]);
+        $pdo->prepare("DELETE FROM estado_enemigos WHERE id_partida = ?")->execute([$id_borrar]);
+        $pdo->prepare("DELETE FROM eventos_completados WHERE id_partida = ?")->execute([$id_borrar]);
+
+        header("Location: perfil.php?msg=deleted");
+        exit;
+    } catch (PDOException $e) {
+        $error_msg = "Error al borrar la partida.";
+    }
+}
 
 try {
     $stmt = $pdo->prepare("
@@ -166,6 +183,13 @@ $emailMasked = enmascararEmail($usuario['email'] ?? $usuarioEmail);
                 PARTIDAS GUARDADAS
             </h2>
 
+            <?php if (isset($_GET['msg']) && $_GET['msg'] === 'deleted'): ?>
+                <div
+                    style="background: rgba(139,0,0,0.2); border: 1px solid #cc2200; color: #ff6b5b; padding: 10px; margin-bottom: 15px; font-size: 11px; letter-spacing: 1px; text-align: center; text-transform: uppercase;">
+                    Registro eliminado correctamente
+                </div>
+            <?php endif; ?>
+
             <?php if (empty($partidas)): ?>
                 <div class="perfil-vacio">
                     <span class="perfil-vacio-icono">⚠</span>
@@ -190,10 +214,17 @@ $emailMasked = enmascararEmail($usuario['email'] ?? $usuarioEmail);
                                     Guardado: <?= htmlspecialchars(substr($partida['fecha_guardado'], 0, 16)) ?>
                                 </div>
                             </div>
-                            <a href="juego.php?partida=<?= (int) $partida['id_partida'] ?>" class="partida-btn-continuar"
-                                id="btn-continuar-<?= (int) $partida['id_partida'] ?>">
-                                CONTINUAR →
-                            </a>
+                            <div style="display: flex; gap: 10px;">
+                                <a href="perfil.php?borrar_partida=<?= (int) $partida['id_partida'] ?>"
+                                    class="partida-btn-borrar"
+                                    onclick="return confirm('¿Estás seguro de que deseas borrar esta partida? Esta acción no se puede deshacer.');">
+                                    BORRAR
+                                </a>
+                                <a href="juego.php?partida=<?= (int) $partida['id_partida'] ?>" class="partida-btn-continuar"
+                                    id="btn-continuar-<?= (int) $partida['id_partida'] ?>">
+                                    CONTINUAR →
+                                </a>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>

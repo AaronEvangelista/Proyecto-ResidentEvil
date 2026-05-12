@@ -457,6 +457,29 @@ body {
     box-shadow: 0 0 10px rgba(255,34,0,.25);
 }
 
+.partida-btn-borrar {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-family: inherit;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    border: 1px solid #333;
+    color: #666;
+    background: transparent;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all .2s;
+}
+
+.partida-btn-borrar:hover {
+    background: #2a0000;
+    border-color: #880000;
+    color: #cc2200;
+    box-shadow: 0 0 10px rgba(180,0,0,.2);
+}
+
 @media (max-width: 620px) {
     .perfil-id-card {
         flex-direction: column;

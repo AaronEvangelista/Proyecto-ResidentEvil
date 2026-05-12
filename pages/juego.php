@@ -17,6 +17,42 @@ if (!$sala) {
     header("Location: juego.php?sala=banos_inicio");
     exit;
 }
+
+if (isset($_GET['final'])) {
+    // Renderizar pantalla final
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Resident Evil - Fin de la Pesadilla</title>
+        <style>
+            body { 
+                background: black; color: white; 
+                display: flex; flex-direction: column; align-items: center; justify-content: center; 
+                height: 100vh; font-family: 'Courier New', Courier, monospace; text-align: center; 
+                background-image: radial-gradient(circle, #200000 0%, #000 100%);
+            }
+            h1 { color: #cc0000; font-size: 3.5rem; margin-bottom: 20px; text-shadow: 0 0 20px #f00; }
+            p { font-size: 1.5rem; letter-spacing: 2px; }
+            .btn-volver { 
+                margin-top: 40px; padding: 12px 30px; 
+                background: #600; color: white; text-decoration: none; 
+                border: 1px solid #f00; transition: 0.3s;
+                letter-spacing: 3px;
+            }
+            .btn-volver:hover { background: #f00; color: black; box-shadow: 0 0 20px #f00; }
+        </style>
+    </head>
+    <body>
+        <h1 style="margin-top: -50px;">¡HAS SOBREVIVIDO!</h1>
+        <p>Has derrotado a "El Recopilador" y escapado del sótano de la comisaría.</p>
+        <p style="font-size: 2.5rem; color: #ccaa44; margin-top: 50px; font-weight: bold; text-shadow: 0 0 10px #aa0;">GRACIAS POR JUGAR</p>
+        <a href="../index.php" class="btn-volver">VOLVER AL MENÚ</a>
+    </body>
+    </html>
+    <?php
+    exit;
+}
 $_SESSION['sala_actual'] = $id_sala_actual;
 
 //2. USUARIO / PARTIDA
@@ -38,7 +74,6 @@ if (isset($_GET['partida'])) {
         $_SESSION['sala_actual'] = $partida_guardada['sala_actual'];
         $_SESSION['inventario_sesion'] = [];
         $_SESSION['eventos_recogidos_sesion'] = [];
-        // Redirigir a la sala donde se guardó
         header("Location: juego.php?sala=" . urlencode($partida_guardada['sala_actual']));
         exit;
     }
@@ -60,7 +95,6 @@ try {
 }
 
 $forzar_nueva = isset($_GET['new']);
-
 if (!$partida || $forzar_nueva) {
     $stmt_crear = $pdo->prepare("INSERT INTO partida (id_usuario, ruta, sala_actual, slot_numero) VALUES (?, 'chico', 'banos_inicio', 0)");
     $stmt_crear->execute([$id_usuario]);
@@ -74,7 +108,6 @@ if (!$partida || $forzar_nueva) {
     }
 } else {
     $id_partida = $partida['id_partida'];
-
     $st_check_v = $pdo->prepare("SELECT vida_actual FROM estado_personaje WHERE id_partida = ?");
     $st_check_v->execute([$id_partida]);
     $v_check = $st_check_v->fetchColumn();
@@ -87,9 +120,18 @@ $_SESSION['id_partida'] = $id_partida;
 //3. PROCESAR RETORNO DE COMBATE (VICTORIA / HUIDA)
 if (isset($_GET['muerto'], $_GET['id_reg'])) {
     $id_reg = (int) $_GET['id_reg'];
+    $stmt_check_boss = $pdo->prepare("SELECT id_enemigo FROM estado_enemigos WHERE id_registro = ?");
+    $stmt_check_boss->execute([$id_reg]);
+    $id_enemigo_muerto = $stmt_check_boss->fetchColumn();
+    
     $stmt_upd = $pdo->prepare("UPDATE estado_enemigos SET estado = 'muerto' WHERE id_registro = ? AND id_partida = ?");
     $stmt_upd->execute([$id_reg, $id_partida]);
     unset($_SESSION['huido_de'][$id_sala_actual]);
+    
+    if ($id_enemigo_muerto == 9) { // ID del Jefe Final
+        header("Location: juego.php?final=1");
+        exit;
+    }
     header("Location: juego.php?sala=" . $id_sala_actual);
     exit;
 }
@@ -218,6 +260,7 @@ if ($id_sala_actual === 'lobby_principal') {
     if ($id_evento_medallones && in_array($id_evento_medallones, $completados)) {
         // El puzzle ha sido completado
         $sala['imagen_url'] = '../img/lobby_abierto.png';
+        $sala['descripcion'] = 'Hub central de la comisaría. El pasaje secreto bajo la estatua ahora está abierto.';
         
         // Añadimos manualmente el evento para bajar al sótano
         $eventos[] = [
@@ -232,6 +275,22 @@ if ($id_sala_actual === 'lobby_principal') {
             'imagen_item' => ''
         ];
     }
+}
+
+// Lógica especial para la Sala Final (Sótano)
+if ($id_sala_actual === 'sala_final') {
+    // Añadir el evento de la puerta del medio para el jefe final
+    $eventos[] = [
+        'id_evento' => 9998, // ID simbólico
+        'id_sala' => 'sala_final',
+        'nombre_objeto' => 'PUERTA DEL LABORATORIO',
+        'xmin' => 46.0, 'xmax' => 54.0, 'ymin' => 44.0, 'ymax' => 73.0,
+        'tipo_accion' => 'jefe_final',
+        'contenido_accion' => '9', // ID del Boss Fase 2
+        'requiere_item' => '',
+        'script' => 'iniciarBatallaFinal',
+        'imagen_item' => ''
+    ];
 }
 
 foreach ($eventos as $key => &$ev) {
@@ -271,12 +330,12 @@ foreach ($eventos as $key => &$ev) {
         } else {
             unset($eventos[$key]);
         }
-    } elseif ($ev['tipo_accion'] === 'recoger_item' && is_numeric($ev['contenido_accion'])) {
+    } elseif ($ev['tipo_accion'] === 'recoger_item' && !empty($ev['contenido_accion'])) {
         $id_item = $ev['contenido_accion'];
         $stmt_item = $pdo->prepare("SELECT imagen_url FROM catalogo_items WHERE id_item = ?");
         $stmt_item->execute([$id_item]);
         $ev['imagen_item'] = $stmt_item->fetchColumn();
-    } elseif ($ev['tipo_accion'] === 'recoger_arma' && is_numeric($ev['contenido_accion'])) {
+    } elseif ($ev['tipo_accion'] === 'recoger_arma' && !empty($ev['contenido_accion'])) {
         $id_arma = $ev['contenido_accion'];
         $stmt_arma = $pdo->prepare("SELECT imagen_url FROM catalogo_armas WHERE id_arma = ?");
         $stmt_arma->execute([$id_arma]);
@@ -285,6 +344,7 @@ foreach ($eventos as $key => &$ev) {
         $ev['imagen_item'] = '../img/fondo_nota.png';
     }
 }
+unset($ev); // Limpiar referencia
 $query_archivos = $pdo->query("SELECT * FROM catalogo_archivos");
 $archivos = $query_archivos->fetchAll(PDO::FETCH_ASSOC);
 
@@ -789,6 +849,11 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             <p><?php echo $hay_combate ? "¡Un engendro bloquea el camino!" : $sala['descripcion']; ?></p>
         </div>
 
+        <div id="item-notification">
+            <span style="font-size: 0.8rem; letter-spacing: 2px; color: #ccaa44; margin-bottom: 5px;">HAS OBTENIDO</span>
+            <span id="notif-item-name" style="font-size: 1.2rem; font-weight: bold; letter-spacing: 4px; text-transform: uppercase;"></span>
+        </div>
+
         <?php if ($hay_combate): ?>
             <div class="enemy-encounter"
                 onclick="window.location.href='combate.php?id_registro=<?php echo $enemigo_presente['id_registro']; ?>&vuelta=<?php echo $id_sala_actual; ?>'">
@@ -805,7 +870,7 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
                 <div class="hotspot <?php echo !empty($ev['imagen_item']) ? 'has-item' : ''; ?>"
                     title="<?php echo htmlspecialchars($ev['nombre_objeto']); ?>"
                     style="left:<?php echo $ev['xmin']; ?>%; top:<?php echo $ev['ymin']; ?>%; width:<?php echo ($ev['xmax'] - $ev['xmin']); ?>%; height:<?php echo ($ev['ymax'] - $ev['ymin']); ?>%;"
-                    onclick='ejecutarEvento(<?php echo json_encode($ev); ?>, event)'>
+                    onclick='ejecutarEvento(<?php echo htmlspecialchars(json_encode($ev), ENT_QUOTES); ?>, event)'>
                     <?php if (!empty($ev['imagen_item'])): ?>
                         <img src="<?php echo $ev['imagen_item']; ?>" alt="Objeto" class="item-visual">
                     <?php endif; ?>
@@ -1310,6 +1375,7 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
     <script src="../js/inventario.js"></script>
     <script>
         const catalogoArchivos = <?php echo json_encode($archivos); ?>;
+        const salaActual = '<?php echo $id_sala_actual; ?>';
         const tension = "<?php echo $hay_combate ? 'alta' : 'baja'; ?>";
         const esAdmin = <?= $usuarioRol === 'admin' ? 'true' : 'false' ?>;
         const zombiesVisibles = <?= $zombiesVisibles ? 'true' : 'false' ?>;

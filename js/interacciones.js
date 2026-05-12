@@ -110,10 +110,60 @@ function ejecutarEvento(evento, event) {
       window.location.href = `juego.php?sala=${evento.contenido_accion}`;
       break;
 
+    case "jefe_final":
+      mostrarMensajeEnPantalla("[CRÍTICO] ¡ALGO SE MUEVE TRAS LA PUERTA!");
+      const bossId = evento.contenido_accion;
+      
+      const formData = new FormData();
+      formData.append("id_boss", bossId);
+      formData.append("sala", salaActual);
+
+      fetch("../src/api/spawn_jefe.php", {
+        method: "POST",
+        body: formData,
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success) {
+            setTimeout(() => {
+              window.location.href = `combate.php?id_registro=${data.id_registro}&vuelta=${salaActual}`;
+            }, 1000);
+          } else {
+            console.error("Error spawn jefe:", data.error);
+          }
+        })
+        .catch((err) => console.error("Error en petición spawn:", err));
+      break;
+
     default:
       console.warn("Tipo de acción no reconocido:", evento.tipo_accion);
       break;
   }
+}
+
+// ALIAS para compatibilidad con la Base de Datos
+function añadirInventario(evento, event) {
+  ejecutarEvento(evento, event);
+}
+
+function recogerObjeto(evento, event) {
+  ejecutarEvento(evento, event);
+}
+
+function añadirInventario(evento, event) {
+  ejecutarEvento(evento, event);
+}
+
+function abrirMenuArchivo(evento, event) {
+  ejecutarEvento(evento, event);
+}
+
+function abrirMenuPuzzle(evento, event) {
+  ejecutarEvento(evento, event);
+}
+
+function intentarAbrir(evento, event) {
+  ejecutarEvento(evento, event);
 }
 
 function registrarRecogida(idEvento, tipoObjeto, idObjeto) {
