@@ -182,8 +182,27 @@ html {
     pointer-events: none;
 }
 
-@keyframes pulsarItem {
+.hotspot.boss-door {
+    background: transparent;
+    border: 2px solid transparent;
+    transition: border-color 0.4s, box-shadow 0.4s;
+    animation: bossDoorPulse 2s ease-in-out infinite;
+}
 
+.hotspot.boss-door:hover {
+    background: rgba(180, 0, 0, 0.12);
+    border-color: #cc0000;
+    box-shadow: 0 0 30px rgba(200, 0, 0, 0.4), inset 0 0 20px rgba(200, 0, 0, 0.15);
+    cursor: crosshair;
+}
+
+@keyframes bossDoorPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(180,0,0,0.15); }
+    50%       { box-shadow: 0 0 20px rgba(220,0,0,0.35); }
+}
+
+
+@keyframes pulsarItem {
     0%,
     100% {
         transform: scale(0.85);

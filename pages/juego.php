@@ -288,43 +288,28 @@ if ($id_sala_actual === 'lobby_principal') {
     $id_evento_medallones = $stmt_m->fetchColumn();
 
     if ($id_evento_medallones && in_array($id_evento_medallones, $completados)) {
-        // El puzzle ha sido completado
+        // El puzzle ha sido completado — abrir el pasaje bajo la estatua
         $sala['imagen_url'] = '../img/lobby_abierto.png';
         $sala['descripcion'] = 'Hub central de la comisaría. El pasaje secreto bajo la estatua ahora está abierto.';
-
-        // Añadimos manualmente el evento para bajar al sótano
-        $eventos[] = [
-            'id_evento' => 9999, // ID simbólico
-            'id_sala' => 'lobby_principal',
-            'nombre_objeto' => 'ENTRADA AL SÓTANO',
-            'xmin' => 39.0,
-            'xmax' => 62.0,
-            'ymin' => 26.0,
-            'ymax' => 74.0,
-            'tipo_accion' => 'transicion',
-            'contenido_accion' => 'sala_final',
-            'requiere_item' => '',
-            'script' => 'cambiarSala',
-            'imagen_item' => ''
-        ];
+        // Redirigir la flecha SUR (centro-inferior) al sótano en vez de a los baños
+        $sala['sur'] = 'sala_final';
     }
 }
 
 // Lógica especial para la Sala Final (Sótano)
 if ($id_sala_actual === 'sala_final') {
-    // Añadir el evento de la puerta del medio para el jefe final
     $eventos[] = [
-        'id_evento' => 9998, // ID simbólico
+        'id_evento' => 9998,
         'id_sala' => 'sala_final',
         'nombre_objeto' => 'PUERTA DEL LABORATORIO',
-        'xmin' => 46.0,
-        'xmax' => 54.0,
-        'ymin' => 44.0,
-        'ymax' => 73.0,
+        'xmin' => 32.0,   // zona amplia centrada sobre la puerta
+        'xmax' => 68.0,
+        'ymin' => 15.0,
+        'ymax' => 88.0,
         'tipo_accion' => 'jefe_final',
-        'contenido_accion' => '9', // ID del Boss Fase 2
+        'contenido_accion' => '9',    // El Recopilador Fase 2
         'requiere_item' => '',
-        'script' => 'iniciarBatallaFinal',
+        'script' => '',
         'imagen_item' => ''
     ];
 }
@@ -518,17 +503,17 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 10px;
             cursor: pointer;
-            position: relative;
         }
 
         .medallon-slot-inner {
-            width: 150px;
-            height: 160px;
+            width: 130px;
+            height: 130px;
             border: 2px solid #333;
+            border-radius: 50%;
             background: #111;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
@@ -538,13 +523,13 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
 
         .medallon-slot.available .medallon-slot-inner {
             border-color: #cc9900;
-            box-shadow: 0 0 18px rgba(180, 130, 0, 0.4), inset 0 0 20px rgba(180, 130, 0, 0.05);
+            box-shadow: 0 0 18px rgba(180, 130, 0, 0.5), inset 0 0 20px rgba(180, 130, 0, 0.08);
             animation: pulseGold 1.5s ease-in-out infinite;
         }
 
         .medallon-slot.placed .medallon-slot-inner {
             border-color: #00cc66;
-            box-shadow: 0 0 22px rgba(0, 180, 80, 0.5), inset 0 0 20px rgba(0, 180, 80, 0.08);
+            box-shadow: 0 0 22px rgba(0, 180, 80, 0.6), inset 0 0 20px rgba(0, 180, 80, 0.1);
         }
 
         @keyframes pulseGold {
@@ -555,15 +540,16 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             }
 
             50% {
-                box-shadow: 0 0 28px rgba(220, 170, 0, 0.6);
+                box-shadow: 0 0 28px rgba(220, 170, 0, 0.7);
             }
         }
 
         .medallon-placeholder {
             width: 80px;
             height: 80px;
-            object-fit: contain;
-            opacity: 0.18;
+            object-fit: cover;
+            border-radius: 50%;
+            opacity: 0.22;
             filter: grayscale(100%);
         }
 
@@ -576,9 +562,11 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
         }
 
         .medallon-placed img {
-            width: 90px;
-            height: 90px;
-            filter: drop-shadow(0 0 8px rgba(0, 220, 100, 0.7));
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            filter: drop-shadow(0 0 10px rgba(0, 220, 100, 0.8));
             animation: floatMedallon 2s ease-in-out infinite;
         }
 
@@ -586,7 +574,7 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
 
             0%,
             100% {
-                transform: translateY(0px);
+                transform: translateY(0);
             }
 
             50% {
@@ -595,12 +583,72 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
         }
 
         .slot-label {
-            position: absolute;
-            bottom: 8px;
-            font-size: 0.65rem;
+            font-size: 0.68rem;
             letter-spacing: 2px;
-            color: #666;
+            color: #aa8833;
             font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+
+        .medallon-slot.placed .slot-label {
+            color: #44dd88;
+        }
+
+        .medallones-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .medallones-actions button {
+            padding: 10px 26px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            border: 1px solid #5a1a1a;
+            cursor: pointer;
+            transition: .2s;
+            text-transform: uppercase;
+        }
+
+        #btn-colocar-medallones {
+            background: #1a0a0a;
+            color: #cc3333;
+        }
+
+        #btn-colocar-medallones:not(:disabled):hover {
+            background: #2a0a0a;
+            border-color: #cc3333;
+            box-shadow: 0 0 12px rgba(200, 30, 30, 0.4);
+        }
+
+        #btn-colocar-medallones:disabled {
+            color: #441111;
+            border-color: #2a1010;
+            cursor: not-allowed;
+        }
+
+        #btn-cancelar-medallones {
+            background: #0d0d0d;
+            color: #555;
+            border-color: #2a2a2a;
+        }
+
+        #btn-cancelar-medallones:hover {
+            background: #1a1a1a;
+            color: #888;
+            border-color: #444;
+        }
+
+        #medallones-status {
+            text-align: center;
+            font-size: 0.78rem;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+            color: #664444;
+            margin-bottom: 14px;
+            min-height: 18px;
         }
 
         #estatua-puzzle {
@@ -905,7 +953,9 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
 
         <?php if (!$hay_combate): ?>
             <?php foreach ($eventos as $ev): ?>
-                <div class="hotspot <?php echo !empty($ev['imagen_item']) ? 'has-item' : ''; ?>"
+                <?php $extraClass = ($ev['tipo_accion'] === 'jefe_final') ? 'boss-door' : ''; ?>
+                <?php $extraClass .= !empty($ev['imagen_item']) ? ' has-item' : ''; ?>
+                <div class="hotspot <?php echo trim($extraClass); ?>"
                     title="<?php echo htmlspecialchars($ev['nombre_objeto']); ?>"
                     style="left:<?php echo $ev['xmin']; ?>%; top:<?php echo $ev['ymin']; ?>%; width:<?php echo ($ev['xmax'] - $ev['xmin']); ?>%; height:<?php echo ($ev['ymax'] - $ev['ymin']); ?>%;"
                     onclick='ejecutarEvento(<?php echo htmlspecialchars(json_encode($ev), ENT_QUOTES); ?>, event)'>
@@ -1104,34 +1154,35 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
         <div id="medallones-puzzle" style="display: none;">
             <div class="medallones-container">
                 <div class="medallones-header">
-                    <h2> ESTATUA DE LOS MEDALLONES </h2>
-                    <p>Coloca los tres medallones</p>
+                    <h2>⚙ ESTATUA DE LOS MEDALLONES</h2>
+                    <p>Coloca los tres medallones en sus ranuras</p>
                 </div>
                 <div class="medallones-base">
                     <div class="medallon-slot" id="slot-leon" data-medallon="7">
-                        <div class="medallon-slot-inner"><img src="../img/medallon_de_leon.png"
-                                class="medallon-placeholder">
+                        <div class="medallon-slot-inner">
+                            <img src="../img/medallon_de_leon.png" class="medallon-placeholder">
                             <div class="medallon-placed" id="placed-leon"><img src="../img/medallon_de_leon.png"></div>
-                            <span class="slot-label">LEÓN</span>
                         </div>
+                        <span class="slot-label">LEÓN</span>
                     </div>
                     <div class="medallon-slot" id="slot-unicornio" data-medallon="8">
-                        <div class="medallon-slot-inner"><img src="../img/medallon_de_unicornio.png"
-                                class="medallon-placeholder">
+                        <div class="medallon-slot-inner">
+                            <img src="../img/medallon_de_unicornio.png" class="medallon-placeholder">
                             <div class="medallon-placed" id="placed-unicornio"><img
-                                    src="../img/medallon_de_unicornio.png"></div><span
-                                class="slot-label">UNICORNIO</span>
+                                    src="../img/medallon_de_unicornio.png"></div>
                         </div>
+                        <span class="slot-label">UNICORNIO</span>
                     </div>
                     <div class="medallon-slot" id="slot-doncella" data-medallon="9">
-                        <div class="medallon-slot-inner"><img src="../img/medallon_de_doncella.png"
-                                class="medallon-placeholder">
+                        <div class="medallon-slot-inner">
+                            <img src="../img/medallon_de_doncella.png" class="medallon-placeholder">
                             <div class="medallon-placed" id="placed-doncella"><img
-                                    src="../img/medallon_de_doncella.png"></div><span class="slot-label">DONCELLA</span>
+                                    src="../img/medallon_de_doncella.png"></div>
                         </div>
+                        <span class="slot-label">DONCELLA</span>
                     </div>
                 </div>
-                <div id="medallones-status">Verificando...</div>
+                <div id="medallones-status"></div>
                 <div class="medallones-actions">
                     <button id="btn-colocar-medallones" disabled>ACTIVAR ESTATUA</button>
                     <button id="btn-cancelar-medallones" onclick="cerrarMenuMedallones()">CANCELAR</button>
@@ -1825,7 +1876,7 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
         const esAdmin = <?= $usuarioRol === 'admin' ? 'true' : 'false' ?>;
         const zombiesVisibles = <?= $zombiesVisibles ? 'true' : 'false' ?>;
 
-                // 1. Definimos la ruta saliendo de 'pages' para entrar en 'sounds'
+        // 1. Definimos la ruta saliendo de 'pages' para entrar en 'sounds'
         const rutaMusica = '../sounds/musica_terror.mp3';
         const musicaMenu = new Audio(rutaMusica);
 
@@ -1850,7 +1901,7 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
         // 4. Escuchamos el primer clic o la primera tecla para activar el sonido
         document.addEventListener('click', iniciarAudio);
         document.addEventListener('keydown', iniciarAudio);
-    
+
     </script>
     <?php if ($usuarioRol === 'admin'): ?>
         <div id="admin-game-bar" style="
