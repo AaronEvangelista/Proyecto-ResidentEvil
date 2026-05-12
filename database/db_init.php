@@ -303,12 +303,9 @@ INSERT OR REPLACE INTO catalogo_logros (nombre, descripcion) VALUES
 
 $db->exec($inserts);
 
-// ─── COLUMNAS ADMIN (migracion segura para BBDDs ya existentes) ─────────────
 $db->exec("ALTER TABLE usuarios ADD COLUMN rol TEXT DEFAULT 'jugador'");
 $db->exec("ALTER TABLE usuarios ADD COLUMN zombies_visibles INTEGER DEFAULT 1");
 
-// ─── USUARIO ADMIN POR DEFECTO ──────────────────────────────────────────────
-// Contraseña: admin123  (bcrypt con coste 12)
 $adminHash = password_hash('admin123', PASSWORD_BCRYPT, ['cost' => 12]);
 $stmtAdmin = $db->prepare(
     "INSERT OR IGNORE INTO usuarios (nombre, email, password, rol, zombies_visibles)
