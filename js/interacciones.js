@@ -499,6 +499,11 @@ function completarPuzzleMedallones() {
         document.querySelectorAll(".hotspot").forEach((h) => {
           if (h.title === "ESTATUA") h.style.display = "none";
         });
+        
+        // Recargar para aplicar cambios de sala (imagen lobby_abierto y pasaje secreto)
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else {
         document.getElementById("medallones-status").textContent =
           "⚠ " + data.error;

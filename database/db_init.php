@@ -211,7 +211,8 @@ INSERT OR REPLACE INTO catalogo_salas (id_sala, nombre_visual, descripcion, capi
 ('biblioteca', 'Biblioteca (2F)', 'Suelos de madera que crujen y estanterías móviles.', 1, 'sala_arte', NULL, NULL, NULL, '../img/biblioteca.png'),
 ('sala_arte', 'Sala de Arte', 'Exposición de estatuas y cuadros clásicos.', 1, NULL, 'biblioteca', NULL, 'pasillo', '../img/sala_arte.png'), 
 ('oficina_capitan', 'Oficina del Capitán', 'Lujosa pero desordenada. Caja fuerte grande.', 1, NULL, 'sala_electrica', 'pasillo', NULL, '../img/oficina_capitan.png'), 
-('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, 'oficina_capitan', NULL, NULL, NULL, '../img/sala_electrica.png');
+('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, 'oficina_capitan', NULL, NULL, NULL, '../img/sala_electrica.png'),
+('sala_final', 'Sótano de la Comisaría', 'El camino hacia la libertad... o hacia algo peor.', 1, NULL, 'lobby_principal', NULL, NULL, '../img/sala_final.png');
 
 -- INSERTAR EVENTOS
 INSERT OR IGNORE INTO eventos_interactivos 

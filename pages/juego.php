@@ -209,6 +209,31 @@ $q_comp_db->execute([$id_partida]);
 $completados_db = $q_comp_db->fetchAll(PDO::FETCH_COLUMN);
 $completados = array_unique(array_merge($completados_db, $_SESSION['eventos_recogidos_sesion'] ?? []));
 
+// Lógica especial para el Lobby Principal tras el puzzle de los medallones
+if ($id_sala_actual === 'lobby_principal') {
+    $stmt_m = $pdo->prepare("SELECT id_evento FROM eventos_interactivos WHERE id_sala = 'lobby_principal' AND tipo_accion = 'puzzle' AND contenido_accion = 'medallones' LIMIT 1");
+    $stmt_m->execute();
+    $id_evento_medallones = $stmt_m->fetchColumn();
+    
+    if ($id_evento_medallones && in_array($id_evento_medallones, $completados)) {
+        // El puzzle ha sido completado
+        $sala['imagen_url'] = '../img/lobby_abierto.png';
+        
+        // Añadimos manualmente el evento para bajar al sótano
+        $eventos[] = [
+            'id_evento' => 9999, // ID simbólico
+            'id_sala' => 'lobby_principal',
+            'nombre_objeto' => 'ENTRADA AL SÓTANO',
+            'xmin' => 39.0, 'xmax' => 62.0, 'ymin' => 26.0, 'ymax' => 74.0,
+            'tipo_accion' => 'transicion',
+            'contenido_accion' => 'sala_final',
+            'requiere_item' => '',
+            'script' => 'cambiarSala',
+            'imagen_item' => ''
+        ];
+    }
+}
+
 foreach ($eventos as $key => &$ev) {
     // Los eventos de guardar NUNCA se ocultan, siempre deben estar disponibles
     if ($ev['tipo_accion'] !== 'guardar' && in_array($ev['id_evento'], $completados)) {
@@ -778,6 +803,7 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
         <?php if (!$hay_combate): ?>
             <?php foreach ($eventos as $ev): ?>
                 <div class="hotspot <?php echo !empty($ev['imagen_item']) ? 'has-item' : ''; ?>"
+                    title="<?php echo htmlspecialchars($ev['nombre_objeto']); ?>"
                     style="left:<?php echo $ev['xmin']; ?>%; top:<?php echo $ev['ymin']; ?>%; width:<?php echo ($ev['xmax'] - $ev['xmin']); ?>%; height:<?php echo ($ev['ymax'] - $ev['ymin']); ?>%;"
                     onclick='ejecutarEvento(<?php echo json_encode($ev); ?>, event)'>
                     <?php if (!empty($ev['imagen_item'])): ?>
