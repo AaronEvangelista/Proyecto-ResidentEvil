@@ -73,6 +73,39 @@ $armas_disponibles[] = [
     'sesion_idx' => null
 ];
 
+// 4. Obtener objetos de CURACIÓN (Hierbas, Sprays, etc.)
+$items_curacion = [];
+// Desde Base de Datos
+$q_items_db = $pdo->prepare("
+    SELECT i.id_registro, i.cantidad, ci.nombre, ci.descripcion, ci.imagen_url, 'db' as fuente, NULL as sesion_idx, ci.tipo
+    FROM inventario i
+    JOIN catalogo_items ci ON i.id_objeto = ci.id_item
+    WHERE i.id_partida = ? AND i.tipo_objeto = 'item' AND ci.tipo = 'curacion' AND i.cantidad > 0
+");
+$q_items_db->execute([$id_partida]);
+$items_curacion = $q_items_db->fetchAll(PDO::FETCH_ASSOC);
+
+// Desde Sesión (si hay objetos aún no persistidos)
+foreach ($inv_sesion as $idx => $item) {
+    if ($item['tipo_objeto'] === 'item' && (int)($item['cantidad'] ?? 0) > 0) {
+        $q_cat = $pdo->prepare("SELECT nombre, tipo, descripcion, imagen_url FROM catalogo_items WHERE id_item = ?");
+        $q_cat->execute([$item['id_objeto']]);
+        $cat = $q_cat->fetch(PDO::FETCH_ASSOC);
+        if ($cat && $cat['tipo'] === 'curacion') {
+            $items_curacion[] = [
+                'id_registro' => null,
+                'cantidad' => $item['cantidad'],
+                'nombre' => $cat['nombre'],
+                'descripcion' => $cat['descripcion'],
+                'imagen_url' => $cat['imagen_url'],
+                'fuente' => 'sesion',
+                'sesion_idx' => $idx,
+                'tipo' => $cat['tipo']
+            ];
+        }
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -94,8 +127,23 @@ $armas_disponibles[] = [
         .hp-bar-bg { background: #003300; height: 15px; border: 1px solid var(--vats-green); margin-top: 5px; }
         .hp-bar-fill { height: 100%; background: var(--vats-green); transition: width 0.4s; }
         .hp-player-fill { background: #ffb000; }
-        .btn-huir { background: transparent; color: #ff4444; border: 1px solid #ff4444; padding: 10px; cursor: pointer; font-family: inherit; font-size: 1.1rem; width: 100%; height: 100%; }
-        .btn-huir:hover { background: #ff4444; color: #000; }
+        .btn-huir { background: transparent; color: #ff4444; border: 1px solid #ff4444; padding: 10px; cursor: pointer; font-family: inherit; font-size: 1.1rem; width: 100%; height: 48%; transition: 0.2s; }
+        .btn-huir:hover { background: #ff4444; color: #000; box-shadow: 0 0 15px #ff4444; }
+        .btn-items { background: transparent; color: #ffb000; border: 1px solid #ffb000; padding: 10px; cursor: pointer; font-family: inherit; font-size: 1.1rem; width: 100%; height: 48%; transition: 0.2s; margin-bottom: 4%; }
+        .btn-items:hover { background: #ffb000; color: #000; box-shadow: 0 0 15px #ffb000; }
+        
+        /* Modal de Objetos */
+        #items-menu { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(8px); border: 2px solid var(--vats-green); margin: 20px; }
+        .items-container { width: 500px; padding: 30px; border: 1px solid var(--vats-green); background: #000; position: relative; }
+        .items-container::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(rgba(0,255,102,0.03) 0px, rgba(0,255,102,0.03) 1px, transparent 1px, transparent 2px); pointer-events: none; }
+        .item-row { display: flex; align-items: center; gap: 20px; border: 1px solid #113311; padding: 15px; margin-bottom: 12px; cursor: pointer; transition: 0.3s; position: relative; z-index: 1; }
+        .item-row:hover { border-color: var(--vats-green); background: rgba(0,255,102,0.15); transform: translateX(5px); }
+        .item-img { width: 60px; height: 60px; object-fit: contain; filter: sepia(1) hue-rotate(80deg) brightness(1.2); }
+        .item-info { flex: 1; }
+        .item-name { font-weight: bold; color: var(--vats-green); font-size: 1.1rem; letter-spacing: 1px; }
+        .item-desc { font-size: 0.75rem; color: #008833; margin-top: 4px; line-height: 1.2; }
+        .item-qty { font-size: 1.4rem; color: #ffb000; font-weight: bold; }
+
         .log-box { font-size: 0.75rem; border: 1px solid #333; padding: 5px; overflow-y: hidden; background: rgba(0,0,0,0.5); min-height: 40px;}
         .flash-hit { position: fixed; top:0; left:0; width:100%; height:100%; background: red; opacity:0; pointer-events:none; z-index: 1000; transition: opacity 0.1s; }
         .ammo-display { font-size: 0.7rem; margin-top: 3px; color: var(--vats-green); letter-spacing: 1px; }
@@ -153,9 +201,21 @@ $armas_disponibles[] = [
             </div>
         </div>
 
-        <div class="stat-box" style="padding: 0; border: none;">
+        <div class="stat-box" style="padding: 0; border: none; display: flex; flex-direction: column; justify-content: space-between;">
+            <button class="btn-items" onclick="abrirMenuObjetos()">[ OBJETOS ]</button>
             <button class="btn-huir" onclick="intentarEscapar()">[ HUIR ]<br><small style="font-size: 0.6rem;">PROBABILIDAD: <?php echo $enemigo['esquive_base']; ?>%</small></button>
         </div>
+    </div>
+</div>
+
+<!-- OVERLAY DE OBJETOS -->
+<div id="items-menu" onclick="event.target === this && cerrarMenuObjetos()">
+    <div class="items-container">
+        <h2 style="border-bottom: 2px solid var(--vats-green); margin-bottom: 25px; letter-spacing: 4px; color: var(--vats-green);">SISTEMA DE SUMINISTROS</h2>
+        <div id="items-list" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+            <!-- Renderizado vía JS -->
+        </div>
+        <button class="weapon-btn" onclick="cerrarMenuObjetos()" style="width: 100%; padding: 15px; margin-top: 20px; font-size: 1.1rem; border-color: #ff4444; color: #ff4444;">SALIR DEL SISTEMA</button>
     </div>
 </div>
 
@@ -189,6 +249,9 @@ $armas_disponibles[] = [
     //4. SISTEMA DE ARMAS
     const armas = <?php echo json_encode($armas_disponibles); ?>;
     let armaActualIdx = 0;
+    
+    //5. SISTEMA DE OBJETOS
+    let objetos = <?php echo json_encode($items_curacion); ?>;
     
     let turnoBloqueado = false;
     let enemigoAturdido = false;
@@ -259,6 +322,81 @@ $armas_disponibles[] = [
         .catch(() => callback());
     }
 
+    // --- MANEJO DE INVENTARIO EN COMBATE ---
+    function abrirMenuObjetos() {
+        if (turnoBloqueado) return;
+        const menu = document.getElementById('items-menu');
+        const list = document.getElementById('items-list');
+        list.innerHTML = '';
+        
+        if (objetos.length === 0) {
+            list.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #444; border: 1px dashed #444;">
+                    NO SE DETECTAN OBJETOS BIOMÉDICOS EN EL INVENTARIO.
+                </div>
+            `;
+        } else {
+            objetos.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'item-row';
+                row.onclick = () => usarObjeto(idx);
+                row.innerHTML = `
+                    <img src="${item.imagen_url}" class="item-img">
+                    <div class="item-info">
+                        <div class="item-name">${item.nombre.toUpperCase()}</div>
+                        <div class="item-desc">${item.descripcion.toUpperCase()}</div>
+                    </div>
+                    <div class="item-qty">x${item.cantidad}</div>
+                `;
+                list.appendChild(row);
+            });
+        }
+        menu.style.display = 'flex';
+    }
+
+    function cerrarMenuObjetos() {
+        document.getElementById('items-menu').style.display = 'none';
+    }
+
+    function usarObjeto(idx) {
+        const item = objetos[idx];
+        if (pHP >= 100) {
+            escribirLog("ESTADO DE SALUD ÓPTIMO. NO SE REQUIERE CURACIÓN.");
+            cerrarMenuObjetos();
+            return;
+        }
+
+        cerrarMenuObjetos();
+        turnoBloqueado = true;
+        escribirLog("PROCESANDO " + item.nombre.toUpperCase() + "...");
+
+        fetch('../includes/usar_item.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                pHP = data.nueva_vida;
+                item.cantidad--;
+                if (item.cantidad <= 0) {
+                    objetos.splice(idx, 1);
+                }
+                actualizarInterfaz();
+                escribirLog("REGENERACIÓN COMPLETADA: +" + data.curacion + " HP. CAMBIO DE TURNO.");
+                setTimeout(turnoEnemigo, 1200);
+            } else {
+                escribirLog("ERROR CRÍTICO: FALLO EN LA APLICACIÓN DEL SUMINISTRO.");
+                turnoBloqueado = false;
+            }
+        })
+        .catch(() => {
+            escribirLog("ERROR DE ENLACE CON EL INVENTARIO.");
+            turnoBloqueado = false;
+        });
+    }
+
     function procesarAccion(zona, probabilidad) {
         if (turnoBloqueado) return;
         
@@ -271,19 +409,27 @@ $armas_disponibles[] = [
             return;
         }
         
-        // Sonido de disparo (Configurado a 1500ms = 1.5 segundos)
+        // Sonido de disparo
         if (arma.nombre.toLowerCase().includes('escopeta')) {
             reproducirSonidoCorto(sndEscopeta, 1500);
         } else if (arma.nombre.toLowerCase().includes('pistola')) {
             reproducirSonidoCorto(sndPistola, 1500);
+        } else if (arma.nombre.toLowerCase().includes('granada')) {
+            // Sonido de granada si existiera
         }
         
         turnoBloqueado = true;
-        escribirLog("ATACANDO A " + zona + "...");
+
+        // --- SISTEMA TÁCTICO: GRANADAS ---
+        // Las granadas tienen 100% de precisión ignorando la zona de impacto
+        const esGranada = arma.nombre.toLowerCase().includes('granada');
+        const precisionFinal = esGranada ? 100 : probabilidad;
+
+        escribirLog("INICIANDO SECUENCIA DE ATAQUE A " + zona + "...");
         
         consumirMunicion(() => {
             setTimeout(() => {
-                if (Math.random() * 100 <= probabilidad) {
+                if (Math.random() * 100 <= precisionFinal) {
                     let danoFinal = danoBase;
                     if (zona === 'cabeza') {
                         danoFinal = Math.round(danoBase * multCabezaJugador);
