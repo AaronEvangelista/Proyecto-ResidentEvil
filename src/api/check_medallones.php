@@ -10,7 +10,7 @@ if (!$id_partida) {
     exit;
 }
 
-$medallones_ids = [7, 8, 9];
+$medallones_ids = [6, 7, 8];
 $tiene = [];
 
 try {

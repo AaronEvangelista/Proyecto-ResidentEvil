@@ -57,7 +57,7 @@ try {
         $_SESSION['eventos_recogidos_sesion'][] = $id_evento;
     }
 
-    $stmt_chk = $pdo->prepare("SELECT COUNT(*) FROM inventario WHERE id_partida = ? AND tipo_objeto = 'item' AND id_objeto = 13");
+    $stmt_chk = $pdo->prepare("SELECT COUNT(*) FROM inventario WHERE id_partida = ? AND tipo_objeto = 'item' AND id_objeto = 12");
     $stmt_chk->execute([$id_partida]);
     if ($stmt_chk->fetchColumn() > 0) {
         echo json_encode(['success' => true, 'message' => 'Caja fuerte abierta. Ya tienes un Cortacadenas.', 'nombre_objeto' => 'Cortacadenas']);
@@ -78,7 +78,7 @@ try {
         exit;
     }
 
-    $pdo->prepare("INSERT INTO inventario (id_partida, tipo_objeto, id_objeto, cantidad, posicion_slot) VALUES (?, 'item', 13, 1, ?)")
+    $pdo->prepare("INSERT INTO inventario (id_partida, tipo_objeto, id_objeto, cantidad, posicion_slot) VALUES (?, 'item', 12, 1, ?)")
         ->execute([$id_partida, $posicion_slot]);
 
     echo json_encode([

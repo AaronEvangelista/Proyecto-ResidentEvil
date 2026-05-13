@@ -155,46 +155,55 @@ CREATE TABLE IF NOT EXISTS eventos_completados (
 
 $db->exec($esquema);
 
-// INSERTS
+$db->exec('PRAGMA foreign_keys = OFF;');
+
+$db->exec("DELETE FROM catalogo_armas;");
+$db->exec("DELETE FROM catalogo_items;");
+$db->exec("DELETE FROM catalogo_enemigos;");
+$db->exec("DELETE FROM catalogo_salas;");
+$db->exec("DELETE FROM eventos_interactivos;");
+$db->exec("DELETE FROM catalogo_archivos;");
+$db->exec("DELETE FROM catalogo_logros;");
+$db->exec("DELETE FROM sqlite_sequence WHERE name='catalogo_armas';");
+$db->exec("DELETE FROM sqlite_sequence WHERE name='catalogo_items';");
+$db->exec("DELETE FROM sqlite_sequence WHERE name='catalogo_enemigos';");
+$db->exec("DELETE FROM sqlite_sequence WHERE name='catalogo_archivos';");
+$db->exec("DELETE FROM sqlite_sequence WHERE name='eventos_interactivos';");
+
+
 $inserts = "
 -- Insertar Armas
-INSERT OR REPLACE INTO catalogo_armas (nombre, dano_porcentaje, ruta_exclusiva, descripcion, imagen_url) VALUES
-('Pistola M19', 25, 'ambos', 'Arma reglamentaria. Daño bajo. Utiliza munición de pistola.', '../img/PistolaM19.png'),
-('Escopeta W-870', 75, 'chico', 'Ideal para distancias cortas. Daño letal. Utiliza cartuchos de escopeta.', '../img/EscopetaW-870.png'),
-('Granada de Fragmentación', 100, 'ambos', 'Eliminación instantánea de enemigos comunes.', '../img/GranadaDeFragmentación.png');
+INSERT OR REPLACE INTO catalogo_armas (id_arma, nombre, dano_porcentaje, ruta_exclusiva, descripcion, imagen_url) VALUES
+(1, 'Pistola M19', 25, 'ambos', 'Arma reglamentaria. Daño bajo. Utiliza munición de pistola.', '../img/PistolaM19.png'),
+(2, 'Escopeta W-870', 75, 'chico', 'Ideal para distancias cortas. Daño letal. Utiliza cartuchos de escopeta.', '../img/EscopetaW-870.png'),
+(3, 'Granada de Fragmentación', 100, 'ambos', 'Eliminación instantánea de enemigos comunes.', '../img/GranadaDeFragmentación.png');
 
 -- Insertar Ítems
-INSERT OR REPLACE INTO catalogo_items (nombre, tipo, ruta_exclusiva, descripcion, imagen_url) VALUES
-('Hierba Verde', 'curacion', 'ambos', 'Planta medicinal local. Cura un 25% de salud. Se pueden combinar hasta 3 juntas (100% de salud).', '../img/Verde_hierva.png'),
-('Cuchillo Defensivo', 'defensa', 'ambos', 'Permite evitar un mordisco y escapar sin recibir daño. Se consume tras su uso.', '../img/Cuchillo_Defensivo.png'),
-('Munición de Pistola', 'municion', 'ambos', 'Balas de 9mm para armas de mano.', '../img/municion_pistola.png'),
-('Munición de Escopeta', 'municion', 'ambos', 'Cartuchos potentes para combate cercano.', '../img/cartucho_de_escopeta.png'),
-('Cinta de Guardado', 'clave', 'ambos', 'Una cinta magnética para máquina de escribir. Permite registrar tu progreso una sola vez. Úsala con sabiduría.', '../img/cinta_de_tinta.webp'),
-('Medallon de León', 'clave', 'ambos', 'Un pesado medallon de plata con el emblema de un león', '../img/medallon_de_leon.png'),
-('Medallon de Unicornio', 'clave', 'ambos', 'Un pesado medallon de bronce con el emblema de un unicornio', '../img/medallon_de_unicornio.png'),
-('Medallon de Doncella', 'clave', 'ambos', 'Un pesado medallon de oro con el emblema de una doncella', '../img/medallon_de_doncella.png'),
-('Caja Fuerte Portatil', 'clave', 'ambos', 'Una pequeña caja fuerte con combinación, si la consigues abrir puede traer buenas recompensas', '../img/Caja_Fuerte_Portatil.png'),
-('Llave de Diamante', 'clave', 'ambos', 'Una llave que tiene la forma del diamate', '../img/llave_de_diamante.png'),
-('Llave de Pica', 'clave', 'ambos', 'Una llave que tiene la forma de la pica', '../img/llave_de_pica.png'),
-('Cortacadenas', 'clave', 'ambos', 'Herramienta útil para cortar cadenas que impidan el paso', '../img/corta_cadenas.png');
+INSERT OR REPLACE INTO catalogo_items (id_item, nombre, tipo, ruta_exclusiva, descripcion, imagen_url) VALUES
+(1, 'Hierba Verde', 'curacion', 'ambos', 'Planta medicinal local. Cura un 25% de salud.', '../img/Verde_hierva.png'),
+(2, 'Cuchillo Defensivo', 'defensa', 'ambos', 'Permite evitar un mordisco. Se consume tras su uso.', '../img/Cuchillo_Defensivo.png'),
+(3, 'Munición de Pistola', 'municion', 'ambos', 'Balas de 9mm para armas de mano.', '../img/municion_pistola.png'),
+(4, 'Munición de Escopeta', 'municion', 'ambos', 'Cartuchos potentes para combate cercano.', '../img/cartucho_de_escopeta.png'),
+(5, 'Cinta de Guardado', 'clave', 'ambos', 'Permite registrar tu progreso una sola vez.', '../img/cinta_de_tinta.webp'),
+(6, 'Medallon de León', 'clave', 'ambos', 'Medallon de plata con emblema de león.', '../img/medallon_de_leon.png'),
+(7, 'Medallon de Unicornio', 'clave', 'ambos', 'Medallon de bronce con emblema de unicornio.', '../img/medallon_de_unicornio.png'),
+(8, 'Medallon de Doncella', 'clave', 'ambos', 'Medallon de oro con emblema de doncella.', '../img/medallon_de_doncella.png'),
+(9, 'Caja Fuerte Portatil', 'clave', 'ambos', 'Pequeña caja fuerte con combinación.', '../img/Caja_Fuerte_Portatil.png'),
+(10, 'Llave de Diamante', 'clave', 'ambos', 'Llave con forma de diamante.', '../img/llave_de_diamante.png'),
+(11, 'Llave de Pica', 'clave', 'ambos', 'Llave con forma de pica.', '../img/llave_de_pica.png'),
+(12, 'Cortacadenas', 'clave', 'ambos', 'Herramienta útil para cortar cadenas.', '../img/corta_cadenas.png');
 
-INSERT OR REPLACE INTO catalogo_enemigos (nombre, tipo, vida_maxima, dano_base, esquive_base, precision_cabeza, precision_torso, precision_piernas, prob_aturdir_piernas,
-multiplicador_cabeza, imagen_url) VALUES
--- Zombie Común: Equilibrado.
-('Zombie Hombre', 'comun', 50, 25, 35, 35, 75, 55, 50, 2.0, '../img/zombie_civil_hombre2.0.png'),
-('Zombie Mujer', 'comun', 50, 25, 35, 35, 75, 55, 50, 2.0, '../img/zombie_civil_mujer2.0.png'),
-('Zombie Recluso', 'comun', 50, 25, 35, 35, 75, 55, 50, 2.0, '../img/zombie_recluso2.0.png'),
-('Zombie Uniforme', 'comun', 50, 25, 35, 35, 75, 55, 50, 2.0, '../img/zombie_uniforme2.0.png'),
--- Licker: Muy difícil de dar en la cabeza por su postura, pero vulnerable al torso.
-('Licker', 'mutante', 75, 50, 25, 25, 60, 45, 30, 2.5, '../img/licker2.0.png'),
--- Lastre: Muy fácil de acertar (grande y lento), pero difícil de aturdir por su masa.
-('Lastre', 'zombie_pesado', 120, 15, 60, 40, 85, 40, 20, 1.5, '../img/lastre_enemigo2.0.png'),
--- Espasmo: Muy difícil de apuntar (errático), pero si le das en las piernas se nota.
-('Espasmo', 'zombie_agil', 40, 20, 15, 30, 50, 40, 60, 2.0, '../img/espasmo_enemigo2.0.png'),
--- FASE 1: El Recopilador (Científico Translúcido)
-('El Recopilador - Fase 1', 'boss', 300, 35, 10, 20, 70, 50, 40, 2.0, '../img/boss_fase1.png'),
-('El Recopilador - Fase 2', 'boss', 600, 55, 5, 15, 50, 40, 25, 3.0, '../img/boss_fase2.png'),
-('El Recopilador - Fase 3', 'boss', 1000, 80, 5, 10, 60, 30, 10, 4.0, '../img/boss_fase3.png');
+INSERT OR REPLACE INTO catalogo_enemigos (id_enemigo, nombre, tipo, vida_maxima, dano_base, esquive_base, precision_cabeza, precision_torso, precision_piernas, prob_aturdir_piernas, multiplicador_cabeza, imagen_url) VALUES
+(1, 'Zombie Hombre', 'comun', 50, 25, 35, 35, 75, 55, 50, 2.0, '../img/zombie_civil_hombre2.0.png'),
+(2, 'Zombie Mujer', 'comun', 50, 25, 35, 35, 75, 55, 50, 2.0, '../img/zombie_civil_mujer2.0.png'),
+(3, 'Zombie Recluso', 'comun', 50, 25, 35, 35, 75, 55, 50, 2.0, '../img/zombie_recluso2.0.png'),
+(4, 'Zombie Uniforme', 'comun', 50, 25, 35, 35, 75, 55, 50, 2.0, '../img/zombie_uniforme2.0.png'),
+(5, 'Licker', 'mutante', 75, 50, 25, 25, 60, 45, 30, 2.5, '../img/licker2.0.png'),
+(6, 'Lastre', 'zombie_pesado', 120, 15, 60, 40, 85, 40, 20, 1.5, '../img/lastre_enemigo2.0.png'),
+(7, 'Espasmo', 'zombie_agil', 40, 20, 15, 30, 50, 40, 60, 2.0, '../img/espasmo_enemigo2.0.png'),
+(8, 'El Recopilador - Fase 1', 'boss', 300, 35, 10, 20, 70, 50, 40, 2.0, '../img/boss_fase1.png'),
+(9, 'El Recopilador - Fase 2', 'boss', 400, 25, 0, 35, 80, 40, 25, 2.0, '../img/boss_fase2.png'),
+(10, 'El Recopilador - Fase 3', 'boss', 1000, 80, 5, 10, 60, 30, 10, 4.0, '../img/boss_fase3.png');
 
 
 -- CATALOGO_SALAS COMPLETO 
@@ -202,7 +211,8 @@ INSERT OR REPLACE INTO catalogo_salas (id_sala, nombre_visual, descripcion, capi
 ('banos_inicio', 'Baños (Inicio)', 'Un lugar lúgubre donde comenzó la pesadilla.', 1, NULL, NULL, 'lobby_principal', NULL, '../img/sala_baños.png'),
 ('lobby_principal', 'Lobby Principal', 'Hub central de la comisaría. Estatua de los medallones.', 1, 'pasillo', 'banos_inicio', 'oficina_este', 'sala_espera', '../img/lobby_principal.png'),
 ('sala_espera', 'Sala de Espera', 'Sillas volcadas y rastros de evacuación.', 1, 'oficina_oeste', NULL, 'lobby_principal', NULL, '../img/sala_de_espera.png'),
-('oficina_oeste', 'Oficina Oeste', 'Departamento de investigación. Huele a químicos.', 1, NULL, 'sala_espera', 'sala_archivos', NULL, '../img/oficina-oeste.png'),
+('oficina_oeste', 'Oficina Oeste', 'Departamento de investigación. Huele a químicos.', 1, NULL, 'sala_espera', 'sala_archivos', 'cuarto_evidencias', '../img/oficina-oeste.png'),
+('cuarto_evidencias', 'Cuarto de Evidencias', 'Estanterías con objetos confiscados y bolsas de plástico.', 1, NULL, NULL, 'oficina_oeste', NULL, '../img/oficina_este.png'),
 ('oficina_este', 'Oficina Este', 'Área administrativa. Hay una puerta con cadena.', 1, 'sala_descanso', NULL, NULL, 'lobby_principal', '../img/oficina_este.png'),
 ('sala_archivos', 'Sala de Archivos', 'Estanterías llenas de documentos y papel.', 1, NULL, NULL, NULL, 'oficina_oeste', '../img/sala_de_archivos.png'),
 ('sala_descanso', 'Sala de Descanso', 'Un pequeño refugio con literas y una cafetera.', 1, 'sala_interrogatorios', 'oficina_este', NULL, NULL, '../img/sala_de_descanso.png'),
@@ -214,54 +224,61 @@ INSERT OR REPLACE INTO catalogo_salas (id_sala, nombre_visual, descripcion, capi
 ('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, 'oficina_capitan', NULL, NULL, NULL, '../img/sala_electrica.png'),
 ('sala_final', 'Sótano de la Comisaría', 'El camino hacia la libertad... o hacia algo peor.', 1, NULL, 'lobby_principal', NULL, NULL, '../img/sala_final.png');
 
--- INSERTAR EVENTOS
-INSERT OR IGNORE INTO eventos_interactivos 
-(id_sala, nombre_objeto, xmin, xmax, ymin, ymax, tipo_accion, contenido_accion, requiere_item, script) VALUES 
-('banos_inicio', 'NOTA 1 INICIO DEL BROTE', 17.0, 29.0, 65.0, 85.0, 'leer_archivo', '1', '', 'abrirMenuArchivo'),
-('banos_inicio', 'NOTA OCULTA 6', 32.0, 37.0, 66.0, 69.0, 'leer_archivo', '15', '', 'abrirMenuArchivo'),
-('lobby_principal', 'ESTATUA', 39.0, 62.0, 26.0, 74.0, 'puzzle', 'medallones', '', 'abrirMenuPuzzle'),
-('lobby_principal', 'PISTOLA', 90.0, 98.0, 54.0, 60.0, 'recoger_arma', '1', '', 'añadirInventario'),
-('lobby_principal', 'ITEM RANDOM', 14.0, 16.0, 62.0, 63.0, 'recoger_item', 'random', '', 'añadirInventario'),
-('sala_espera', 'NOTA 3', 85.0, 94.0, 72.0, 77.0, 'leer_archivo', '3', '', 'abrirMenuArchivo'),
-('sala_espera', 'PISTA CUADERNO LEON', 11.0, 20.0, 62.0, 68.0, 'leer_archivo', '8', '', 'abrirMenuArchivo'),
-('sala_espera', 'ITEM RANDOM', 55.0, 59.0, 61.0, 62.0, 'recoger_item', 'random', '', 'añadirInventario'),
-('oficina_oeste', 'NOTA 2', 37.0, 40.0, 35.0, 42.0, 'leer_archivo', '2', '', 'abrirMenuArchivo'),
-('oficina_oeste', 'NOTA OCULTA 1', 96.0, 99.0, 71.0, 72.0, 'leer_archivo', '10', '', 'abrirMenuArchivo'),
-('oficina_oeste', 'CAJA FUERTE PORTATIL', 53.0, 59.0, 82.0, 86.0, 'recoger_item', '10', '', 'añadirInventario'),
-('oficina_oeste', 'CAJÓN CON LLAVE', 12.0, 16.0, 77.0, 81.0, 'abrir_contenedor', 'item', 'Llave de Pica', 'intentarAbrir'),
-('oficina_oeste', 'PUNTO DE GUARDADO', 13.0, 21.0, 67.0, 72.0, 'guardar', 'maquina_escribir', 'Cinta de Guardado', 'abrirMenuGuardado'),
-('sala_archivos', 'NOTA 6', 56.0, 60.0, 68.0, 71.0, 'leer_archivo', '6', '', 'abrirMenuArchivo'),
-('sala_archivos', 'MEDALLON UNICORNIO', 71.0, 79.0, 73.0, 82.0, 'recoger_item', '8', '', 'añadirInventario'),
-('sala_archivos', 'ITEM RANDOM', 68.0, 72.0, 38.0, 42.0, 'recoger_item', 'random', '', 'añadirInventario'),
-('sala_archivos', 'ITEM RANDOM', 12.0, 16.0, 47.0, 52.0, 'recoger_item', 'random', '', 'añadirInventario'),
-('oficina_este', 'NOTA 4', 21.0, 25.0, 64.0, 66.0, 'leer_archivo', '4', '', 'abrirMenuArchivo'),
-('oficina_este', 'LLAVE PICA', 86.0, 91.0, 79.0, 83.0, 'recoger_item', '12', '', 'añadirInventario'),
-('oficina_este', 'PUERTA PARA CORTAR', 59.0, 63.0, 44.0, 50.0, 'desbloquear', 'puerta', 'Cortacadenas', 'usarHerramienta'),
-('oficina_este', 'ITEM RANDOM', 74.0, 78.0, 52.0, 57.0, 'recoger_item', 'random', '', 'añadirInventario'),
-('oficina_capitan', 'NOTA 7', 57.0, 59.0, 80.0, 81.0, 'leer_archivo', '7', '', 'abrirMenuArchivo'),
-('oficina_capitan', 'CAJA FUERTE CORTACADENAS', 48.0, 54.0, 56.0, 70.0, 'puzzle', 'caja_fuerte', '', 'abrirMenuPuzzle'),
-('oficina_capitan', 'BOTELLA RON', 26.0, 30.0, 84.0, 94.0, 'recoger_item', 'consumible', '', 'añadirInventario'),
-('oficina_capitan', 'NOTA OCULTA 4', 85.0, 92.0, 87.0, 98.0, 'leer_archivo', '13', '', 'abrirMenuArchivo'),
-('oficina_capitan', 'PUERTA IZQ', 4.0, 12.0, 36.0, 94.0, 'transicion', 'sala_electrica', '', 'cambiarSala'),
-('oficina_capitan', 'ITEM RANDOM', 61.0, 64.0, 59.0, 63.0, 'recoger_item', 'random', '', 'añadirInventario'),
-('sala_electrica', 'PUZZLE FUSIBLES', 16.0, 22.0, 24.0, 42.0, 'puzzle', 'electricidad', '', 'abrirMenuPuzzle'),
-('sala_electrica', 'NOTA OCULTA 2', 86.0, 94.0, 64.0, 74.0, 'leer_archivo', '11', '', 'abrirMenuArchivo'),
-('sala_electrica', 'ITEM RANDOM', 77.0, 80.0, 19.0, 25.0, 'recoger_item', 'random', '', 'añadirInventario'),
-('pasillo', 'ESTATUA LEON', 32.0, 50.0, 25.0, 74.0, 'puzzle', 'puzzle_leon', '', 'abrirMenuPuzzle'),
-('pasillo', 'ITEM RANDOM', 11.0, 15.0, 25.0, 30.0, 'recoger_item', 'random', '', 'añadirInventario'),
-('pasillo', 'ITEM RANDOM', 75.0, 78.0, 47.0, 51.0, 'recoger_item', 'random', '', 'añadirInventario'),
-('sala_arte', 'ESTATUA DONCELLA', 44.0, 55.0, 26.0, 80.0, 'puzzle', 'puzzle_doncella', '', 'abrirMenuPuzzle'),
-('sala_arte', 'NOTA OCULTA 5', 64.0, 67.0, 76.0, 79.0, 'leer_archivo', '14', '', 'abrirMenuArchivo'),
-('sala_arte', 'ITEM RANDOM', 30.0, 33.0, 67.0, 70.0, 'recoger_item', 'random', '', 'añadirInventario'),
-('biblioteca', 'NOTA 5', 68.0, 71.0, 62.0, 62.0, 'leer_archivo', '5', '', 'abrirMenuArchivo'),
-('biblioteca', 'NOTA OCULTA 3', 42.0, 45.0, 81.0, 83.0, 'leer_archivo', '12', '', 'abrirMenuArchivo'),
-('biblioteca', 'ITEM RANDOM', 8.0, 11.0, 63.0, 66.0, 'recoger_item', 'random', '', 'añadirInventario'),
-('sala_descanso', 'ESCOPETA ROTA', 58.0, 60.0, 49.0, 76.0, 'recoger_item', 'arma_rota', '', 'añadirInventario'),
-('sala_descanso', 'CAJA FUERTE PORTATIL', 2.0, 7.0, 61.0, 65.0, 'recoger_item', '10', '', 'añadirInventario'),
-('sala_descanso', 'GUARDADO', 17.0, 33.0, 63.0, 82.0, 'guardar', 'maquina_escribir', 'Cinta de Guardado', 'abrirMenuGuardado'),
-('sala_descanso', 'ITEM RANDOM', 84.0, 87.0, 22.0, 28.0, 'recoger_item', 'random', '', 'añadirInventario'),
-('sala_interrogatorios', 'PROTOCOLO DE CIERRE', 37.0, 45.0, 69.0, 77.0, 'leer_archivo', '9', '', 'abrirMenuArchivo'),
-('sala_interrogatorios', 'NOTA OCULTA 7', 27.0, 31.0, 47.0, 54.0, 'leer_archivo', '16', '', 'abrirMenuArchivo');
+-- INSERTAR EVENTOS (CON IDs FIJOS)
+INSERT OR REPLACE INTO eventos_interactivos 
+(id_evento, id_sala, nombre_objeto, xmin, xmax, ymin, ymax, tipo_accion, contenido_accion, requiere_item, script) VALUES 
+(1, 'banos_inicio', 'NOTA 1 INICIO DEL BROTE', 17.0, 29.0, 65.0, 85.0, 'leer_archivo', '1', '', 'abrirMenuArchivo'),
+(2, 'banos_inicio', 'NOTA OCULTA 6', 32.0, 37.0, 66.0, 69.0, 'leer_archivo', '15', '', 'abrirMenuArchivo'),
+(3, 'lobby_principal', 'ESTATUA', 39.0, 62.0, 26.0, 74.0, 'puzzle', 'medallones', '', 'abrirMenuPuzzle'),
+(4, 'lobby_principal', 'PISTOLA', 90.0, 98.0, 54.0, 60.0, 'recoger_arma', '1', '', 'añadirInventario'),
+(5, 'lobby_principal', 'ITEM RANDOM', 14.0, 16.0, 62.0, 63.0, 'recoger_item', 'random', '', 'añadirInventario'),
+(6, 'sala_espera', 'NOTA 3', 85.0, 94.0, 72.0, 77.0, 'leer_archivo', '3', '', 'abrirMenuArchivo'),
+(7, 'sala_espera', 'PISTA CUADERNO LEON', 11.0, 20.0, 62.0, 68.0, 'leer_archivo', '8', '', 'abrirMenuArchivo'),
+(8, 'sala_espera', 'ITEM RANDOM', 55.0, 59.0, 61.0, 62.0, 'recoger_item', 'random', '', 'añadirInventario'),
+(9, 'oficina_oeste', 'NOTA 2', 37.0, 40.0, 35.0, 42.0, 'leer_archivo', '2', '', 'abrirMenuArchivo'),
+(10, 'oficina_oeste', 'NOTA OCULTA 1', 96.0, 99.0, 71.0, 72.0, 'leer_archivo', '10', '', 'abrirMenuArchivo'),
+(11, 'oficina_oeste', 'CAJA FUERTE PORTATIL', 53.0, 59.0, 82.0, 86.0, 'recoger_item', '9', '', 'añadirInventario'),
+(12, 'oficina_oeste', 'CAJÓN CON LLAVE', 12.0, 16.0, 77.0, 81.0, 'abrir_contenedor', 'item', 'Llave de Pica', 'intentarAbrir'),
+(13, 'oficina_oeste', 'PUNTO DE GUARDADO', 13.0, 21.0, 67.0, 72.0, 'guardar', 'maquina_escribir', 'Cinta de Guardado', 'abrirMenuGuardado'),
+(14, 'sala_archivos', 'NOTA 6: Caja fuerte del capitán', 56.0, 60.0, 68.0, 71.0, 'leer_archivo', '6', '', 'abrirMenuArchivo'),
+(15, 'sala_archivos', 'MEDALLON UNICORNIO', 71.0, 79.0, 73.0, 82.0, 'recoger_item', '7', '', 'añadirInventario'),
+(16, 'sala_archivos', 'ITEM RANDOM', 68.0, 72.0, 38.0, 42.0, 'recoger_item', 'random', '', 'añadirInventario'),
+(17, 'sala_archivos', 'ITEM RANDOM', 12.0, 16.0, 47.0, 52.0, 'recoger_item', 'random', '', 'añadirInventario'),
+(18, 'oficina_este', 'NOTA 4', 21.0, 25.0, 64.0, 66.0, 'leer_archivo', '4', '', 'abrirMenuArchivo'),
+(19, 'oficina_este', 'LLAVE PICA', 86.0, 91.0, 79.0, 83.0, 'recoger_item', '11', '', 'añadirInventario'),
+(20, 'oficina_este', 'PUERTA PARA CORTAR', 59.0, 63.0, 44.0, 50.0, 'desbloquear', 'puerta', 'Cortacadenas', 'usarHerramienta'),
+(21, 'oficina_este', 'ITEM RANDOM', 74.0, 78.0, 52.0, 57.0, 'recoger_item', 'random', '', 'añadirInventario'),
+(22, 'oficina_capitan', 'NOTA 7', 57.0, 59.0, 80.0, 81.0, 'leer_archivo', '7', '', 'abrirMenuArchivo'),
+(23, 'oficina_capitan', 'CAJA FUERTE CORTACADENAS', 48.0, 54.0, 56.0, 70.0, 'puzzle', 'caja_fuerte', '', 'abrirMenuPuzzle'),
+(24, 'oficina_capitan', 'BOTELLA RON', 26.0, 30.0, 84.0, 94.0, 'recoger_item', 'consumible', '', 'añadirInventario'),
+(25, 'oficina_capitan', 'NOTA OCULTA 4', 85.0, 92.0, 87.0, 98.0, 'leer_archivo', '13', '', 'abrirMenuArchivo'),
+(26, 'oficina_capitan', 'PUERTA IZQ', 4.0, 12.0, 36.0, 94.0, 'transicion', 'sala_electrica', '', 'cambiarSala'),
+(27, 'oficina_capitan', 'ITEM RANDOM', 61.0, 64.0, 59.0, 63.0, 'recoger_item', 'random', '', 'añadirInventario'),
+(28, 'sala_electrica', 'PUZZLE FUSIBLES', 16.0, 22.0, 24.0, 42.0, 'puzzle', 'electricidad', '', 'abrirMenuPuzzle'),
+(29, 'sala_electrica', 'NOTA OCULTA 2', 86.0, 94.0, 64.0, 74.0, 'leer_archivo', '11', '', 'abrirMenuArchivo'),
+(30, 'sala_electrica', 'ITEM RANDOM', 77.0, 80.0, 19.0, 25.0, 'recoger_item', 'random', '', 'añadirInventario'),
+(31, 'pasillo', 'ESTATUA LEON', 32.0, 50.0, 25.0, 74.0, 'puzzle', 'puzzle_leon', '', 'abrirMenuPuzzle'),
+(32, 'pasillo', 'ITEM RANDOM', 11.0, 15.0, 25.0, 30.0, 'recoger_item', 'random', '', 'añadirInventario'),
+(33, 'pasillo', 'ITEM RANDOM', 75.0, 78.0, 47.0, 51.0, 'recoger_item', 'random', '', 'añadirInventario'),
+(34, 'sala_arte', 'ESTATUA DONCELLA', 44.0, 55.0, 26.0, 80.0, 'puzzle', 'puzzle_doncella', '', 'abrirMenuPuzzle'),
+(35, 'sala_arte', 'NOTA OCULTA 5', 64.0, 67.0, 76.0, 79.0, 'leer_archivo', '14', '', 'abrirMenuArchivo'),
+(36, 'sala_arte', 'ITEM RANDOM', 30.0, 33.0, 67.0, 70.0, 'recoger_item', 'random', '', 'añadirInventario'),
+(37, 'biblioteca', 'NOTA 5', 68.0, 71.0, 62.0, 62.0, 'leer_archivo', '5', '', 'abrirMenuArchivo'),
+(38, 'biblioteca', 'NOTA OCULTA 3', 42.0, 45.0, 81.0, 83.0, 'leer_archivo', '12', '', 'abrirMenuArchivo'),
+(39, 'biblioteca', 'ITEM RANDOM', 8.0, 11.0, 63.0, 66.0, 'recoger_item', 'random', '', 'añadirInventario'),
+(40, 'sala_descanso', 'ESCOPETA ROTA', 58.0, 60.0, 49.0, 76.0, 'recoger_item', 'arma_rota', '', 'añadirInventario'),
+(41, 'sala_descanso', 'CAJA FUERTE PORTATIL', 2.0, 7.0, 61.0, 65.0, 'recoger_item', '9', '', 'añadirInventario'),
+(42, 'sala_descanso', 'GUARDADO', 17.0, 33.0, 63.0, 82.0, 'guardar', 'maquina_escribir', 'Cinta de Guardado', 'abrirMenuGuardado'),
+(43, 'sala_descanso', 'ITEM RANDOM', 84.0, 87.0, 22.0, 28.0, 'recoger_item', 'random', '', 'añadirInventario'),
+(44, 'sala_interrogatorios', 'PROTOCOLO DE CIERRE', 37.0, 45.0, 69.0, 77.0, 'leer_archivo', '9', '', 'abrirMenuArchivo'),
+(45, 'sala_interrogatorios', 'NOTA OCULTA 7', 27.0, 31.0, 47.0, 54.0, 'leer_archivo', '16', '', 'abrirMenuArchivo'),
+(46, 'oficina_oeste', 'PUERTA PICA', 90.0, 100.0, 30.0, 70.0, 'desbloquear', 'puerta', 'Llave de Pica', 'usarHerramienta'),
+(47, 'sala_final', 'HIERBA VERDE', 25.0, 30.0, 75.0, 85.0, 'recoger_item', '1', '', 'añadirInventario'),
+(48, 'sala_final', 'HIERBA VERDE', 70.0, 75.0, 75.0, 85.0, 'recoger_item', '1', '', 'añadirInventario'),
+(49, 'sala_final', 'MUNICIÓN ESCOPETA', 40.0, 45.0, 70.0, 75.0, 'recoger_item', '4', '', 'añadirInventario'),
+(50, 'sala_final', 'MUNICIÓN PISTOLA', 55.0, 60.0, 70.0, 75.0, 'recoger_item', '3', '', 'añadirInventario'),
+(51, 'sala_final', 'MUNICIÓN ESCOPETA', 45.0, 50.0, 75.0, 80.0, 'recoger_item', '4', '', 'añadirInventario'),
+(52, 'sala_final', 'MUNICIÓN PISTOLA', 50.0, 55.0, 75.0, 80.0, 'recoger_item', '3', '', 'añadirInventario');
 
 -- NOTAS DE HISTORIA PRINCIPAL Y NOTAS OCULTAS
 INSERT OR REPLACE INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, imagen_url) VALUES
@@ -273,7 +290,7 @@ INSERT OR REPLACE INTO catalogo_archivos (nombre, ruta_exclusiva, informacion, i
 ('NOTA 3: Orden interna', 'ambos', 'A TODO EL PERSONAL: Queda prohibido permitir la entrada a civiles con heridas abiertas o mordeduras. Cualquier individuo que muestre signos de agresividad extrema deberá ser neutralizado. Disparen a la cabeza. — Capitanía', '../img/fondo_nota.png'),
 ('NOTA 4: Mensaje personal', 'ambos', 'Sarah, si estás leyendo esto, lo siento. Dejé pasar a gente herida… niños, incluso. Pensé que estaba haciendo lo correcto. Ahora están dentro. Si no salgo de aquí, no dejes que nadie se acerque a ti si está herido. — Mike', '../img/fondo_nota.png'),
 ('NOTA 5: Informe clasificado', 'ambos', '[DOCUMENTO DAÑADO] …el brote no es natural. Se sospecha de una filtración en los laboratorios subterráneos de la ciudad. Nombre en clave: \"T-Virus\". Efectos: Reanimación post-mortem, pérdida de funciones cognitivas, agresión extrema. [FIN DEL DOCUMENTO]', '../img/fondo_nota.png'),
-('NOTA 6: Grabación transcrita', 'ambos', '[Inicio de grabación] No queda nadie… Intentamos resistir en el vestíbulo, pero… no paran. Las puertas no aguantaron. Si alguien encuentra esto: no vengas aquí. [Golpes, gritos] Dios… están entrando— [Fin de grabación]', '../img/fondo_nota.png'),
+('NOTA 6: Caja fuerte del capitán', 'ambos', 'Me acuerdo de aquella vez que estuve hablando con el capitán sobre lo que guardaba en la caja fuerte de su despacho. Que si documentos importantes y una foto de su familia, la verdad que todo bien, pero me pidió que guardara el cortacadenas en esa caja, me pregunto para que? Bueno, si lo estas buscando la combinación es 911, pero cuidado que no te regañe por abrirla…', '../img/fondo_nota.png'),
 ('NOTA 7: Último informe del capitán', 'ambos', 'Hemos perdido la comisaría. Los supervivientes que quedan están dispersos o muertos. Esto no fue un fallo… fue una condena desde el principio. Si alguien logra escapar: La ciudad está perdida. No busques ayuda aquí. — Capitán de policía', '../img/fondo_nota.png'),
 ('Cuaderno de Leon (Pista)', 'ambos', 'Día 1: Las puertas del lobby están selladas. Parece que el código de la salida está relacionado con tres estatuas... Lobo, Águila y Serpiente.', '../img/fondo_nota.png'),
 ('Protocolo de Cierre (Pista)', 'ambos', 'Nivel de amenaza crítico. Salida del garaje bloqueada. Requiere inserción de los tres medallones tácticos en el panel inferior.', '../img/fondo_nota.png'),
@@ -304,8 +321,10 @@ INSERT OR REPLACE INTO catalogo_logros (nombre, descripcion) VALUES
 
 $db->exec($inserts);
 
-$db->exec("ALTER TABLE usuarios ADD COLUMN rol TEXT DEFAULT 'jugador'");
-$db->exec("ALTER TABLE usuarios ADD COLUMN zombies_visibles INTEGER DEFAULT 1");
+$db->exec('PRAGMA foreign_keys = ON;');
+
+@$db->exec("ALTER TABLE usuarios ADD COLUMN rol TEXT DEFAULT 'jugador'");
+@$db->exec("ALTER TABLE usuarios ADD COLUMN zombies_visibles INTEGER DEFAULT 1");
 
 $adminHash = password_hash('admin123', PASSWORD_BCRYPT, ['cost' => 12]);
 $stmtAdmin = $db->prepare(

@@ -21,7 +21,7 @@ if (!$id_partida) {
 try {
     $pdo->beginTransaction();
 
-    $stmt_count = $pdo->prepare("SELECT COUNT(*) FROM inventario WHERE id_partida = ? AND tipo_objeto = 'item' AND id_objeto = 10");
+    $stmt_count = $pdo->prepare("SELECT COUNT(*) FROM inventario WHERE id_partida = ? AND tipo_objeto = 'item' AND id_objeto = 9");
     $stmt_count->execute([$id_partida]);
     $cajas_restantes = (int) $stmt_count->fetchColumn();
 
