@@ -241,28 +241,21 @@ if ($zombiesVisibles) {
     $hay_combate = ($enemigo_presente && $id_reg_huido != $enemigo_presente['id_registro']);
 }
 
-// sala_final: el boss nunca bloquea la sala al entrar.
-// El encuentro solo ocurre cuando el jugador hace clic en la puerta.
-// Limpiamos cualquier boss residual para que la sala sea explorable libremente.
 if ($id_sala_actual === 'sala_final') {
     $hay_combate = false;
     $enemigo_presente = null;
-    // Borrar entradas de boss que puedan haber quedado de pruebas o combates previos
     $pdo->prepare("DELETE FROM estado_enemigos WHERE id_partida = ? AND sala_ubicacion = 'sala_final'")
         ->execute([$id_partida]);
 }
 
-//6. EVENTOS Y VIDA 
 if (!isset($_SESSION['eventos_recogidos_sesion']))
     $_SESSION['eventos_recogidos_sesion'] = [];
 $query_eventos = $pdo->prepare("SELECT * FROM eventos_interactivos WHERE id_sala = ?");
 $query_eventos->execute([$id_sala_actual]);
 $eventos = $query_eventos->fetchAll(PDO::FETCH_ASSOC);
 
-// Pool de Loot (Items consumibles y Claves)
 $loot_pool_names = [
     'Hierba Verde',
-    'Pólvora Gris',
     'Cinta de Guardado',
     'Munición de Pistola',
     'Munición de Escopeta'
@@ -306,18 +299,18 @@ if ($id_sala_actual === 'lobby_principal') {
 
         // Hotspot visible sobre la apertura de la escalera central
         $eventos[] = [
-            'id_evento'        => 9997,
-            'id_sala'          => 'lobby_principal',
-            'nombre_objeto'    => '↓ BAJAR AL SÓTANO',
-            'xmin'             => 40.0,
-            'xmax'             => 60.0,
-            'ymin'             => 58.0,
-            'ymax'             => 82.0,
-            'tipo_accion'      => 'transicion',
+            'id_evento' => 9997,
+            'id_sala' => 'lobby_principal',
+            'nombre_objeto' => '↓ BAJAR AL SÓTANO',
+            'xmin' => 40.0,
+            'xmax' => 60.0,
+            'ymin' => 58.0,
+            'ymax' => 82.0,
+            'tipo_accion' => 'transicion',
             'contenido_accion' => 'sala_final',
-            'requiere_item'    => '',
-            'script'           => '',
-            'imagen_item'      => ''
+            'requiere_item' => '',
+            'script' => '',
+            'imagen_item' => ''
         ];
     }
 }
@@ -325,22 +318,30 @@ if ($id_sala_actual === 'lobby_principal') {
 // Lógica especial para la Sala Final (Sótano)
 if ($id_sala_actual === 'sala_final') {
     $eventos[] = [
-        'id_evento'        => 9998,
-        'id_sala'          => 'sala_final',
-        'nombre_objeto'    => 'PUERTA DEL LABORATORIO',
-        'xmin'             => 42.0,   // Solo la puerta del fondo
-        'xmax'             => 58.0,
-        'ymin'             => 18.0,
-        'ymax'             => 60.0,
-        'tipo_accion'      => 'jefe_final',
+        'id_evento' => 9998,
+        'id_sala' => 'sala_final',
+        'nombre_objeto' => 'PUERTA DEL LABORATORIO',
+        'xmin' => 42.0,   // Solo la puerta del fondo
+        'xmax' => 58.0,
+        'ymin' => 18.0,
+        'ymax' => 60.0,
+        'tipo_accion' => 'jefe_final',
         'contenido_accion' => '9',    // El Recopilador Fase 2
-        'requiere_item'    => '',
-        'script'           => '',
-        'imagen_item'      => ''
+        'requiere_item' => '',
+        'script' => '',
+        'imagen_item' => ''
     ];
 }
 
 foreach ($eventos as $key => &$ev) {
+    // Override: Cambiar Escopeta Rota por la funcional
+    if ($ev['nombre_objeto'] === 'ESCOPETA ROTA') {
+        $ev['nombre_objeto'] = 'ESCOPETA W-870';
+        $ev['tipo_accion'] = 'recoger_arma';
+        $ev['contenido_accion'] = 2; // ID Escopeta en catalogo_armas
+        $ev['imagen_item'] = '../img/EscopetaW-870.png';
+    }
+
     // Los eventos de guardar NUNCA se ocultan, siempre deben estar disponibles
     if ($ev['tipo_accion'] !== 'guardar' && in_array($ev['id_evento'], $completados)) {
         unset($eventos[$key]);
@@ -348,10 +349,26 @@ foreach ($eventos as $key => &$ev) {
     }
 
     if ($ev['contenido_accion'] === 'random') {
-        // Probabilidad de aparición: 60%
-        if (rand(1, 100) > 60) {
-            unset($eventos[$key]);
-            continue;
+        if ($id_sala_actual === 'lobby_principal') {
+            $ev['nombre_objeto'] = 'Hierba Verde';
+            $ev['contenido_accion'] = 1; // ID de Hierba Verde
+            $ev['imagen_item'] = '../img/Verde_hierva.png';
+        } elseif ($id_sala_actual === 'pasillo') {
+            if ($ev['xmin'] < 20) {
+                $ev['nombre_objeto'] = 'Cinta de Guardado';
+                $ev['contenido_accion'] = 5; // ID Cinta
+                $ev['imagen_item'] = '../img/cinta_de_tinta.webp';
+            } else {
+                $ev['nombre_objeto'] = 'Munición de Pistola';
+                $ev['contenido_accion'] = 3; // ID Munición
+                $ev['imagen_item'] = '../img/municion_pistola.png';
+            }
+        } else {
+            // Probabilidad de aparición: 60% para el resto de salas
+            if (rand(1, 100) > 60) {
+                unset($eventos[$key]);
+                continue;
+            }
         }
 
         $rand_val = rand(1, 100);
@@ -980,10 +997,13 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
         <?php if (!$hay_combate): ?>
             <?php foreach ($eventos as $ev): ?>
                 <?php
-                    $extraClass = '';
-                    if ($ev['tipo_accion'] === 'jefe_final')   $extraClass = 'boss-door';
-                    if ($ev['tipo_accion'] === 'transicion')   $extraClass = 'passage-entry';
-                    if (!empty($ev['imagen_item']))             $extraClass .= ' has-item';
+                $extraClass = '';
+                if ($ev['tipo_accion'] === 'jefe_final')
+                    $extraClass = 'boss-door';
+                if ($ev['tipo_accion'] === 'transicion')
+                    $extraClass = 'passage-entry';
+                if (!empty($ev['imagen_item']))
+                    $extraClass .= ' has-item';
                 ?>
                 <div class="hotspot <?php echo trim($extraClass); ?>"
                     title="<?php echo htmlspecialchars($ev['nombre_objeto']); ?>"
