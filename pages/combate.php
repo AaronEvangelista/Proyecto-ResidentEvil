@@ -330,6 +330,21 @@ $armas_disponibles[] = [
     </div>
 
     <script>
+        // --- EFECTOS DE SONIDO ---
+        const sndPistola = new Audio('../sounds/disparo_pistola.mp3');
+        const sndEscopeta = new Audio('../sounds/disparo_escopeta.mp3');
+        const sndAtaqueEnemigo = new Audio('../sounds/ataque_mordisco.mp3');
+
+        // Función genérica para reproducir y cortar el audio
+        function reproducirSonidoCorto(audio, duracionMs) {
+            audio.currentTime = 0;
+            audio.play();
+            setTimeout(() => {
+                audio.pause();
+                audio.currentTime = 0;
+            }, duracionMs);
+        }
+
         let eHP = parseInt(<?php echo (int) $enemigo['vida_restante']; ?>);
         const eHPMax = parseInt(<?php echo (int) $enemigo['vida_maxima']; ?>);
         let pHP = parseInt(<?php echo (int) $vida_jugador; ?>);
@@ -425,6 +440,13 @@ $armas_disponibles[] = [
             turnoBloqueado = true;
             escribirLog("ATACANDO A " + zona + "...");
 
+            // Sonido de disparo (Configurado a 1500ms = 1.5 segundos)
+            if (arma.nombre.toLowerCase().includes('escopeta')) {
+                reproducirSonidoCorto(sndEscopeta, 1500);
+            } else if (arma.nombre.toLowerCase().includes('pistola')) {
+                reproducirSonidoCorto(sndPistola, 1500);
+            }
+
             consumirMunicion(() => {
                 setTimeout(() => {
                     if (Math.random() * 100 <= probabilidad) {
@@ -432,8 +454,7 @@ $armas_disponibles[] = [
                         if (zona === 'cabeza') {
                             danoFinal = Math.round(danoBase * multCabezaJugador);
                             escribirLog("¡TIRO EN LA CABEZA! DAÑO MASIVO.");
-                        }
-                        if (zona === 'piernas') {
+                        } else if (zona === 'piernas') {
                             danoFinal = Math.round(danoBase * 0.7);
                             if (Math.random() > 0.5) {
                                 enemigoAturdido = true;
@@ -441,10 +462,12 @@ $armas_disponibles[] = [
                             } else {
                                 escribirLog("IMPACTO EN PIERNAS.");
                             }
+                        } else {
+                             escribirLog("¡IMPACTO! OBJETIVO PIERDE " + danoFinal + " HP.");
                         }
+
                         eHP = Math.max(0, eHP - danoFinal);
                         actualizarInterfaz();
-                        if (zona !== 'cabeza' && zona !== 'piernas') escribirLog("¡IMPACTO! OBJETIVO PIERDE " + danoFinal + " HP.");
 
                         if (eHP <= 0) {
                             escribirLog("AMENAZA ELIMINADA.");
@@ -472,6 +495,9 @@ $armas_disponibles[] = [
             escribirLog("EL ENEMIGO ATACA...");
 
             setTimeout(() => {
+                // Sonido de ataque enemigo (Configurado a 1500ms = 1.5 segundos)
+                reproducirSonidoCorto(sndAtaqueEnemigo, 1500);
+
                 const flash = document.getElementById('flash');
                 flash.style.opacity = "0.4";
                 setTimeout(() => flash.style.opacity = "0", 150);
