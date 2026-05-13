@@ -23,7 +23,6 @@ try {
     ];
 
     foreach ($slots_db as $row) {
-        // Obtener nombre visual de la sala
         $stmt_sala = $pdo->prepare("SELECT nombre_visual FROM catalogo_salas WHERE id_sala = ?");
         $stmt_sala->execute([$row['sala_actual']]);
         $nombre_sala = $stmt_sala->fetchColumn();

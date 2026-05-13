@@ -80,13 +80,10 @@ try {
     if ($evento) {
         $id_evento = $evento['id_evento'];
 
-        // Insertar en DB de completados
         $stmt_comp = $pdo->prepare("
             INSERT OR IGNORE INTO eventos_completados (id_partida, id_evento) VALUES (?, ?)
         ");
         $stmt_comp->execute([$id_partida, $id_evento]);
-
-        // Marcar también en sesión activa
         if (!isset($_SESSION['eventos_recogidos_sesion'])) {
             $_SESSION['eventos_recogidos_sesion'] = [];
         }

@@ -53,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
 
-            // Si es un item, verificar si es clave
             if ($tipo === 'item') {
                 $stmt_clave = $pdo->prepare("
                     SELECT tipo FROM catalogo_items ci
