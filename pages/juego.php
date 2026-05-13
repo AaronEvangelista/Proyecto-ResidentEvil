@@ -262,7 +262,6 @@ $eventos = $query_eventos->fetchAll(PDO::FETCH_ASSOC);
 // Pool de Loot (Items consumibles y Claves)
 $loot_pool_names = [
     'Hierba Verde',
-    'Cuchillo Defensivo',
     'Pólvora Gris',
     'Cinta de Guardado',
     'Munición de Pistola',
