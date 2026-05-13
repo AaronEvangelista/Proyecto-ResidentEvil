@@ -26,9 +26,9 @@ $soluciones = [
 ];
 
 $recompensas = [
-    'puzzle_leon' => 7,
-    'puzzle_unicornio' => 8,
-    'puzzle_doncella' => 9
+    'puzzle_leon' => 6,
+    'puzzle_unicornio' => 7,
+    'puzzle_doncella' => 8
 ];
 
 if (!isset($soluciones[$tipo_puzzle])) {

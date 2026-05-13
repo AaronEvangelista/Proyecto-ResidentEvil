@@ -15,7 +15,7 @@ if (!$id_partida) {
     exit;
 }
 
-$medallones_requeridos = [7, 8, 9];
+$medallones_requeridos = [6, 7, 8];
 
 try {
     $medallones_en_db = [];

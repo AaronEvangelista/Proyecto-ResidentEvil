@@ -317,16 +317,18 @@ if ($id_sala_actual === 'lobby_principal') {
 
 // Lógica especial para la Sala Final (Sótano)
 if ($id_sala_actual === 'sala_final') {
+    $fusibles_completados = in_array(28, $completados);
+
     $eventos[] = [
         'id_evento' => 9998,
         'id_sala' => 'sala_final',
-        'nombre_objeto' => 'PUERTA DEL LABORATORIO',
-        'xmin' => 42.0,   // Solo la puerta del fondo
+        'nombre_objeto' => $fusibles_completados ? 'PUERTA DEL LABORATORIO' : 'PUERTA SELLADA (SIN ENERGÍA)',
+        'xmin' => 42.0,
         'xmax' => 58.0,
         'ymin' => 18.0,
         'ymax' => 60.0,
-        'tipo_accion' => 'jefe_final',
-        'contenido_accion' => '9',    // El Recopilador Fase 2
+        'tipo_accion' => $fusibles_completados ? 'jefe_final' : 'mensaje',
+        'contenido_accion' => $fusibles_completados ? '9' : 'La puerta requiere energía para abrirse. El sistema eléctrico está caído.',
         'requiere_item' => '',
         'script' => '',
         'imagen_item' => ''
@@ -962,11 +964,34 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
         </div>
 
         <div class="navigation-controls <?php echo $hay_combate ? 'nav-blocked' : ''; ?>">
-            <?php if ($sala['norte']): ?><a href="juego.php?sala=<?php echo $sala['norte']; ?>"
+            <?php
+            $norte_bloqueado = false;
+            $oeste_bloqueado = false;
+            $este_bloqueado = false;
+
+            if ($id_sala_actual === 'oficina_este') {
+                foreach ($eventos as $e_check) {
+                    if ($e_check['nombre_objeto'] === 'PUERTA PARA CORTAR') {
+                        $norte_bloqueado = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($id_sala_actual === 'oficina_oeste') {
+                foreach ($eventos as $e_check) {
+                    if ($e_check['nombre_objeto'] === 'PUERTA PICA') {
+                        $este_bloqueado = true;
+                        break;
+                    }
+                }
+            }
+            ?>
+            <?php if ($sala['norte'] && !$norte_bloqueado): ?><a href="juego.php?sala=<?php echo $sala['norte']; ?>"
                     class="nav-btn north">▲</a><?php endif; ?>
             <?php if ($sala['sur']): ?><a href="juego.php?sala=<?php echo $sala['sur']; ?>"
                     class="nav-btn south">▼</a><?php endif; ?>
-            <?php if ($sala['este']): ?><a href="juego.php?sala=<?php echo $sala['este']; ?>"
+            <?php if ($sala['este'] && !$este_bloqueado): ?><a href="juego.php?sala=<?php echo $sala['este']; ?>"
                     class="nav-btn east">►</a><?php endif; ?>
             <?php if ($sala['oeste']): ?><a href="juego.php?sala=<?php echo $sala['oeste']; ?>"
                     class="nav-btn west">◄</a><?php endif; ?>
@@ -1208,14 +1233,14 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
                     <p>Coloca los tres medallones en sus ranuras</p>
                 </div>
                 <div class="medallones-base">
-                    <div class="medallon-slot" id="slot-leon" data-medallon="7">
+                    <div class="medallon-slot" id="slot-leon" data-medallon="6">
                         <div class="medallon-slot-inner">
                             <img src="../img/medallon_de_leon.png" class="medallon-placeholder">
                             <div class="medallon-placed" id="placed-leon"><img src="../img/medallon_de_leon.png"></div>
                         </div>
                         <span class="slot-label">LEÓN</span>
                     </div>
-                    <div class="medallon-slot" id="slot-unicornio" data-medallon="8">
+                    <div class="medallon-slot" id="slot-unicornio" data-medallon="7">
                         <div class="medallon-slot-inner">
                             <img src="../img/medallon_de_unicornio.png" class="medallon-placeholder">
                             <div class="medallon-placed" id="placed-unicornio"><img
@@ -1223,7 +1248,7 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
                         </div>
                         <span class="slot-label">UNICORNIO</span>
                     </div>
-                    <div class="medallon-slot" id="slot-doncella" data-medallon="9">
+                    <div class="medallon-slot" id="slot-doncella" data-medallon="8">
                         <div class="medallon-slot-inner">
                             <img src="../img/medallon_de_doncella.png" class="medallon-placeholder">
                             <div class="medallon-placed" id="placed-doncella"><img

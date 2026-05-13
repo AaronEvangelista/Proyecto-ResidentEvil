@@ -18,7 +18,6 @@ function mostrarNotificacionCentrada(nombre) {
     notif.classList.add("show");
   }, 10);
 
-  // Ocultar después de 3 segundos
   setTimeout(() => {
     notif.classList.remove("show");
     setTimeout(() => {
@@ -29,6 +28,16 @@ function mostrarNotificacionCentrada(nombre) {
 
 function ejecutarEvento(evento, event) {
   console.log("Evento clickeado:", evento);
+
+  if (evento.script && typeof window[evento.script] === "function" &&
+    evento.script !== "ejecutarEvento" &&
+    evento.script !== "intentarAbrir" &&
+    evento.script !== "recogerObjeto" &&
+    evento.script !== "añadirInventario" &&
+    evento.script !== "abrirMenuArchivo") {
+    window[evento.script](evento, event);
+    return;
+  }
 
   switch (evento.tipo_accion) {
     case "recoger_item":
@@ -135,46 +144,70 @@ function ejecutarEvento(evento, event) {
         .catch((err) => console.error("Error en petición spawn:", err));
       break;
 
+    case "desbloquear":
+      usarHerramienta(evento, event);
+      break;
+
+    case "mensaje":
+      mostrarMensajeEnPantalla(`[AVISO] ${evento.contenido_accion}`);
+      break;
+
     default:
       console.warn("Tipo de acción no reconocido:", evento.tipo_accion);
       break;
   }
 }
 
-function abrirMenuPuzzle(eventoOrTipo, event) {
-  if (typeof eventoOrTipo === "object" && eventoOrTipo !== null) {
-    ejecutarEvento(eventoOrTipo, event);
-  } else {
-    const tipo = eventoOrTipo;
-    if (tipo === "medallones") {
-      if (typeof abrirPuzzleMedallones === "function") abrirPuzzleMedallones();
-    } else if (tipo === "caja_fuerte") {
-      if (typeof abrirCajaFuerte === "function") abrirCajaFuerte();
-    } else if (tipo === "electricidad") {
-      if (typeof abrirPuzzleElectricidad === "function")
-        abrirPuzzleElectricidad();
-    } else if (tipo.startsWith("puzzle_")) {
-      if (typeof abrirEstatuaPuzzle === "function") abrirEstatuaPuzzle(tipo);
-    } else {
-      console.warn("Tipo de puzzle no reconocido:", tipo);
-    }
+function usarHerramienta(evento, event) {
+  const itemRequerido = evento.requiere_item;
+  if (!itemRequerido) {
+    ejecutarEvento(evento, event);
+    return;
   }
-}
 
-function añadirInventario(evento, event) {
-  ejecutarEvento(evento, event);
-}
+  mostrarMensajeEnPantalla(`[INVESTIGAR] ${evento.nombre_objeto}. Parece que requiere algo...`);
 
-function recogerObjeto(evento, event) {
-  ejecutarEvento(evento, event);
-}
+  // Verificar inventario
+  fetch("../src/api/get_inventario.php")
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.success) {
+        const itemObj = data.inventario.find(
+          (i) => i.nombre.toLowerCase().includes(itemRequerido.toLowerCase())
+        );
 
-function abrirMenuArchivo(evento, event) {
-  ejecutarEvento(evento, event);
-}
+        if (itemObj) {
+          if (confirm(`¿Quieres usar el ${itemRequerido}?`)) {
+            // Consumir el objeto
+            fetch("../includes/usar_item.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id_registro: itemObj.id_registro,
+                fuente: itemObj.fuente || "db",
+                sesion_idx: itemObj.sesion_idx,
+                tipo: "herramienta",
+                nombre: itemObj.nombre
+              }),
+            });
 
-function intentarAbrir(evento, event) {
-  ejecutarEvento(evento, event);
+            registrarRecogida(evento.id_evento, "item", 0);
+            mostrarMensajeEnPantalla(`[ÉXITO] Has usado el ${itemRequerido}.`);
+            if (event && event.currentTarget) {
+              event.currentTarget.style.display = "none";
+            }
+            if (evento.tipo_accion === "desbloquear") {
+              setTimeout(() => window.location.reload(), 1500);
+            }
+          }
+        } else {
+          setTimeout(() => {
+            mostrarMensajeEnPantalla(`[AVISO] Necesitas el objeto: ${itemRequerido}`);
+          }, 1500);
+        }
+      }
+    })
+    .catch((err) => console.error("Error en usarHerramienta:", err));
 }
 
 function registrarRecogida(idEvento, tipoObjeto, idObjeto) {
@@ -259,32 +292,28 @@ function cerrarMenuGuardado() {
   document.getElementById("save-menu").style.display = "none";
 }
 
-// ════════════════════════════════════════════════
-//  PUZZLE DE MEDALLONES
-// ════════════════════════════════════════════════
-
-// Mapa id_item -> nombre del slot HTML
 const MEDALLON_SLOTS = {
-  7: "leon",
-  8: "unicornio",
-  9: "doncella",
+  6: "leon",
+  7: "unicornio",
+  8: "doncella",
 };
 
 const MEDALLON_NOMBRES = {
-  7: "León",
-  8: "Unicornio",
-  9: "Doncella",
+  6: "León",
+  7: "Unicornio",
+  8: "Doncella",
 };
 
 let medallonesPuzzleState = {
-  disponibles: [], // IDs que tiene el jugador en inventario
-  colocados: [], // IDs colocados en slots por el jugador
+  disponibles: [],
+  colocados: [],
 };
 
-/**
- * Punto de entrada llamado desde ejecutarEvento() cuando tipo_accion = 'puzzle'.
- */
-function abrirMenuPuzzle(tipo) {
+
+function abrirMenuPuzzle(tipo, event) {
+  if (typeof tipo === "object" && tipo !== null && tipo.contenido_accion) {
+    tipo = tipo.contenido_accion;
+  }
   if (tipo === "medallones") {
     abrirPuzzleMedallones();
   } else if (tipo === "caja_fuerte") {
@@ -494,13 +523,13 @@ function actualizarSlotsMedallones() {
   });
 
   // Habilitar botón solo si los 3 están colocados
-  const todosColocados = [7, 8, 9].every((id) =>
+  const todosColocados = [6, 7, 8].every((id) =>
     medallonesPuzzleState.colocados.includes(id),
   );
   document.getElementById("btn-colocar-medallones").disabled = !todosColocados;
 
   // Mensaje de estado
-  const faltantes = [7, 8, 9].filter(
+  const faltantes = [6, 7, 8].filter(
     (id) => !medallonesPuzzleState.disponibles.includes(id),
   );
   const colocadosCount = medallonesPuzzleState.colocados.length;

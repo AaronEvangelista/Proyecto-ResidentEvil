@@ -13,6 +13,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($id_evento) {
         try {
+            // Si el id_objeto es 0, solo registramos el evento como completado
+            if ($id_objeto == 0) {
+                $stmt_comp = $pdo->prepare("INSERT OR IGNORE INTO eventos_completados (id_partida, id_evento) VALUES (?, ?)");
+                $stmt_comp->execute([$id_partida, $id_evento]);
+                echo json_encode(['success' => true, 'message' => 'Evento marcado como completado']);
+                exit;
+            }
+
             if ($tipo_objeto && $id_objeto) {
                 $stmt_ya = $pdo->prepare("SELECT COUNT(*) FROM eventos_completados WHERE id_partida = ? AND id_evento = ?");
                 $stmt_ya->execute([$id_partida, $id_evento]);
@@ -34,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt_slot = $pdo->prepare("
                     SELECT s.n 
                     FROM (SELECT 0 n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7) s
-                    WHERE s.n NOT IN (SELECT posicion_slot FROM inventario WHERE id_partida = ?)
+                    WHERE s.n NOT IN (SELECT posicion_slot FROM inventario WHERE id_partida = ? AND posicion_slot IS NOT NULL)
                     LIMIT 1
                 ");
                 $stmt_slot->execute([$id_partida]);
