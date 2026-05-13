@@ -4,7 +4,6 @@ require_once __DIR__ . '/../../includes/conexion.php';
 
 header('Content-Type: application/json');
 
-// Solo admins
 if (empty($_SESSION['logueado']) || ($_SESSION['usuario_rol'] ?? '') !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Acceso denegado.']);
@@ -34,7 +33,6 @@ try {
     ");
     $stmt->execute([':activo' => $activo, ':id' => $idUsuario]);
 
-    // Reflejar en sesión inmediatamente
     $_SESSION['zombies_visibles'] = $activo;
 
     echo json_encode([

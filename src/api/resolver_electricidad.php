@@ -15,7 +15,6 @@ $accion = $data['accion'] ?? '';
 
 if ($accion === 'completar') {
     try {
-        // Marcar el evento del puzzle de fusibles como completado
         $stmt = $pdo->prepare("
             SELECT id_evento FROM eventos_interactivos 
             WHERE id_sala = 'sala_electrica' AND nombre_objeto = 'PUZZLE FUSIBLES'
@@ -29,7 +28,6 @@ if ($accion === 'completar') {
                 ->execute([$id_partida, $id_evento]);
         }
 
-        // Dar una recompensa: Cortacadenas (id_item=13) si no la tiene ya
         $stmtChk = $pdo->prepare("
             SELECT COUNT(*) FROM inventario 
             WHERE id_partida = ? AND tipo_objeto = 'item' AND id_objeto = 13
@@ -39,7 +37,6 @@ if ($accion === 'completar') {
 
         $recompensa = '';
         if (!$ya_tiene) {
-            // Buscar slot libre
             $stSlot = $pdo->prepare("
                 SELECT s.n FROM 
                 (SELECT 0 n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 

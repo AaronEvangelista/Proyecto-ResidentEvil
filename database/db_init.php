@@ -211,7 +211,8 @@ INSERT OR REPLACE INTO catalogo_salas (id_sala, nombre_visual, descripcion, capi
 ('biblioteca', 'Biblioteca (2F)', 'Suelos de madera que crujen y estanterías móviles.', 1, 'sala_arte', NULL, NULL, NULL, '../img/biblioteca.png'),
 ('sala_arte', 'Sala de Arte', 'Exposición de estatuas y cuadros clásicos.', 1, NULL, 'biblioteca', NULL, 'pasillo', '../img/sala_arte.png'), 
 ('oficina_capitan', 'Oficina del Capitán', 'Lujosa pero desordenada. Caja fuerte grande.', 1, NULL, 'sala_electrica', 'pasillo', NULL, '../img/oficina_capitan.png'), 
-('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, 'oficina_capitan', NULL, NULL, NULL, '../img/sala_electrica.png');
+('sala_electrica', 'Sala Eléctrica', 'Paneles de fusibles y zumbido constante.', 1, 'oficina_capitan', NULL, NULL, NULL, '../img/sala_electrica.png'),
+('sala_final', 'Sótano de la Comisaría', 'El camino hacia la libertad... o hacia algo peor.', 1, NULL, 'lobby_principal', NULL, NULL, '../img/sala_final.png');
 
 -- INSERTAR EVENTOS
 INSERT OR IGNORE INTO eventos_interactivos 
@@ -303,12 +304,9 @@ INSERT OR REPLACE INTO catalogo_logros (nombre, descripcion) VALUES
 
 $db->exec($inserts);
 
-// ─── COLUMNAS ADMIN (migracion segura para BBDDs ya existentes) ─────────────
 $db->exec("ALTER TABLE usuarios ADD COLUMN rol TEXT DEFAULT 'jugador'");
 $db->exec("ALTER TABLE usuarios ADD COLUMN zombies_visibles INTEGER DEFAULT 1");
 
-// ─── USUARIO ADMIN POR DEFECTO ──────────────────────────────────────────────
-// Contraseña: admin123  (bcrypt con coste 12)
 $adminHash = password_hash('admin123', PASSWORD_BCRYPT, ['cost' => 12]);
 $stmtAdmin = $db->prepare(
     "INSERT OR IGNORE INTO usuarios (nombre, email, password, rol, zombies_visibles)

@@ -8,7 +8,6 @@ $logueado = $_SESSION['logueado'] ?? false;
 if ($logueado && !empty($_SESSION['usuario_id'])) {
     $id_usuario = $_SESSION['usuario_id'];
 
-    // mostramos los archivos que el jugador tiene
     $query = "
         SELECT ca.* 
         FROM catalogo_archivos ca

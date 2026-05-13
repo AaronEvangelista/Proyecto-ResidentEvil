@@ -14,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($id_evento) {
         try {
             if ($tipo_objeto && $id_objeto) {
-                // Verificar que el evento no esté ya completado en la BD
                 $stmt_ya = $pdo->prepare("SELECT COUNT(*) FROM eventos_completados WHERE id_partida = ? AND id_evento = ?");
                 $stmt_ya->execute([$id_partida, $id_evento]);
                 if ($stmt_ya->fetchColumn() > 0) {
@@ -22,19 +21,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 }
 
-                // Para armas: comprobar si ya existe una igual en el inventario
                 if ($tipo_objeto === 'arma') {
                     $stmt_chk = $pdo->prepare("SELECT COUNT(*) FROM inventario WHERE id_partida = ? AND tipo_objeto = 'arma' AND id_objeto = ?");
                     $stmt_chk->execute([$id_partida, $id_objeto]);
                     if ($stmt_chk->fetchColumn() > 0) {
-                        // Marcar igualmente como completado y salir
                         $pdo->prepare("INSERT OR IGNORE INTO eventos_completados (id_partida, id_evento) VALUES (?, ?)")->execute([$id_partida, $id_evento]);
                         echo json_encode(['success' => false, 'error' => 'Ya tienes esta arma en el inventario.']);
                         exit;
                     }
                 }
 
-                // Buscar el primer slot libre (0-7) en la DB
                 $stmt_slot = $pdo->prepare("
                     SELECT s.n 
                     FROM (SELECT 0 n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7) s
@@ -49,12 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 }
 
-                // Insertar en la DB
                 $cantidad_inicial = ($tipo_objeto === 'arma') ? 6 : 1;
                 $stmt_inv = $pdo->prepare("INSERT INTO inventario (id_partida, tipo_objeto, id_objeto, cantidad, posicion_slot) VALUES (?, ?, ?, ?, ?)");
                 $stmt_inv->execute([$id_partida, $tipo_objeto, $id_objeto, $cantidad_inicial, $posicion_slot]);
-
-                // Registrar en eventos completados para que no vuelva a aparecer
                 $stmt_comp = $pdo->prepare("INSERT OR IGNORE INTO eventos_completados (id_partida, id_evento) VALUES (?, ?)");
                 $stmt_comp->execute([$id_partida, $id_evento]);
             }

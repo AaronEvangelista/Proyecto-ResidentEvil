@@ -162,6 +162,40 @@ html {
     background: transparent;
 }
 
+/* ── Hotspot de transición de zona (ej: bajar al sótano) ── */
+.hotspot.passage-entry {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 6px;
+    background: transparent;
+    border: none;
+}
+
+.hotspot.passage-entry:hover {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.passage-label {
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    padding: 5px 12px;
+    border: 1px solid #444;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.hotspot.passage-entry:hover .passage-label {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: #fff;
+    color: #fff;
+}
+
 .hotspot.has-item {
     background: transparent;
     min-width: 48px;
@@ -182,8 +216,20 @@ html {
     pointer-events: none;
 }
 
-@keyframes pulsarItem {
+.hotspot.boss-door {
+    background: transparent;
+    border: none;
+}
 
+.hotspot.boss-door:hover {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+
+@keyframes pulsarItem {
     0%,
     100% {
         transform: scale(0.85);

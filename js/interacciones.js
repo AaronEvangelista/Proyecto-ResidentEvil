@@ -110,10 +110,71 @@ function ejecutarEvento(evento, event) {
       window.location.href = `juego.php?sala=${evento.contenido_accion}`;
       break;
 
+    case "jefe_final":
+      mostrarMensajeEnPantalla("[CRÍTICO] ¡ALGO SE MUEVE TRAS LA PUERTA!");
+      const bossId = evento.contenido_accion;
+
+      const formData = new FormData();
+      formData.append("id_boss", bossId);
+      formData.append("sala", salaActual);
+
+      fetch("../src/api/spawn_jefe.php", {
+        method: "POST",
+        body: formData,
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success) {
+            setTimeout(() => {
+              window.location.href = `combate.php?id_registro=${data.id_registro}&vuelta=${salaActual}`;
+            }, 1000);
+          } else {
+            console.error("Error spawn jefe:", data.error);
+          }
+        })
+        .catch((err) => console.error("Error en petición spawn:", err));
+      break;
+
     default:
       console.warn("Tipo de acción no reconocido:", evento.tipo_accion);
       break;
   }
+}
+
+function abrirMenuPuzzle(eventoOrTipo, event) {
+  if (typeof eventoOrTipo === "object" && eventoOrTipo !== null) {
+    ejecutarEvento(eventoOrTipo, event);
+  } else {
+    const tipo = eventoOrTipo;
+    if (tipo === "medallones") {
+      if (typeof abrirPuzzleMedallones === "function") abrirPuzzleMedallones();
+    } else if (tipo === "caja_fuerte") {
+      if (typeof abrirCajaFuerte === "function") abrirCajaFuerte();
+    } else if (tipo === "electricidad") {
+      if (typeof abrirPuzzleElectricidad === "function")
+        abrirPuzzleElectricidad();
+    } else if (tipo.startsWith("puzzle_")) {
+      if (typeof abrirEstatuaPuzzle === "function") abrirEstatuaPuzzle(tipo);
+    } else {
+      console.warn("Tipo de puzzle no reconocido:", tipo);
+    }
+  }
+}
+
+function añadirInventario(evento, event) {
+  ejecutarEvento(evento, event);
+}
+
+function recogerObjeto(evento, event) {
+  ejecutarEvento(evento, event);
+}
+
+function abrirMenuArchivo(evento, event) {
+  ejecutarEvento(evento, event);
+}
+
+function intentarAbrir(evento, event) {
+  ejecutarEvento(evento, event);
 }
 
 function registrarRecogida(idEvento, tipoObjeto, idObjeto) {
@@ -499,6 +560,11 @@ function completarPuzzleMedallones() {
         document.querySelectorAll(".hotspot").forEach((h) => {
           if (h.title === "ESTATUA") h.style.display = "none";
         });
+
+        // Recargar para aplicar cambios de sala (imagen lobby_abierto y pasaje secreto)
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else {
         document.getElementById("medallones-status").textContent =
           "⚠ " + data.error;
