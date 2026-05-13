@@ -160,6 +160,21 @@ $armas_disponibles[] = [
 </div>
 
 <script>
+    // --- EFECTOS DE SONIDO ---
+    const sndPistola = new Audio('../sounds/disparo_pistola.mp3');
+    const sndEscopeta = new Audio('../sounds/disparo_escopeta.mp3');
+    const sndAtaqueEnemigo = new Audio('../sounds/ataque_mordisco.mp3');
+
+    // Función genérica para reproducir y cortar el audio
+    function reproducirSonidoCorto(audio, duracionMs) {
+        audio.currentTime = 0;
+        audio.play();
+        setTimeout(() => {
+            audio.pause();
+            audio.currentTime = 0;
+        }, duracionMs);
+    }
+
     //1. DATOS DE ESTADO
     let eHP = parseInt(<?php echo (int)$enemigo['vida_restante']; ?>);
     const eHPMax = parseInt(<?php echo (int)$enemigo['vida_maxima']; ?>);
@@ -256,6 +271,13 @@ $armas_disponibles[] = [
             return;
         }
         
+        // Sonido de disparo (Configurado a 1500ms = 1.5 segundos)
+        if (arma.nombre.toLowerCase().includes('escopeta')) {
+            reproducirSonidoCorto(sndEscopeta, 1500);
+        } else if (arma.nombre.toLowerCase().includes('pistola')) {
+            reproducirSonidoCorto(sndPistola, 1500);
+        }
+        
         turnoBloqueado = true;
         escribirLog("ATACANDO A " + zona + "...");
         
@@ -306,6 +328,9 @@ $armas_disponibles[] = [
         escribirLog("EL ENEMIGO ATACA...");
         
         setTimeout(() => {
+            // Sonido de ataque enemigo (Configurado a 1500ms = 1.5 segundos)
+            reproducirSonidoCorto(sndAtaqueEnemigo, 1500);
+
             const flash = document.getElementById('flash');
             flash.style.opacity = "0.4";
             setTimeout(() => flash.style.opacity = "0", 150);

@@ -1,13 +1,10 @@
 <?php
 session_start();
 
-// 1. Lógica para resetear al personaje si es necesario
-// Por ejemplo, podríamos devolver la vida a 100 en la sesión
+//1. Lógica para resetear al personaje si es necesario
 if (isset($_SESSION['player_hp'])) {
     $_SESSION['player_hp'] = 100;
 }
-
-// Aquí podrías añadir una consulta SQL para resetear la vida en la BD si usas persistencia
 ?>
 
 <!DOCTYPE html>
@@ -88,12 +85,11 @@ if (isset($_SESSION['player_hp'])) {
         
         <div class="options">
             <a href="../index.php">REINTENTAR</a>
-            <a href="../logout.php">SALIR AL MENU</a>
         </div>
     </div>
 
     <audio autoplay>
-        <source src="../assets/audio/death_sound.mp3" type="audio/mpeg">
+        <source src="../sounds/death_sound.mp3" type="audio/mpeg">
     </audio>
 
 </body>

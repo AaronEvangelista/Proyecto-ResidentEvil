@@ -60,6 +60,8 @@ def buscar_y_descargar(termino_busqueda, nombre_archivo):
 
 # --- EJECUCIÓN ---
 if __name__ == "__main__":
-    buscar_y_descargar("creepy ambience horror", "ambiente_principal")
-    buscar_y_descargar("zombie groan", "voz_zombie")
     buscar_y_descargar("door creak", "abrir_puerta")
+    buscar_y_descargar("handgun shot 9mm pistol", "disparo_pistola")
+    buscar_y_descargar("shotgun blast fire", "disparo_escopeta")
+    buscar_y_descargar("bite flesh attack", "ataque_mordisco")
+    buscar_y_descargar("monster claw scratch", "ataque_arana")
