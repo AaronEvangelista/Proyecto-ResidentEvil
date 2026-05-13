@@ -433,14 +433,13 @@ $armas_disponibles[] = [
             const danoBase = usandoMunicion ? arma.dano_porcentaje : 5;
 
             if (!usandoMunicion && arma.cantidad !== -1) {
-                escribirLog("SIN MUNICIÓN EN " + arma.nombre + ". ¡Derrótalo con el cuchillo!");
+                escribirLog("SIN MUNICIÓN EN " + arma.nombre + ". ¡Derrotalo con el cuchillo!");
                 return;
             }
 
             turnoBloqueado = true;
             escribirLog("ATACANDO A " + zona + "...");
 
-            // Sonido de disparo (Configurado a 1500ms = 1.5 segundos)
             if (arma.nombre.toLowerCase().includes('escopeta')) {
                 reproducirSonidoCorto(sndEscopeta, 1500);
             } else if (arma.nombre.toLowerCase().includes('pistola')) {
@@ -463,7 +462,7 @@ $armas_disponibles[] = [
                                 escribirLog("IMPACTO EN PIERNAS.");
                             }
                         } else {
-                             escribirLog("¡IMPACTO! OBJETIVO PIERDE " + danoFinal + " HP.");
+                            escribirLog("¡IMPACTO! OBJETIVO PIERDE " + danoFinal + " HP.");
                         }
 
                         eHP = Math.max(0, eHP - danoFinal);
