@@ -145,7 +145,7 @@ if ($zombiesVisibles) {
             $q_veces->execute([$id_partida, $id_sala_actual]);
             $veces_spawn = (int) $q_veces->fetchColumn();
 
-            if ($veces_spawn === 0 || ($puede_respawnear && rand(1, 100) <= 40)) {
+            if ($veces_spawn === 0 || ($puede_respawnear && rand(1, 100) <= 20)) {
                 $pool = $distribucion_enemigos[$id_sala_actual];
                 $id_enemigo_eleg = $pool[array_rand($pool)];
 
