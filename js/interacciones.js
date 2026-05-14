@@ -347,7 +347,7 @@ const SIMBOLOS_PUZZLE = [
 
 let estatuaPuzzleState = {
   tipo: "",
-  valores: [0, 0, 0], 
+  valores: [0, 0, 0],
 };
 
 function abrirEstatuaPuzzle(tipo) {
@@ -526,9 +526,9 @@ function actualizarSlotsMedallones() {
   let statusMsg;
   if (faltantes.length > 0) {
     const nombres = faltantes.map((id) => MEDALLON_NOMBRES[id]).join(", ");
-    statusMsg = `⚠ Te faltan: ${nombres}. Sigue explorando.`;
+    statusMsg = `Te faltan: ${nombres}. Sigue explorando.`;
   } else if (todosColocados) {
-    statusMsg = "✔ Los tres medallones están listos. Pulsa ACTIVAR ESTATUA.";
+    statusMsg = "Los tres medallones están listos. Pulsa ACTIVAR ESTATUA.";
   } else {
     statusMsg = `${colocadosCount}/3 medallones colocados. Haz clic en los slots dorados.`;
   }
@@ -593,7 +593,7 @@ function completarPuzzleMedallones() {
     .catch((err) => {
       console.error("colocar_medallones error:", err);
       document.getElementById("medallones-status").textContent =
-        "⚠ Error de conexión.";
+        " Error de conexión.";
       btn.disabled = false;
       btn.textContent = "ACTIVAR ESTATUA";
     });
@@ -719,7 +719,6 @@ function guardarEnSlot(slotNumero) {
     .catch((error) => console.error("Error al guardar:", error));
 }
 
-//Listeners globales de DOMContentLoaded
 document.addEventListener("DOMContentLoaded", () => {
   const btnCancel = document.getElementById("btn-cancelar-guardado");
   if (btnCancel) btnCancel.onclick = cerrarMenuGuardado;
@@ -737,7 +736,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  //Botón de completar puzzle de medallones
   const btnColocar = document.getElementById("btn-colocar-medallones");
   if (btnColocar) {
     btnColocar.addEventListener("click", completarPuzzleMedallones);
@@ -820,7 +818,7 @@ window.addEventListener("keydown", (e) => {
 
 //PUZZLE CAJA FUERTE PORTÁTIL
 let psafeState = {
-  grid: [], //9 booleans (true = lit)
+  grid: [],
   idRegistro: null,
 };
 
@@ -830,14 +828,11 @@ function abrirPortableSafe(idRegistro = null) {
 
   psafeState.idRegistro = idRegistro;
 
-  //Generar estado inicial aleatorio SOLVABLE
-  //Generamos aplicando N pulsaciones aleatorias al estado todo-encendido
   psafeState.grid = Array(9).fill(true);
   const moves = 10 + Math.floor(Math.random() * 8);
   for (let m = 0; m < moves; m++) {
     psafeToggleCell(Math.floor(Math.random() * 9), false);
   }
-  //Si por casualidad quedó todo encendido, forzar una pulsación
   if (psafeState.grid.every((v) => v)) psafeToggleCell(4, false);
 
   document.getElementById("portable-status").textContent = "";
@@ -853,7 +848,6 @@ function cerrarPortableSafe() {
   if (modal) modal.style.display = "none";
 }
 
-//Togglea celda y vecinos (Lights Out)
 function psafeToggleCell(idx, rerender = true) {
   const neighbors = psafeGetNeighbors(idx);
   [idx, ...neighbors].forEach((i) => {
@@ -870,10 +864,10 @@ function psafeGetNeighbors(idx) {
   const row = Math.floor(idx / 3),
     col = idx % 3;
   const nbrs = [];
-  if (row > 0) nbrs.push(idx - 3); // arriba
-  if (row < 2) nbrs.push(idx + 3); // abajo
-  if (col > 0) nbrs.push(idx - 1); // izquierda
-  if (col < 2) nbrs.push(idx + 1); // derecha
+  if (row > 0) nbrs.push(idx - 3);
+  if (row < 2) nbrs.push(idx + 3);
+  if (col > 0) nbrs.push(idx - 1);
+  if (col < 2) nbrs.push(idx + 1);
   return nbrs;
 }
 

@@ -184,7 +184,7 @@ INSERT OR REPLACE INTO catalogo_items (id_item, nombre, tipo, ruta_exclusiva, de
 (2, 'Cuchillo Defensivo', 'defensa', 'ambos', 'Permite evitar un mordisco. Se consume tras su uso.', '../img/Cuchillo_Defensivo.png'),
 (3, 'Munición de Pistola', 'municion', 'ambos', 'Balas de 9mm para armas de mano.', '../img/municion_pistola.png'),
 (4, 'Munición de Escopeta', 'municion', 'ambos', 'Cartuchos potentes para combate cercano.', '../img/cartucho_de_escopeta.png'),
-(5, 'Cinta de Guardado', 'clave', 'ambos', 'Permite registrar tu progreso una sola vez.', '../img/cinta_de_tinta.webp'),
+(5, 'Cinta de Guardado', 'clave', 'ambos', 'Permite registrar tu progreso una sola vez.', '../img/cinta_de_tinta.png'),
 (6, 'Medallon de León', 'clave', 'ambos', 'Medallon de plata con emblema de león.', '../img/medallon_de_leon.png'),
 (7, 'Medallon de Unicornio', 'clave', 'ambos', 'Medallon de bronce con emblema de unicornio.', '../img/medallon_de_unicornio.png'),
 (8, 'Medallon de Doncella', 'clave', 'ambos', 'Medallon de oro con emblema de doncella.', '../img/medallon_de_doncella.png'),
