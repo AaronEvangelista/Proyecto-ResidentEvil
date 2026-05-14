@@ -28,7 +28,7 @@ window.addEventListener("keydown", (e) => {
 
   if (noteVisible || saveVisible) return;
 
-  // Usar code o key para Tab
+  //Usar code o key para Tab
   if (code === "Tab" || key === "tab") {
     console.log("Tecla Tab detectada");
     e.preventDefault();
@@ -188,7 +188,7 @@ function renderizarInventario(items) {
         }
       });
 
-      // Seleccionar para examinar/eliminar
+      //Seleccionar para examinar/eliminar
       itemElement.addEventListener("click", () => {
         document
           .querySelectorAll(".inventory-slot")
@@ -206,7 +206,7 @@ function renderizarInventario(items) {
           btnExaminar.onclick = () => examinarObjeto(item);
         }
 
-        // Botón PUZZLE: solo para Caja Fuerte Portatil
+        //Botón PUZZLE: solo para Caja Fuerte Portatil
         const btnPuzzle = document.getElementById("btn-puzzle-portable");
         if (btnPuzzle) {
           const esCajaPortatil =
@@ -257,7 +257,7 @@ function eliminarObjeto(idRegistro) {
     .then((r) => r.json())
     .then((data) => {
       if (data.success) {
-        abrirInventario(); // Recargar
+        abrirInventario(); //Recargar
       } else {
         alert(data.error);
       }

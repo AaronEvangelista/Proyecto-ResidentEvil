@@ -13,7 +13,7 @@ function mostrarNotificacionCentrada(nombre) {
   nameEl.textContent = nombre;
   notif.style.display = "flex";
 
-  // Pequeño delay para la transición de entrada
+  //Pequeño delay para la transición de entrada
   setTimeout(() => {
     notif.classList.add("show");
   }, 10);
@@ -167,7 +167,7 @@ function usarHerramienta(evento, event) {
 
   mostrarMensajeEnPantalla(`[INVESTIGAR] ${evento.nombre_objeto}. Parece que requiere algo...`);
 
-  // Verificar inventario
+  //Verificar inventario
   fetch("../src/api/get_inventario.php")
     .then((r) => r.json())
     .then((data) => {
@@ -178,7 +178,7 @@ function usarHerramienta(evento, event) {
 
         if (itemObj) {
           if (confirm(`¿Quieres usar el ${itemRequerido}?`)) {
-            // Consumir el objeto
+            //Consumir el objeto
             fetch("../includes/usar_item.php", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -329,10 +329,7 @@ function abrirMenuPuzzle(tipo, event) {
   }
 }
 
-// ════════════════════════════════════════════════
-//  PUZZLE ESTATUAS (PARA OBTENER MEDALLONES)
-// ════════════════════════════════════════════════
-
+//PUZZLE ESTATUAS (PARA OBTENER MEDALLONES)
 const SIMBOLOS_PUZZLE = [
   "Leon",
   "Rama",
@@ -350,7 +347,7 @@ const SIMBOLOS_PUZZLE = [
 
 let estatuaPuzzleState = {
   tipo: "",
-  valores: [0, 0, 0], // Índices en SIMBOLOS_PUZZLE
+  valores: [0, 0, 0], 
 };
 
 function abrirEstatuaPuzzle(tipo) {
@@ -422,11 +419,8 @@ function intentarResolverEstatua() {
           actualizarInventarioSilent();
         }
 
-        // El hotspot se oculta automáticamente al recargar o si manejamos el DOM
-        // Pero como estamos en una SPA-like, podemos ocultarlo manualmente
         const hotspots = document.querySelectorAll(".hotspot");
         hotspots.forEach((h) => {
-          // Buscamos el hotspot que corresponde a este puzzle
           if (
             h.onclick &&
             h.onclick.toString().includes(estatuaPuzzleState.tipo)
@@ -451,11 +445,11 @@ function abrirPuzzleMedallones() {
   const modal = document.getElementById("medallones-puzzle");
   if (!modal) return;
 
-  // Resetear estado
+  //Resetear estado
   medallonesPuzzleState.disponibles = [];
   medallonesPuzzleState.colocados = [];
 
-  // Limpiar slots visualmente
+  //Limpiar slots visualmente
   Object.values(MEDALLON_SLOTS).forEach((nombre) => {
     const slot = document.getElementById(`slot-${nombre}`);
     const placed = document.getElementById(`placed-${nombre}`);
@@ -469,7 +463,7 @@ function abrirPuzzleMedallones() {
 
   modal.style.display = "flex";
 
-  // Consultar qué medallones tiene el jugador
+  //Consultar qué medallones tiene el jugador
   fetch("../src/api/check_medallones.php")
     .then((r) => r.json())
     .then((data) => {
@@ -489,32 +483,27 @@ function abrirPuzzleMedallones() {
     });
 }
 
-/**
- * Actualiza el aspecto de cada slot según el estado actual.
- */
+//Actualiza el aspecto de cada slot según el estado actual.
 function actualizarSlotsMedallones() {
   Object.entries(MEDALLON_SLOTS).forEach(([idStr, nombre]) => {
     const id = Number(idStr);
     const slot = document.getElementById(`slot-${nombre}`);
     const placed = document.getElementById(`placed-${nombre}`);
 
-    // Quitar todas las clases de estado
+    //Quitar todas las clases de estado
     slot.classList.remove("available", "placed", "unavailable");
 
     if (medallonesPuzzleState.colocados.includes(id)) {
-      // --- Ya colocado: verde, imagen visible, click = quitar ---
       slot.classList.add("placed");
       placed.style.display = "flex";
       slot.onclick = () => quitarMedallon(id);
       slot.title = "Haz clic para retirar el medallón";
     } else if (medallonesPuzzleState.disponibles.includes(id)) {
-      // --- Disponible: dorado pulsante, click = colocar ---
       slot.classList.add("available");
       placed.style.display = "none";
       slot.onclick = () => colocarMedallon(id);
       slot.title = `Colocar Medallón de ${MEDALLON_NOMBRES[id]}`;
     } else {
-      // --- No disponible: gris oscuro, sin interacción ---
       slot.classList.add("unavailable");
       placed.style.display = "none";
       slot.onclick = null;
@@ -522,13 +511,13 @@ function actualizarSlotsMedallones() {
     }
   });
 
-  // Habilitar botón solo si los 3 están colocados
+  //Habilitar botón solo si los 3 están colocados
   const todosColocados = [6, 7, 8].every((id) =>
     medallonesPuzzleState.colocados.includes(id),
   );
   document.getElementById("btn-colocar-medallones").disabled = !todosColocados;
 
-  // Mensaje de estado
+  //Mensaje de estado
   const faltantes = [6, 7, 8].filter(
     (id) => !medallonesPuzzleState.disponibles.includes(id),
   );
@@ -585,12 +574,12 @@ function completarPuzzleMedallones() {
           actualizarInventarioSilent();
         }
 
-        // Ocultar el hotspot de la estatua
+        //Ocultar el hotspot de la estatua
         document.querySelectorAll(".hotspot").forEach((h) => {
           if (h.title === "ESTATUA") h.style.display = "none";
         });
 
-        // Recargar para aplicar cambios de sala (imagen lobby_abierto y pasaje secreto)
+        //Recargar para aplicar cambios de sala (imagen lobby_abierto y pasaje secreto)
         setTimeout(() => {
           window.location.reload();
         }, 2000);
@@ -610,17 +599,14 @@ function completarPuzzleMedallones() {
     });
 }
 
-// ════════════════════════════════════════════════
-//  PUZZLE CAJA FUERTE
-// ════════════════════════════════════════════════
-
+//PUZZLE CAJA FUERTE
 let dialValues = [0, 0, 0];
 
 function abrirCajaFuerte() {
   const modal = document.getElementById("caja-fuerte-puzzle");
   if (!modal) return;
 
-  // Verificar en el servidor si ya fue completada antes de abrir
+  //Verificar en el servidor si ya fue completada antes de abrir
   fetch("../src/api/resolver_caja.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -628,7 +614,7 @@ function abrirCajaFuerte() {
   })
     .then((r) => r.json())
     .then((data) => {
-      // Si el error es "ya abierta", ocultamos el hotspot y mostramos mensaje
+      //Si el error es "ya abierta", ocultamos el hotspot y mostramos mensaje
       if (
         !data.success &&
         data.error &&
@@ -643,7 +629,7 @@ function abrirCajaFuerte() {
         });
         return;
       }
-      // Si no está completada (o el check no aplica), abrir normalmente
+      //Si no está completada (o el check no aplica), abrir normalmente
       dialValues = [0, 0, 0];
       for (let i = 0; i < 3; i++) {
         document.getElementById(`dial-${i}`).textContent = "0";
@@ -652,7 +638,7 @@ function abrirCajaFuerte() {
       modal.style.display = "flex";
     })
     .catch(() => {
-      // Si falla la red, abrir igualmente
+      //Si falla la red, abrir igualmente
       dialValues = [0, 0, 0];
       for (let i = 0; i < 3; i++) {
         document.getElementById(`dial-${i}`).textContent = "0";
@@ -733,7 +719,7 @@ function guardarEnSlot(slotNumero) {
     .catch((error) => console.error("Error al guardar:", error));
 }
 
-// Listeners globales de DOMContentLoaded
+//Listeners globales de DOMContentLoaded
 document.addEventListener("DOMContentLoaded", () => {
   const btnCancel = document.getElementById("btn-cancelar-guardado");
   if (btnCancel) btnCancel.onclick = cerrarMenuGuardado;
@@ -751,7 +737,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Botón de completar puzzle de medallones
+  //Botón de completar puzzle de medallones
   const btnColocar = document.getElementById("btn-colocar-medallones");
   if (btnColocar) {
     btnColocar.addEventListener("click", completarPuzzleMedallones);
@@ -782,7 +768,7 @@ window.addEventListener("keydown", (e) => {
       }
     }
 
-    // ESC también cierra el puzzle de medallones
+    //ESC también cierra el puzzle de medallones
     const medallonesPuzzle = document.getElementById("medallones-puzzle");
     if (medallonesPuzzle && medallonesPuzzle.style.display === "flex") {
       cerrarMenuMedallones();
@@ -794,7 +780,7 @@ window.addEventListener("keydown", (e) => {
       }
     }
 
-    // ESC también cierra la estatua puzzle
+    //ESC también cierra la estatua puzzle
     const estatuaPuzzle = document.getElementById("estatua-puzzle");
     if (estatuaPuzzle && estatuaPuzzle.style.display === "flex") {
       cerrarEstatuaPuzzle();
@@ -806,7 +792,7 @@ window.addEventListener("keydown", (e) => {
       }
     }
 
-    // ESC también cierra la portable
+    //ESC también cierra la portable
     const portableSafe = document.getElementById("portable-safe-puzzle");
     if (portableSafe && portableSafe.style.display === "flex") {
       cerrarPortableSafe();
@@ -818,7 +804,7 @@ window.addEventListener("keydown", (e) => {
       }
     }
 
-    // ESC también cierra la caja fuerte
+    //ESC también cierra la caja fuerte
     const cajaPuzzle = document.getElementById("caja-fuerte-puzzle");
     if (cajaPuzzle && cajaPuzzle.style.display === "flex") {
       cerrarCajaFuerte();
@@ -831,16 +817,10 @@ window.addEventListener("keydown", (e) => {
     }
   }
 });
-// ════════════════════════════════════════════════
-//  PUZZLE CAJA FUERTE PORTÁTIL
-// ════════════════════════════════════════════════
 
-// ════════════════════════════════════════════════
-//  CAJA FUERTE PORTÁTIL — LIGHTS OUT (3×3)
-// ════════════════════════════════════════════════
-
+//PUZZLE CAJA FUERTE PORTÁTIL
 let psafeState = {
-  grid: [], // 9 booleans (true = lit)
+  grid: [], //9 booleans (true = lit)
   idRegistro: null,
 };
 
@@ -850,14 +830,14 @@ function abrirPortableSafe(idRegistro = null) {
 
   psafeState.idRegistro = idRegistro;
 
-  // Generar estado inicial aleatorio SOLVABLE
-  // Generamos aplicando N pulsaciones aleatorias al estado todo-encendido
+  //Generar estado inicial aleatorio SOLVABLE
+  //Generamos aplicando N pulsaciones aleatorias al estado todo-encendido
   psafeState.grid = Array(9).fill(true);
   const moves = 10 + Math.floor(Math.random() * 8);
   for (let m = 0; m < moves; m++) {
     psafeToggleCell(Math.floor(Math.random() * 9), false);
   }
-  // Si por casualidad quedó todo encendido, forzar una pulsación
+  //Si por casualidad quedó todo encendido, forzar una pulsación
   if (psafeState.grid.every((v) => v)) psafeToggleCell(4, false);
 
   document.getElementById("portable-status").textContent = "";
@@ -873,7 +853,7 @@ function cerrarPortableSafe() {
   if (modal) modal.style.display = "none";
 }
 
-// Togglea celda y vecinos (Lights Out)
+//Togglea celda y vecinos (Lights Out)
 function psafeToggleCell(idx, rerender = true) {
   const neighbors = psafeGetNeighbors(idx);
   [idx, ...neighbors].forEach((i) => {
@@ -961,9 +941,7 @@ function psafeSolved() {
   }, 1200);
 }
 
-// ════════════════════════════════════════════════════════
-//  PUZZLE ELÉCTRICO — CIRCUITO DE FUSIBLES
-// ════════════════════════════════════════════════════════
+//PUZZLE ELÉCTRICO — CIRCUITO DE FUSIBLES
 const ELEC_CONNS = {
   I: [
     ["E", "W"],
@@ -996,7 +974,6 @@ function elecGetSVGPath(type, rot) {
   ][r];
 }
 
-// Grid 5×4. Solution: SRC(1,0)→L1(1,1)→L3(2,1)→I0(2,2)→L2(2,3)→L0(1,3)→TGT(1,4)
 let elecGrid = null;
 function elecInitGrid() {
   return [
