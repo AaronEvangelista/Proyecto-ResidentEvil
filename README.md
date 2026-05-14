@@ -39,14 +39,13 @@ El juego incluye dos rutas de personaje (chico/chica), cada una con objetos excl
 - Sistema de combate por turnos con zonas de impacto (cabeza, torso, piernas)
 - Gestion de inventario con 8 ranuras de objetos
 - Multiples tipos de puzzle: estatua de medallones, panel electrico, caja fuerte portatil y cerraduras con llaves
-- Sistema de doble ruta de personaje (Chico / Chica) con armas e items exclusivos
 - Sistema de guardado mediante maquinas de escribir con cintas de tinta consumibles
 - Sistema de logros con 9 desbloqueos disponibles
 - Enciclopedia de Raccoon City con entradas de lore y catalogo de enemigos
 - Panel de administracion para gestion de roles y visibilidad de zombies
 - Efecto visual de pantalla CRT en el menu principal
 - Sonido ambiental y audio atmosferico
-- Zonas de interaccion calculadas mediante coordenadas porcentuales sobre la imagen
+- Zonas de interaccion 
 - Sistema de notas ocultas con 7 documentos de historia secreta
 
 ---
@@ -118,8 +117,7 @@ Proyecto-ResidentEvil/
 |-------------|-------------------------------|
 | Backend     | PHP 8.x                       |
 | Base de datos | SQLite3 (via PHP PDO)       |
-| Frontend    | HTML5, CSS Vanilla, JS Vanilla |
-| Servidor Web| Apache via XAMPP              |
+| Frontend    | HTML5, CSS Vanilla, JS Vanilla| 
 | Sesiones    | Sesiones nativas de PHP       |
 | Autenticacion | Hashing de contrasenas bcrypt |
 
@@ -232,7 +230,7 @@ Las conexiones entre salas siguen un grafo direccional fijo. Algunas salas requi
 
 ## Enemigos
 
-Se definen siete tipos de enemigo mas un jefe final de tres fases en el catalogo:
+Se definen siete tipos de enemigo mas un jefe final en el catalogo:
 
 | Enemigo                   | Tipo            | Vida Max | Dano Base | Prob. Huida |
 |---------------------------|-----------------|----------|-----------|-------------|
@@ -243,9 +241,8 @@ Se definen siete tipos de enemigo mas un jefe final de tres fases en el catalogo
 | Licker                    | Mutante         | 75       | 50        | 25%         |
 | Lastre                    | Zombie Pesado   | 120      | 15        | 60%         |
 | Espasmo                   | Zombie Agil     | 40       | 20        | 15%         |
-| El Recopilador - Fase 1   | Jefe            | 300      | 35        | 10%         |
-| El Recopilador - Fase 2   | Jefe            | 400      | 25        | 0%          |
-| El Recopilador - Fase 3   | Jefe            | 1000     | 80        | 5%          |
+| El Recopilador            | Jefe            | 1000     | 80        | 5%          |
+
 
 Cada enemigo tiene valores independientes de precision por zona de impacto y multiplicadores de disparo a la cabeza. El estado del enemigo (vida, vivo/muerto/aturdido) se persiste por slot de guardado, por lo que los enemigos eliminados no reaparecen.
 
@@ -255,11 +252,11 @@ Cada enemigo tiene valores independientes de precision por zona de impacto y mul
 
 ### Armas
 
-| Nombre                    | Dano | Ruta       |
-|---------------------------|------|------------|
-| Pistola M19               | 25%  | Ambas      |
-| Escopeta W-870            | 75%  | Solo chico |
-| Granada de Fragmentacion  | 100% | Ambas      |
+| Nombre                    | Dano |
+|---------------------------|------|
+| Pistola M19               | 25%  |
+| Escopeta W-870            | 75%  |
+| Granada de Fragmentacion  | 100% |
 
 ### Objetos Clave
 
@@ -279,7 +276,6 @@ Cada enemigo tiene valores independientes de precision por zona de impacto y mul
 | Nombre                 | Efecto                              |
 |------------------------|-------------------------------------|
 | Hierba Verde           | Restaura un 25% de vida             |
-| Cuchillo Defensivo     | Bloquea un unico ataque entrante    |
 | Municion de Pistola    | Municion para la Pistola M19        |
 | Municion de Escopeta   | Municion para la Escopeta W-870     |
 
@@ -340,73 +336,6 @@ Los usuarios con rol `admin` pueden acceder al panel en `pages/admin.php`. Funci
 - Alternar el indicador de visibilidad de zombies en el juego por usuario, util para pruebas
 
 La cuenta de administrador por defecto se crea automaticamente al inicializar la base de datos (ver Credenciales por Defecto).
-
----
-
-## Instalacion
-
-**Requisitos:**
-- XAMPP (o cualquier stack Apache + PHP 8+)
-- PHP compilado con las extensiones SQLite3 y PDO_SQLite habilitadas
-
-**Pasos:**
-
-1. Clona o copia la carpeta del proyecto en el directorio `htdocs` de XAMPP:
-
-   ```
-   C:\xampp\htdocs\ProyectoFinal\Proyecto-ResidentEvil\
-   ```
-
-2. Inicia Apache desde el Panel de Control de XAMPP.
-
-3. Abre el navegador y navega a:
-
-   ```
-   http://localhost/ProyectoFinal/Proyecto-ResidentEvil/
-   ```
-
-4. La base de datos se inicializa automaticamente en el primer acceso mediante `database/db_init.php`. No es necesario importar ningun SQL manualmente.
-
-5. Todos los fondos de sala, sprites de objetos y assets de enemigos deben estar presentes en el directorio `img/`. Se incluyen con el proyecto.
-
----
-
-## Credenciales por Defecto
-
-Se crea automaticamente una cuenta de administrador durante la inicializacion de la base de datos:
-
-| Campo      | Valor                    |
-|------------|--------------------------|
-| Usuario    | `admin`                  |
-| Email      | `admin@raccoon-city.gov` |
-| Contrasena | `admin123`               |
-| Rol        | `admin`                  |
-
-Se recomienda encarecidamente cambiar esta contrasena antes de desplegar el proyecto en un servidor publico.
-
----
-
-## Nota sobre las Imagenes
-
-Todos los assets visuales del proyecto se almacenan en el directorio `img/` y se referencian mediante rutas relativas desde la base de datos y las plantillas PHP. Se incluyen las siguientes categorias de imagenes:
-
-- **Fondos de sala** - 15 fondos PNG a tamano completo para cada ubicacion del juego
-- **Sprites de enemigos** - Variantes estandar y en miniatura para cada tipo de enemigo
-- **Iconos de objetos y armas** - Assets PNG transparentes para el HUD del inventario
-- **Fases del jefe final** - Tres imagenes a tamano completo para el encuentro final
-- **Assets de interfaz** - Textura de fondo de nota y logotipo del juego
-
-Para añadir el proyecto a GitHub u otro sistema de control de versiones, se recomienda incluir el directorio `img/` en el repositorio, ya que no se utiliza ninguna CDN ni servicio externo de alojamiento de imagenes. Todas las rutas son relativas, por lo que el proyecto es completamente autocontenido y portable sin necesidad de cambiar ninguna configuracion de rutas.
-
-Si faltan imagenes, el juego seguira funcionando pero los fondos de sala y los iconos de objetos no se renderizaran. Asegurate de incluir la carpeta `img/` al desplegar o compartir el proyecto.
-
-Si quieres añadir capturas de pantalla reales al README, puedes hacerlo con la siguiente sintaxis de Markdown:
-
-```markdown
-![Descripcion de la imagen](img/nombre_del_archivo.png)
-```
-
-Esto funciona correctamente en GitHub cuando el repositorio es publico y la imagen esta incluida en el repositorio.
 
 ---
 
