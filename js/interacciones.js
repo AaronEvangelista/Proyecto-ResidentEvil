@@ -719,6 +719,7 @@ function guardarEnSlot(slotNumero) {
     .catch((error) => console.error("Error al guardar:", error));
 }
 
+//Listeners globales de DOMContentLoaded
 document.addEventListener("DOMContentLoaded", () => {
   const btnCancel = document.getElementById("btn-cancelar-guardado");
   if (btnCancel) btnCancel.onclick = cerrarMenuGuardado;
@@ -736,6 +737,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  //Botón de completar puzzle de medallones
   const btnColocar = document.getElementById("btn-colocar-medallones");
   if (btnColocar) {
     btnColocar.addEventListener("click", completarPuzzleMedallones);
@@ -818,7 +820,7 @@ window.addEventListener("keydown", (e) => {
 
 //PUZZLE CAJA FUERTE PORTÁTIL
 let psafeState = {
-  grid: [], 
+  grid: [], //9 booleans (true = lit)
   idRegistro: null,
 };
 
@@ -828,11 +830,14 @@ function abrirPortableSafe(idRegistro = null) {
 
   psafeState.idRegistro = idRegistro;
 
+  //Generar estado inicial aleatorio SOLVABLE
+  //Generamos aplicando N pulsaciones aleatorias al estado todo-encendido
   psafeState.grid = Array(9).fill(true);
   const moves = 10 + Math.floor(Math.random() * 8);
   for (let m = 0; m < moves; m++) {
     psafeToggleCell(Math.floor(Math.random() * 9), false);
   }
+  //Si por casualidad quedó todo encendido, forzar una pulsación
   if (psafeState.grid.every((v) => v)) psafeToggleCell(4, false);
 
   document.getElementById("portable-status").textContent = "";
@@ -848,6 +853,7 @@ function cerrarPortableSafe() {
   if (modal) modal.style.display = "none";
 }
 
+//Togglea celda y vecinos (Lights Out)
 function psafeToggleCell(idx, rerender = true) {
   const neighbors = psafeGetNeighbors(idx);
   [idx, ...neighbors].forEach((i) => {
