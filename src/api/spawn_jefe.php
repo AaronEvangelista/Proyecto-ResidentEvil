@@ -18,7 +18,6 @@ if (!$id_partida) {
 }
 
 try {
-    // Primero, limpiar cualquier jefe previo en esta sala para esta partida (para evitar duplicados vivos)
     $pdo->prepare("DELETE FROM estado_enemigos WHERE id_partida = ? AND sala_ubicacion = ? AND estado = 'vivo'")->execute([$id_partida, $sala]);
 
     $q_vida = $pdo->prepare("SELECT vida_maxima FROM catalogo_enemigos WHERE id_enemigo = ?");

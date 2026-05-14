@@ -2,13 +2,11 @@
 session_start();
 require_once '../includes/conexion.php';
 
-// Admin: control de visibilidad de zombies
 $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
 $usuarioRol = $_SESSION['usuario_rol'] ?? 'jugador';
 
 $id_sala_actual = $_GET['sala'] ?? 'banos_inicio';
 
-//1. CARGAR DATOS DE LA SALA
 $query_sala = $pdo->prepare("SELECT * FROM catalogo_salas WHERE id_sala = ?");
 $query_sala->execute([$id_sala_actual]);
 $sala = $query_sala->fetch(PDO::FETCH_ASSOC);
@@ -19,7 +17,6 @@ if (!$sala) {
 }
 
 if (isset($_GET['final'])) {
-    // Renderizar pantalla final
     ?>
     <!DOCTYPE html>
     <html>
@@ -85,14 +82,12 @@ if (isset($_GET['final'])) {
 }
 $_SESSION['sala_actual'] = $id_sala_actual;
 
-//2. USUARIO / PARTIDA
 $id_usuario = $_SESSION['usuario_id'] ?? null;
 if (!$id_usuario) {
     header('Location: ../sessions/login.php');
     exit;
 }
 
-// Cargar partida guardada desde el perfil (?partida=X)
 if (isset($_GET['partida'])) {
     $id_partida_cargada = (int) $_GET['partida'];
     $stmt_load = $pdo->prepare("SELECT id_partida, sala_actual FROM partida WHERE id_partida = ? AND id_usuario = ? AND slot_numero IS NOT NULL");
@@ -147,7 +142,6 @@ if (!$partida || $forzar_nueva) {
 }
 $_SESSION['id_partida'] = $id_partida;
 
-//3. PROCESAR RETORNO DE COMBATE (VICTORIA / HUIDA)
 if (isset($_GET['muerto'], $_GET['id_reg'])) {
     $id_reg = (int) $_GET['id_reg'];
     $stmt_check_boss = $pdo->prepare("SELECT id_enemigo FROM estado_enemigos WHERE id_registro = ?");
@@ -158,7 +152,7 @@ if (isset($_GET['muerto'], $_GET['id_reg'])) {
     $stmt_upd->execute([$id_reg, $id_partida]);
     unset($_SESSION['huido_de'][$id_sala_actual]);
 
-    if ($id_enemigo_muerto == 9) { // ID del Jefe Final
+    if ($id_enemigo_muerto == 9) {
         header("Location: juego.php?final=1");
         exit;
     }
@@ -174,34 +168,29 @@ if (isset($_GET['huir'], $_GET['id_reg'])) {
     exit;
 }
 
-//Inicializar huida
 if (!isset($_SESSION['huido_de']))
     $_SESSION['huido_de'] = [];
 $id_reg_huido = $_SESSION['huido_de'][$id_sala_actual] ?? 0;
 
-//Limpiar marcas de huida de otras salas
 foreach (array_keys($_SESSION['huido_de']) as $s) {
     if ($s !== $id_sala_actual)
         unset($_SESSION['huido_de'][$s]);
 }
 
-//4. GENERADOR DE ENEMIGOS (SPAWN)
 $enemigo_presente = null;
 $hay_combate = false;
 
 if ($zombiesVisibles) {
-    //Salas con zombies básicos (IDs 1-4) → pueden reaparecer (40% al volver)
     $salas_respawn = [
         'sala_espera' => [1, 2, 3, 4],
         'oficina_este' => [1, 2, 3, 4],
         'biblioteca' => [1, 2, 3, 4],
     ];
-    //Salas con enemigos especiales → aparecen UNA sola vez, no respawnean
     $salas_unicas = [
-        'oficina_capitan' => [6],   // Lastre
-        'pasillo' => [7],   // Espasmo
-        'sala_interrogatorios' => [7],   // Espasmo
-        'sala_arte' => [5],   // Licker
+        'oficina_capitan' => [6],
+        'pasillo' => [7],
+        'sala_interrogatorios' => [7],
+        'sala_arte' => [5],
     ];
 
     $distribucion_enemigos = array_merge($salas_respawn, $salas_unicas);
@@ -230,9 +219,8 @@ if ($zombiesVisibles) {
             }
         }
     }
-} // fin if ($zombiesVisibles) — bloque spawn
+}
 
-//5. DETECTAR ENEMIGO ACTUAL
 if ($zombiesVisibles) {
     $q_ep = $pdo->prepare("SELECT ee.*, ce.nombre, ce.imagen_url FROM estado_enemigos ee JOIN catalogo_enemigos ce ON ee.id_enemigo = ce.id_enemigo WHERE ee.id_partida = ? AND ee.sala_ubicacion = ? AND ee.estado = 'vivo' LIMIT 1");
     $q_ep->execute([$id_partida, $id_sala_actual]);
@@ -278,26 +266,21 @@ while ($row = $query_loot->fetch(PDO::FETCH_ASSOC)) {
     }
 }
 
-// Combinar eventos completados en BD + sesión actual
 $q_comp_db = $pdo->prepare("SELECT id_evento FROM eventos_completados WHERE id_partida = ?");
 $q_comp_db->execute([$id_partida]);
 $completados_db = $q_comp_db->fetchAll(PDO::FETCH_COLUMN);
 $completados = array_unique(array_merge($completados_db, $_SESSION['eventos_recogidos_sesion'] ?? []));
 
-// Lógica especial para el Lobby Principal tras el puzzle de los medallones
 if ($id_sala_actual === 'lobby_principal') {
     $stmt_m = $pdo->prepare("SELECT id_evento FROM eventos_interactivos WHERE id_sala = 'lobby_principal' AND tipo_accion = 'puzzle' AND contenido_accion = 'medallones' LIMIT 1");
     $stmt_m->execute();
     $id_evento_medallones = $stmt_m->fetchColumn();
 
     if ($id_evento_medallones && in_array($id_evento_medallones, $completados)) {
-        // El puzzle ha sido completado — abrir el pasaje bajo la estatua
         $sala['imagen_url'] = '../img/lobby_abierto.png?v=2';
         $sala['descripcion'] = 'Hub central de la comisaría. El pasaje secreto bajo la estatua ahora está abierto.';
-        // Flecha SUR → sótano
         $sala['sur'] = 'sala_final';
 
-        // Hotspot visible sobre la apertura de la escalera central
         $eventos[] = [
             'id_evento' => 9997,
             'id_sala' => 'lobby_principal',
@@ -315,7 +298,6 @@ if ($id_sala_actual === 'lobby_principal') {
     }
 }
 
-// Lógica especial para la Sala Final (Sótano)
 if ($id_sala_actual === 'sala_final') {
     $fusibles_completados = in_array(28, $completados);
 
@@ -336,15 +318,13 @@ if ($id_sala_actual === 'sala_final') {
 }
 
 foreach ($eventos as $key => &$ev) {
-    // Override: Cambiar Escopeta Rota por la funcional
     if ($ev['nombre_objeto'] === 'ESCOPETA ROTA') {
         $ev['nombre_objeto'] = 'ESCOPETA W-870';
         $ev['tipo_accion'] = 'recoger_arma';
-        $ev['contenido_accion'] = 2; // ID Escopeta en catalogo_armas
+        $ev['contenido_accion'] = 2;
         $ev['imagen_item'] = '../img/EscopetaW-870.png';
     }
 
-    // Los eventos de guardar NUNCA se ocultan, siempre deben estar disponibles
     if ($ev['tipo_accion'] !== 'guardar' && in_array($ev['id_evento'], $completados)) {
         unset($eventos[$key]);
         continue;
@@ -353,20 +333,19 @@ foreach ($eventos as $key => &$ev) {
     if ($ev['contenido_accion'] === 'random') {
         if ($id_sala_actual === 'lobby_principal') {
             $ev['nombre_objeto'] = 'Hierba Verde';
-            $ev['contenido_accion'] = 1; // ID de Hierba Verde
+            $ev['contenido_accion'] = 1;
             $ev['imagen_item'] = '../img/Verde_hierva.png';
         } elseif ($id_sala_actual === 'pasillo') {
             if ($ev['xmin'] < 20) {
                 $ev['nombre_objeto'] = 'Cinta de Guardado';
-                $ev['contenido_accion'] = 5; // ID Cinta
+                $ev['contenido_accion'] = 5;
                 $ev['imagen_item'] = '../img/cinta_de_tinta.webp';
             } else {
                 $ev['nombre_objeto'] = 'Munición de Pistola';
-                $ev['contenido_accion'] = 3; // ID Munición
+                $ev['contenido_accion'] = 3;
                 $ev['imagen_item'] = '../img/municion_pistola.png';
             }
         } else {
-            // Probabilidad de aparición: 60% para el resto de salas
             if (rand(1, 100) > 60) {
                 unset($eventos[$key]);
                 continue;

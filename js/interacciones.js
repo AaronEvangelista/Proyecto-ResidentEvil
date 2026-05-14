@@ -13,7 +13,6 @@ function mostrarNotificacionCentrada(nombre) {
   nameEl.textContent = nombre;
   notif.style.display = "flex";
 
-  // Pequeño delay para la transición de entrada
   setTimeout(() => {
     notif.classList.add("show");
   }, 10);
@@ -329,10 +328,6 @@ function abrirMenuPuzzle(tipo, event) {
   }
 }
 
-// ════════════════════════════════════════════════
-//  PUZZLE ESTATUAS (PARA OBTENER MEDALLONES)
-// ════════════════════════════════════════════════
-
 const SIMBOLOS_PUZZLE = [
   "Leon",
   "Rama",
@@ -350,7 +345,7 @@ const SIMBOLOS_PUZZLE = [
 
 let estatuaPuzzleState = {
   tipo: "",
-  valores: [0, 0, 0], // Índices en SIMBOLOS_PUZZLE
+  valores: [0, 0, 0],
 };
 
 function abrirEstatuaPuzzle(tipo) {

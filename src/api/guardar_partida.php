@@ -131,14 +131,12 @@ try {
     $_SESSION['inventario_sesion'] = [];
     $_SESSION['id_partida'] = $id_partida_destino;
 
-    // --- COPIAR VIDA AL SLOT ---
     $st_get_vida = $pdo->prepare("SELECT vida_actual FROM estado_personaje WHERE id_partida = ?");
     $st_get_vida->execute([$id_partida_actual]);
     $vida_actual = $st_get_vida->fetchColumn() ?: 100;
 
     $pdo->prepare("REPLACE INTO estado_personaje (id_partida, vida_actual) VALUES (?, ?)")
         ->execute([$id_partida_destino, $vida_actual]);
-    // ---------------------------
 
     $pdo->commit();
     echo json_encode(['success' => true, 'message' => 'Partida guardada correctamente en el Slot ' . $slot_numero]);

@@ -12,7 +12,6 @@ if (!$id_registro || !$id_partida)
     die("Error: Sesión o enemigo no encontrado.");
 
 
-//1. Obtener datos del enemigo
 $query = $pdo->prepare("
     SELECT ee.*, ce.nombre, ce.vida_maxima, ce.dano_base, ce.imagen_url,
            ce.precision_cabeza, ce.precision_torso, ce.precision_piernas,
@@ -25,7 +24,6 @@ $query->execute([$id_registro, $id_partida]);
 $enemigo = $query->fetch(PDO::FETCH_ASSOC);
 
 
-//2. Obtener vida del jugador
 $query_p = $pdo->prepare("SELECT vida_actual FROM estado_personaje WHERE id_partida = ?");
 $query_p->execute([$id_partida]);
 $vida_jugador = $query_p->fetchColumn();
@@ -39,11 +37,9 @@ if (!$enemigo) {
 }
 
 
-//3. Obtener TODAS las armas del jugador
 $armas_disponibles = [];
 
 
-//Buscar armas en BD
 $q_armas_db = $pdo->prepare("
     SELECT i.id_registro, i.cantidad, ca.nombre, ca.dano_porcentaje, ca.imagen_url, 'db' as fuente, NULL as sesion_idx
     FROM inventario i
@@ -54,7 +50,6 @@ $q_armas_db->execute([$id_partida]);
 $armas_disponibles = $q_armas_db->fetchAll(PDO::FETCH_ASSOC);
 
 
-//Buscar armas en sesión
 $inv_sesion = $_SESSION['inventario_sesion'] ?? [];
 foreach ($inv_sesion as $idx => $item) {
     if ($item['tipo_objeto'] === 'arma' && (int) ($item['cantidad'] ?? 0) > 0) {
@@ -76,7 +71,6 @@ foreach ($inv_sesion as $idx => $item) {
 }
 
 
-//Cuchillo siempre disponible
 $armas_disponibles[] = [
     'id_registro' => null,
     'cantidad' => -1,
@@ -88,9 +82,7 @@ $armas_disponibles[] = [
 ];
 
 
-// 4. Obtener objetos de CURACIÓN y MUNICIÓN
 $objetos_utilizables = [];
-// Desde Base de Datos
 $q_items_db = $pdo->prepare("
     SELECT i.id_registro, i.cantidad, ci.nombre, ci.descripcion, ci.imagen_url, 'db' as fuente, NULL as sesion_idx, ci.tipo
     FROM inventario i
@@ -101,7 +93,6 @@ $q_items_db->execute([$id_partida]);
 $objetos_utilizables = $q_items_db->fetchAll(PDO::FETCH_ASSOC);
 
 
-// Desde Sesión (si hay objetos aún no persistidos)
 foreach ($inv_sesion as $idx => $item) {
     if ($item['tipo_objeto'] === 'item' && (int) ($item['cantidad'] ?? 0) > 0) {
         $q_cat = $pdo->prepare("SELECT nombre, tipo, descripcion, imagen_url FROM catalogo_items WHERE id_item = ?");
@@ -496,14 +487,12 @@ foreach ($inv_sesion as $idx => $item) {
     </div>
 
 
-    <!-- OVERLAY DE OBJETOS -->
     <div id="items-menu" onclick="event.target === this && cerrarMenuObjetos()">
         <div class="items-container">
             <h2
                 style="border-bottom: 2px solid var(--vats-green); margin-bottom: 25px; letter-spacing: 4px; color: var(--vats-green);">
                 SISTEMA DE SUMINISTROS</h2>
             <div id="items-list" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
-                <!-- Renderizado vía JS -->
             </div>
             <button class="weapon-btn" onclick="cerrarMenuObjetos()"
                 style="width: 100%; padding: 15px; margin-top: 20px; font-size: 1.1rem; border-color: #ff4444; color: #ff4444;">SALIR
@@ -513,13 +502,11 @@ foreach ($inv_sesion as $idx => $item) {
 
 
     <script>
-        // --- EFECTOS DE SONIDO ---
         const sndPistola = new Audio('../sounds/disparo_pistola.mp3');
         const sndEscopeta = new Audio('../sounds/disparo_escopeta.mp3');
         const sndAtaqueEnemigo = new Audio('../sounds/ataque_mordisco.mp3');
 
 
-        // Función genérica para reproducir y cortar el audio
         function reproducirSonidoCorto(audio, duracionMs) {
             audio.currentTime = 0;
             audio.play();
@@ -530,22 +517,17 @@ foreach ($inv_sesion as $idx => $item) {
         }
 
 
-        //1. DATOS DE ESTADO
         let eHP = parseInt(<?php echo (int) $enemigo['vida_restante']; ?>);
         const eHPMax = parseInt(<?php echo (int) $enemigo['vida_maxima']; ?>);
         let pHP = parseInt(<?php echo (int) $vida_jugador; ?>);
 
-        //2. DAÑO DEL ENEMIGO
         const eDmgBase = parseInt(<?php echo (int) ($enemigo['dano_base'] ?? 25); ?>);
 
-        //3. MULTIPLICADOR PARA EL JUGADOR
         const multCabezaJugador = parseFloat(<?php echo (float) $enemigo['multiplicador_cabeza']; ?>);
 
-        //4. SISTEMA DE ARMAS
         const armas = <?php echo json_encode($armas_disponibles); ?>;
         let armaActualIdx = 0;
 
-        //5. SISTEMA DE OBJETOS
         let objetos = <?php echo json_encode($objetos_utilizables); ?>;
 
         let turnoBloqueado = false;
@@ -623,7 +605,6 @@ foreach ($inv_sesion as $idx => $item) {
         }
 
 
-        // --- MANEJO DE INVENTARIO EN COMBATE ---
         function abrirMenuObjetos() {
             if (turnoBloqueado) return;
             const menu = document.getElementById('items-menu');
@@ -687,25 +668,22 @@ foreach ($inv_sesion as $idx => $item) {
                             pHP = data.nueva_vida;
                             escribirLog("REGENERACIÓN COMPLETADA: +" + data.curacion + " HP.");
                         } else if (data.tipo === 'recarga') {
-                            // Actualizar el arma correspondiente en nuestro array local
                             const armaAfectada = armas.find(a => a.nombre === data.arma);
                             if (armaAfectada) {
                                 armaAfectada.cantidad = data.nueva_cantidad;
                                 actualizarMunicionUI();
-                                initWeaponSelector(); // Refrescar nombres/estados si es necesario
+                                initWeaponSelector();
                             }
                             escribirLog("RECARGA COMPLETADA: " + data.arma.toUpperCase() + " (+" + data.recarga + " BALAS).");
                         }
 
 
-                        // Descontar objeto de la lista local
                         item.cantidad--;
                         if (item.cantidad <= 0) {
                             objetos.splice(idx, 1);
                         }
 
                         actualizarInterfaz();
-                        // El jugador puede seguir actuando
                         turnoBloqueado = false;
                     } else {
                         escribirLog("ERROR: " + (data.error || "FALLO EN EL SUMINISTRO."));
@@ -731,23 +709,17 @@ foreach ($inv_sesion as $idx => $item) {
                 return;
             }
 
-            // Sonido de disparo
             if (arma.nombre.toLowerCase().includes('escopeta')) {
                 reproducirSonidoCorto(sndEscopeta, 1500);
             } else if (arma.nombre.toLowerCase().includes('pistola')) {
                 reproducirSonidoCorto(sndPistola, 1500);
             } else if (arma.nombre.toLowerCase().includes('granada')) {
-                // Sonido de granada si existiera
             }
 
             turnoBloqueado = true;
 
-
-            // --- SISTEMA TÁCTICO: GRANADAS ---
-            // Las granadas tienen 100% de precisión ignorando la zona de impacto
             const esGranada = arma.nombre.toLowerCase().includes('granada');
             const precisionFinal = esGranada ? 100 : probabilidad;
-
 
             escribirLog("INICIANDO SECUENCIA DE ATAQUE A " + zona + "...");
 
@@ -800,7 +772,6 @@ foreach ($inv_sesion as $idx => $item) {
             escribirLog("EL ENEMIGO ATACA...");
 
             setTimeout(() => {
-                // Sonido de ataque enemigo (Configurado a 1500ms = 1.5 segundos)
                 reproducirSonidoCorto(sndAtaqueEnemigo, 1500);
 
 
@@ -865,7 +836,6 @@ foreach ($inv_sesion as $idx => $item) {
         }
 
 
-        //Inicializar selector de armas al cargar
         initWeaponSelector();
     </script>
 

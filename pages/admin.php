@@ -42,10 +42,8 @@ $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
         </div>
     </header>
 
-    <!-- ─── CONTENIDO PRINCIPAL ─────────────────────────────────── -->
     <div class="admin-wrapper">
 
-        <!-- ── Estadísticas ─────────────────────────────────────── -->
         <section class="admin-section" aria-label="Estadísticas globales">
             <div class="admin-section-header">
                 <span class="admin-section-icon">📊</span>
@@ -68,7 +66,6 @@ $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
             </div>
         </section>
 
-        <!-- ── Control de Zombies ────────────────────────────────── -->
         <section class="admin-section" aria-label="Control de zombies">
             <div class="admin-section-header">
                 <span class="admin-section-icon">🧟</span>
@@ -104,7 +101,6 @@ $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
             </div>
         </section>
 
-        <!-- ── Gestión de Usuarios ───────────────────────────────── -->
         <section class="admin-section" aria-label="Gestión de usuarios">
             <div class="admin-section-header">
                 <span class="admin-section-icon">👥</span>
@@ -126,7 +122,6 @@ $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
                         </tr>
                     </thead>
                     <tbody id="tbody-usuarios">
-                        <!-- Skeleton loader -->
                         <tr class="skeleton-row">
                             <td>#00001</td>
                             <td>Cargando usuario...</td>
@@ -150,16 +145,12 @@ $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
             </div>
         </section>
 
-    </div><!-- /.admin-wrapper -->
-
-    <!-- ─── TOAST ────────────────────────────────────────────────── -->
+    </div>
     <div id="admin-toast" role="alert" aria-live="polite"></div>
 
-    <!-- ─── SCRIPTS ──────────────────────────────────────────────── -->
     <script>
         const SESSION_ADMIN_ID = <?= (int) $_SESSION['usuario_id'] ?>;
 
-        /* ── Toast helper ─────────────────────────────────────────── */
         function mostrarToast(msg, esError = false) {
             const t = document.getElementById('admin-toast');
             t.textContent = msg;
@@ -168,7 +159,6 @@ $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        /* ── Toggle Zombies ───────────────────────────────────────── */
         const toggleZombies = document.getElementById('toggle-zombies');
         const zombieFeedback = document.getElementById('zombie-feedback');
         const zombieStatusText = document.getElementById('zombie-status-text');
@@ -193,7 +183,6 @@ $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
                         zombieFeedback.textContent = '✔ ' + data.mensaje;
                         zombieFeedback.style.color = activo ? '#e74c3c' : '#00ff88';
 
-                        // Actualizar UI
                         zombieCard.className = 'zombie-control-card ' + (activo ? 'zombies-on' : 'zombies-off');
                         zombieStatusText.className = 'zombie-status-text ' + (activo ? 'activos' : 'inactivos');
                         zombieStatusText.textContent = activo
@@ -207,7 +196,6 @@ $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
                     } else {
                         zombieFeedback.textContent = '⚠ ' + data.error;
                         zombieFeedback.style.color = '#e74c3c';
-                        // Revertir toggle visualmente
                         toggleZombies.checked = !activo;
                         mostrarToast(data.error, true);
                     }
@@ -224,19 +212,15 @@ $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
                 });
         });
 
-        /* ── Cargar usuarios ──────────────────────────────────────── */
         function cargarUsuarios() {
             fetch('../src/api/admin_get_usuarios.php')
                 .then(r => r.json())
                 .then(data => {
                     if (!data.success) { mostrarToast(data.error, true); return; }
 
-                    // Stats
                     document.getElementById('stat-usuarios').textContent = data.total_usuarios;
                     document.getElementById('stat-partidas').textContent = data.total_partidas;
                     document.getElementById('badge-total-usuarios').textContent = data.total_usuarios + ' usuarios';
-
-                    // Tabla
                     const tbody = document.getElementById('tbody-usuarios');
                     tbody.innerHTML = '';
 
@@ -290,7 +274,6 @@ $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
             return d.innerHTML;
         }
 
-        /* ── Cambiar rol ──────────────────────────────────────────── */
         function cambiarRol(idUsuario, nuevoRol) {
             const btn = document.getElementById(`btn-rol-${idUsuario}`);
             const feedback = document.getElementById(`feedback-${idUsuario}`);
@@ -305,7 +288,6 @@ $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
                 .then(data => {
                     if (data.success) {
                         mostrarToast(data.mensaje);
-                        // Recargar la tabla para reflejar el cambio
                         cargarUsuarios();
                     } else {
                         if (feedback) {
@@ -322,7 +304,6 @@ $zombiesVisibles = (int) ($_SESSION['zombies_visibles'] ?? 1);
                 });
         }
 
-        /* ── Init ─────────────────────────────────────────────────── */
         document.addEventListener('DOMContentLoaded', cargarUsuarios);
     </script>
 
