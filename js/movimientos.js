@@ -21,7 +21,7 @@ const teclasPresionadas = {
 const gameActions = {
   elegirRuta: function (direccion) {
     let selector = "";
-    // Mapeo de teclas a selectores
+    //Mapeo de teclas a selectores
     const mapeo = {
         'w': '.north', 'arrowup': '.north',
         's': '.south', 'arrowdown': '.south',
@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
 window.addEventListener("keydown", (e) => {
   const key = e.key.toLowerCase();
   
-  // Lista de IDs de elementos que bloquean el movimiento
+  //Lista de IDs de elementos que bloquean el movimiento
   const modalesBloqueantes = [
     'inventory-screen', 'note-viewer', 'save-menu', 
     'medallones-puzzle', 'estatua-puzzle', 'portable-safe-puzzle', 'caja-fuerte-puzzle'
@@ -118,13 +118,13 @@ window.addEventListener("keydown", (e) => {
   const hayCombate = typeof tension !== 'undefined' && tension === 'alta';
 
   if (algunModalAbierto || hayCombate) {
-    if (key === 'escape' && !hayCombate) return; // Dejar que otros scripts cierren modales
+    if (key === 'escape' && !hayCombate) return; //Dejar que otros scripts cierren modales
     if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
-      return; // Bloquear movimiento
+      return; //Bloquear movimiento
     }
   }
 
-  // Si estamos en pausa, solo escuchamos Escape para reanudar
+  //Si estamos en pausa, solo escuchamos Escape para reanudar
   if (estadoActual === ESTADOS_JUEGO.PAUSA) {
     if (key === "escape") {
       gameActions.reanudarJuego();
