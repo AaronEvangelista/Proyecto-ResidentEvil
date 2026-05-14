@@ -1,3 +1,5 @@
+# Proyecto desarrollado por [Aarón y Sergio] 
+
 # Resident Evil - The Survival Horror
 
 Juego de terror y supervivencia basado en navegador, inspirado en la saga clasica de Resident Evil. Desarrollado como proyecto final utilizando PHP, SQLite, HTML, CSS y JavaScript. El jugador explora las habitaciones interconectadas de una comisaria de policia, resuelve puzzles, gestiona su inventario y se enfrenta a enemigos en combates por turnos.
