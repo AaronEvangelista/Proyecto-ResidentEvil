@@ -2,9 +2,15 @@
 require_once '../../includes/conexion.php';
 
 try {
-    $stmt = $pdo->prepare("UPDATE eventos_interactivos SET tipo_accion = 'puzzle', contenido_accion = 'caja_fuerte', requiere_item = '' WHERE nombre_objeto = 'CAJA FUERTE CORTACADENAS'");
+    // Quitar la conexión oeste de oficina_oeste (no debe aparecer flecha izquierda)
+    $stmt = $pdo->prepare(
+        "UPDATE catalogo_salas SET oeste = NULL WHERE id_sala = 'oficina_oeste'"
+    );
     $stmt->execute();
-    echo "DB actualitzada exitosamente";
+
+    // Verificar
+    $row = $pdo->query("SELECT oeste FROM catalogo_salas WHERE id_sala = 'oficina_oeste'")->fetch();
+    echo "OK: oficina_oeste.oeste actualizado a: " . ($row['oeste'] ?? 'NULL');
 } catch(Exception $e) {
     echo "Error: " . $e->getMessage();
 }

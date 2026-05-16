@@ -48,13 +48,15 @@ if ($logueado) {
 
         <nav class="menu-area" id="menu-principal">
             <ul>
+                <?php if ($logueado && !empty($partidas_guardadas)): ?>
                 <li>
                     <a href="#" id="btn-continuar" class="item-seleccionado">
                         <span class="icono"></span>CONTINUAR PARTIDA<span class="llave"></span>
                     </a>
                 </li>
+                <?php endif; ?>
                 <li>
-                    <a href="#" id="btn-nueva-partida">
+                    <a href="#" id="btn-nueva-partida" <?= ($logueado && !empty($partidas_guardadas)) ? '' : 'class="item-seleccionado"' ?>>
                         <span class="icono"></span>NUEVA PARTIDA
                     </a>
                 </li>
@@ -207,25 +209,21 @@ if ($logueado) {
         const modalSeleccion  = document.getElementById('modal-seleccion-partida');
         const btnCerrar       = document.getElementById('modal-cerrar');
 
-        btnContinuar.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!logueado) {
-                modalLogin.classList.add('modal-visible');
-                return;
-            }
-            if (partidasGuardadas === 0) {
-                // Sin partidas guardadas → entrar al juego (creará partida temporal)
-                window.location.href = './pages/juego.php';
-            } else if (partidasGuardadas === 1) {
-                // Una sola partida → cargar directo sin selector
-                const primerSlot = document.querySelector('.msp-slot');
-                if (primerSlot) primerSlot.click();
-                else window.location.href = './pages/juego.php';
-            } else {
-                // Varias partidas → mostrar modal selector
-                modalSeleccion.style.display = 'flex';
-            }
-        });
+        // CONTINUAR PARTIDA solo existe en el DOM si hay partidas guardadas
+        if (btnContinuar) {
+            btnContinuar.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (partidasGuardadas === 1) {
+                    // Una sola partida → cargar directo sin selector
+                    const primerSlot = document.querySelector('.msp-slot');
+                    if (primerSlot) primerSlot.click();
+                    else window.location.href = './pages/juego.php';
+                } else {
+                    // Varias partidas → mostrar modal selector
+                    modalSeleccion.style.display = 'flex';
+                }
+            });
+        }
 
         btnNuevaPartida.addEventListener('click', (e) => {
             e.preventDefault();

@@ -339,7 +339,7 @@ foreach ($eventos as $key => &$ev) {
             if ($ev['xmin'] < 20) {
                 $ev['nombre_objeto'] = 'Cinta de Guardado';
                 $ev['contenido_accion'] = 5;
-                $ev['imagen_item'] = '../img/cinta_de_tinta.webp';
+                $ev['imagen_item'] = '../img/cinta_de_tinta.png';
             } else {
                 $ev['nombre_objeto'] = 'Munición de Pistola';
                 $ev['contenido_accion'] = 3;
@@ -914,6 +914,51 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
             pointer-events: none;
             transition: opacity 0.5s;
         }
+
+        /* ═══════════════════════════════════════
+           LOGO OVERLAY (cubre watermark esquina inferior derecha)
+        ═══════════════════════════════════════ */
+        .game-logo-overlay {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 220px;
+            height: 150px;
+            z-index: 50;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            padding: 0 12px 10px 0;
+            background: linear-gradient(135deg, transparent 30%, rgba(0,0,0,0.96) 65%);
+            pointer-events: none;
+        }
+
+        /* Bloque sólido adicional que asegura cubrir el watermark */
+        .game-logo-overlay::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 160px;
+            height: 90px;
+            background: #000;
+            opacity: 0.97;
+        }
+
+        .game-logo-overlay img {
+            position: relative;
+            z-index: 1;
+            width: 62px;
+            height: auto;
+            opacity: 0.7;
+            filter: drop-shadow(0 0 8px rgba(200,0,0,0.5)) grayscale(20%);
+            animation: logoBreath 4s ease-in-out infinite;
+        }
+
+        @keyframes logoBreath {
+            0%, 100% { opacity: 0.55; filter: drop-shadow(0 0 5px rgba(180,0,0,0.4)) grayscale(25%); }
+            50%       { opacity: 0.80; filter: drop-shadow(0 0 14px rgba(220,0,0,0.7)) grayscale(5%); }
+        }
     </style>
 </head>
 
@@ -978,6 +1023,11 @@ $vida_p = $st_vida->fetchColumn() ?: 100;
 
         <div class="message-box">
             <p><?php echo $hay_combate ? "¡Un engendro bloquea el camino!" : $sala['descripcion']; ?></p>
+        </div>
+
+        <!-- Logo overlay: cubre el watermark de la esquina inferior derecha -->
+        <div class="game-logo-overlay">
+            <img src="../img/logo.png" alt="Resident Evil">
         </div>
 
         <div id="item-notification">
